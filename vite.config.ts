@@ -14,8 +14,8 @@ export default defineConfig({
       filename: 'sw.ts',
       injectRegister: 'auto',
       manifest: {
-        name: 'Metamorfa',
-        short_name: 'Metamorfa',
+        name: 'Aurora',
+        short_name: 'Aurora',
         description: 'Sua jornada de transição hormonal: doses, humor, medidas e exames num só lugar.',
         theme_color: '#F5A9B8',
         background_color: '#faf7f8',
