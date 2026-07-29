@@ -2,11 +2,13 @@ import clsx from 'clsx'
 
 export default function Avatar({
   src,
+  icon,
   name,
   size = 36,
   className,
 }: {
   src?: string | null
+  icon?: string | null
   name?: string
   size?: number
   className?: string
@@ -32,7 +34,7 @@ export default function Avatar({
         className,
       )}
     >
-      {initial ?? '🏳️‍⚧️'}
+      {icon ?? initial ?? '🏳️‍⚧️'}
     </div>
   )
 }

@@ -15,6 +15,13 @@
       "when": 1785290219976,
       "tag": "0001_fluffy_shadowcat",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785364133057,
+      "tag": "0002_overrated_invisible_woman",
+      "breakpoints": true
     }
   ]
 }

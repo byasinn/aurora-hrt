@@ -21,6 +21,15 @@ export const profile = pgTable('profile', {
   themeAccent2: text('theme_accent_2').notNull().default('#7fd4e8'),
   themeMode: text('theme_mode').notNull().default('dark'), // 'light' | 'dark'
   contentPreference: text('content_preference').notNull().default('feminine'), // 'feminine' | 'masculine' | 'combined'
+  textStyle: text('text_style').notNull().default('feminine'), // 'feminine' | 'masculine'
+  avatarIcon: text('avatar_icon'), // emoji key quando não há foto
+  isOnHrt: boolean('is_on_hrt'),
+  notOnMedsYet: boolean('not_on_meds_yet').notNull().default(false),
+  appGoals: jsonb('app_goals').notNull().default([]), // string[]
+  enabledModules: jsonb('enabled_modules')
+    .notNull()
+    .default(['medications', 'mood', 'calendar', 'measurements']), // string[]
+  onboardingCompleted: boolean('onboarding_completed').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 

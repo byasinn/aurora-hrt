@@ -25,7 +25,7 @@ export default function WelcomeBanner() {
 
   return (
     <div className="mb-5 flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 [box-shadow:var(--shadow)]">
-      <Avatar src={profile?.avatarUrl} name={profile?.displayName} size={44} />
+      <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} size={44} />
       <div>
         <p className="text-sm text-[var(--text-muted)]">
           {greeting()}

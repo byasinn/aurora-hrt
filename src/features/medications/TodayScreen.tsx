@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Button, Card, EmptyState, ScreenTitle } from '../../components/ui'
 import { useToday, useLogDose, useUpdateDoseLog, type TodayItem } from '../../api/doses'
 import { useMoodEntries } from '../../api/moods'
+import { useProfile } from '../../api/profile'
 import { formatTime, todayStr } from '../../lib/dateUtils'
 import WelcomeBanner from '../../components/WelcomeBanner'
 import clsx from 'clsx'
@@ -100,6 +101,7 @@ function DoseCard({ item, onTaken }: { item: TodayItem; onTaken: () => void }) {
 
 export default function TodayScreen() {
   const { data, isLoading, isError } = useToday()
+  const { data: profile } = useProfile()
   const today = todayStr()
   const { data: moodToday } = useMoodEntries({ from: today, to: today })
   const [moodPromptDismissed, setMoodPromptDismissed] = useState(false)
@@ -140,7 +142,11 @@ export default function TodayScreen() {
       )}
 
       {data && data.items.length === 0 && (
-        <EmptyState>Nenhum medicamento cadastrado ainda. Toque em "+ Medicamento" para começar.</EmptyState>
+        <EmptyState>
+          {profile?.notOnMedsYet
+            ? 'Você ainda não começou a tomar nada — sem pressa. Quando decidir, é só tocar em "+ Medicamento" que a gente te ajuda a organizar os horários.'
+            : 'Nenhum medicamento cadastrado ainda. Toque em "+ Medicamento" para começar.'}
+        </EmptyState>
       )}
 
       <div className="space-y-3">

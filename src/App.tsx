@@ -12,6 +12,8 @@ import CalendarScreen from './features/calendar/CalendarScreen'
 import ProfileScreen from './features/profile/ProfileScreen'
 import AchievementsScreen from './features/achievements/AchievementsScreen'
 import MeasurementsScreen from './features/measurements/MeasurementsScreen'
+import OnboardingScreen from './features/onboarding/OnboardingScreen'
+import { useProfile } from './api/profile'
 
 function ThemeInitializer() {
   const { mode, accent, accent2 } = useThemeStore()
@@ -21,23 +23,37 @@ function ThemeInitializer() {
   return null
 }
 
+function RootGate() {
+  const { data: profile, isLoading, refetch } = useProfile()
+
+  if (isLoading || !profile) return null
+
+  if (!profile.onboardingCompleted) {
+    return <OnboardingScreen onComplete={() => refetch()} />
+  }
+
+  return (
+    <Routes>
+      <Route element={<Layout />}>
+        <Route index element={<TodayScreen />} />
+        <Route path="medications" element={<MedicationsScreen />} />
+        <Route path="mood" element={<MoodCheckIn />} />
+        <Route path="calendar" element={<CalendarScreen />} />
+        <Route path="achievements" element={<AchievementsScreen />} />
+        <Route path="measurements" element={<MeasurementsScreen />} />
+        <Route path="profile" element={<ProfileScreen />} />
+      </Route>
+    </Routes>
+  )
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeInitializer />
       <BrowserRouter>
         <PassphraseGate>
-          <Routes>
-            <Route element={<Layout />}>
-              <Route index element={<TodayScreen />} />
-              <Route path="medications" element={<MedicationsScreen />} />
-              <Route path="mood" element={<MoodCheckIn />} />
-              <Route path="calendar" element={<CalendarScreen />} />
-              <Route path="achievements" element={<AchievementsScreen />} />
-              <Route path="measurements" element={<MeasurementsScreen />} />
-              <Route path="profile" element={<ProfileScreen />} />
-            </Route>
-          </Routes>
+          <RootGate />
         </PassphraseGate>
       </BrowserRouter>
     </QueryClientProvider>

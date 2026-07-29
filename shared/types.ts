@@ -12,6 +12,11 @@ import type {
 export type Profile = typeof profile.$inferSelect
 export type ProfileInput = Partial<Omit<typeof profile.$inferInsert, 'id' | 'createdAt'>>
 
+export type TextStyle = 'feminine' | 'masculine'
+export type ContentPreference = 'feminine' | 'masculine' | 'combined'
+export type AppModule = 'medications' | 'mood' | 'calendar' | 'measurements'
+export const ALL_APP_MODULES: AppModule[] = ['medications', 'mood', 'calendar', 'measurements']
+
 export type MedicationRoute = 'oral' | 'injection' | 'patch' | 'gel' | 'other'
 export type FrequencyType = 'daily' | 'every_n_days' | 'specific_days'
 

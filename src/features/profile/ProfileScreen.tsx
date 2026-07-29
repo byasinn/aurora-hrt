@@ -14,6 +14,13 @@ const CONTENT_OPTIONS: { value: string; label: string }[] = [
   { value: 'combined', label: 'Combinado' },
 ]
 
+const MODULE_OPTIONS: { value: string; label: string }[] = [
+  { value: 'medications', label: '💊 Remédios' },
+  { value: 'mood', label: '💜 Humor' },
+  { value: 'calendar', label: '🗓️ Histórico' },
+  { value: 'measurements', label: '📏 Medidas' },
+]
+
 export default function ProfileScreen() {
   const { data: profile } = useProfile()
   const updateProfile = useUpdateProfile()
@@ -69,7 +76,7 @@ export default function ProfileScreen() {
           className="relative"
           disabled={uploading}
         >
-          <Avatar src={profile?.avatarUrl} name={profile?.displayName} size={88} />
+          <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} size={88} />
           <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-[var(--surface)] bg-[var(--accent)] text-xs text-[var(--accent-contrast)]">
             {uploading ? '…' : '✏️'}
           </span>
@@ -241,6 +248,43 @@ export default function ProfileScreen() {
           </div>
         </div>
       </Card>
+
+      <Card className="space-y-3">
+        <h2 className="text-sm font-medium text-[var(--text-muted)]">Módulos visíveis no menu</h2>
+        <div className="flex flex-col gap-2">
+          {MODULE_OPTIONS.map((opt) => {
+            const enabled = (profile?.enabledModules as string[] | undefined)?.includes(opt.value) ?? true
+            return (
+              <label
+                key={opt.value}
+                className="flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5"
+              >
+                <input
+                  type="checkbox"
+                  checked={enabled}
+                  onChange={() => {
+                    const current = (profile?.enabledModules as string[] | undefined) ?? []
+                    const updated = enabled
+                      ? current.filter((m) => m !== opt.value)
+                      : [...current, opt.value]
+                    updateProfile.mutate({ enabledModules: updated })
+                  }}
+                  className="h-4 w-4 accent-[var(--accent)]"
+                />
+                <span className="text-sm text-[var(--text)]">{opt.label}</span>
+              </label>
+            )
+          })}
+        </div>
+      </Card>
+
+      <button
+        type="button"
+        onClick={() => updateProfile.mutate({ onboardingCompleted: false })}
+        className="pb-2 text-center text-xs text-[var(--text-muted)]/60"
+      >
+        repetir configuração inicial (dev)
+      </button>
     </div>
   )
 }

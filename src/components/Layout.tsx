@@ -3,15 +3,22 @@ import clsx from 'clsx'
 import { useProfile } from '../api/profile'
 import Avatar from './Avatar'
 
-const NAV_ITEMS = [
+const NAV_ITEMS: { to: string; label: string; icon: string; module?: string }[] = [
   { to: '/', label: 'Hoje', icon: '✅' },
-  { to: '/medications', label: 'Remédios', icon: '💊' },
-  { to: '/mood', label: 'Humor', icon: '💜' },
-  { to: '/calendar', label: 'Histórico', icon: '🗓️' },
+  { to: '/medications', label: 'Remédios', icon: '💊', module: 'medications' },
+  { to: '/mood', label: 'Humor', icon: '💜', module: 'mood' },
+  { to: '/calendar', label: 'Histórico', icon: '🗓️', module: 'calendar' },
 ]
 
 export default function Layout() {
   const { data: profile } = useProfile()
+  const enabledModules = (profile?.enabledModules as string[] | undefined) ?? [
+    'medications',
+    'mood',
+    'calendar',
+    'measurements',
+  ]
+  const visibleItems = NAV_ITEMS.filter((item) => !item.module || enabledModules.includes(item.module))
 
   return (
     <div className="mx-auto flex min-h-svh w-full max-w-md flex-col bg-[var(--bg)] text-[var(--text)]">
@@ -21,7 +28,7 @@ export default function Layout() {
       </main>
       <nav className="fixed bottom-0 left-1/2 z-10 w-full max-w-md -translate-x-1/2 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur">
         <ul className="flex items-stretch justify-around">
-          {NAV_ITEMS.map((item) => (
+          {visibleItems.map((item) => (
             <li key={item.to} className="flex-1">
               <NavLink
                 to={item.to}
@@ -48,7 +55,7 @@ export default function Layout() {
                 )
               }
             >
-              <Avatar src={profile?.avatarUrl} name={profile?.displayName} size={22} />
+              <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} size={22} />
               Perfil
             </NavLink>
           </li>
