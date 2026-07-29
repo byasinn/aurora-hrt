@@ -6,8 +6,46 @@ import { useCreateMoodEntry, useMoodEntries } from '../../api/moods'
 import { todayStr } from '../../lib/dateUtils'
 import type { Tag } from '../../../shared/types'
 
-const MOOD_SUGGESTIONS = ['😊 Feliz', '😢 Triste', '😡 Irritada', '😌 Tranquila', '😰 Ansiosa', '🥱 Cansada', '💪 Motivada', '🥰 Afetuosa']
-const SYMPTOM_SUGGESTIONS = ['Sensibilidade nos seios', 'Ondas de calor', 'Dor de cabeça', 'Alteração de libido', 'Mudança de pele', 'Inchaço', 'Insônia', 'Enjoo']
+const MOOD_SUGGESTIONS = [
+  '😊 Feliz',
+  '😢 Triste',
+  '😡 Irritada',
+  '😌 Tranquila',
+  '😰 Ansiosa',
+  '🥱 Cansada',
+  '💪 Motivada',
+  '🥰 Afetuosa',
+  '😍 Confiante',
+  '🥹 Sensível',
+  '🙏 Grata',
+  '😔 Sozinha',
+  '✨ Esperançosa',
+  '😩 Sobrecarregada',
+  '🌈 Orgulhosa',
+  '😵 Confusa',
+  '🥳 Animada',
+  '😞 Desanimada',
+]
+const SYMPTOM_SUGGESTIONS = [
+  'Sensibilidade nos seios',
+  'Ondas de calor',
+  'Dor de cabeça',
+  'Alteração de libido',
+  'Mudança de pele',
+  'Inchaço',
+  'Insônia',
+  'Enjoo',
+  'Dor nas articulações',
+  'Alteração de apetite',
+  'Suor noturno',
+  'Queda de cabelo',
+  'Crescimento de pelos',
+  'Fadiga',
+  'Cólica',
+  'Retenção de líquido',
+  'Dor no local da aplicação',
+  'Dor de barriga',
+]
 
 function TagPicker({
   type,
@@ -41,7 +79,7 @@ function TagPicker({
           className={clsx(
             'rounded-full border px-3 py-1.5 text-sm transition',
             selected.includes(tag.id)
-              ? 'border-[var(--accent)] bg-[var(--accent)] text-[#0b0f14]'
+              ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
               : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]',
           )}
         >
@@ -124,19 +162,25 @@ export default function MoodCheckIn() {
       <div>
         <h2 className="mb-2 text-sm font-medium text-[var(--text-muted)]">Energia</h2>
         <div className="flex gap-2">
-          {[1, 2, 3, 4, 5].map((lvl) => (
+          {[
+            { lvl: 1, emoji: '🪫' },
+            { lvl: 2, emoji: '😴' },
+            { lvl: 3, emoji: '🙂' },
+            { lvl: 4, emoji: '⚡' },
+            { lvl: 5, emoji: '🚀' },
+          ].map(({ lvl, emoji }) => (
             <button
               key={lvl}
               type="button"
               onClick={() => setEnergyLevel(lvl)}
               className={clsx(
-                'h-10 flex-1 rounded-lg border text-sm',
+                'h-12 flex-1 rounded-xl border text-lg transition',
                 energyLevel === lvl
-                  ? 'border-[var(--accent)] bg-[var(--accent)] text-[#0b0f14]'
+                  ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
                   : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]',
               )}
             >
-              {lvl}
+              {emoji}
             </button>
           ))}
         </div>

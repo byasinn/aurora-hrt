@@ -9,12 +9,13 @@ import TodayScreen from './features/medications/TodayScreen'
 import MoodCheckIn from './features/mood/MoodCheckIn'
 import CalendarScreen from './features/calendar/CalendarScreen'
 import ProfileScreen from './features/profile/ProfileScreen'
+import AchievementsScreen from './features/achievements/AchievementsScreen'
 
 function ThemeInitializer() {
-  const { mode, accent } = useThemeStore()
+  const { mode, accent, accent2 } = useThemeStore()
   useEffect(() => {
-    applyTheme(mode, accent)
-  }, [mode, accent])
+    applyTheme(mode, accent, accent2)
+  }, [mode, accent, accent2])
   return null
 }
 
@@ -29,6 +30,7 @@ export default function App() {
               <Route index element={<TodayScreen />} />
               <Route path="mood" element={<MoodCheckIn />} />
               <Route path="calendar" element={<CalendarScreen />} />
+              <Route path="achievements" element={<AchievementsScreen />} />
               <Route path="profile" element={<ProfileScreen />} />
             </Route>
           </Routes>

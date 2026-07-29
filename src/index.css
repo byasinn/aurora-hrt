@@ -1,25 +1,30 @@
 @import "tailwindcss";
 
 :root {
-  --accent: #7fd4e8;
-  --accent-soft: color-mix(in srgb, var(--accent) 20%, transparent);
+  --accent: #f5a9b8;
+  --accent-2: #5bcefa;
+  --accent-soft: color-mix(in srgb, var(--accent) 22%, transparent);
+  --accent-contrast: #1a1113;
   color-scheme: dark;
-  --bg: #0b0f14;
-  --surface: #131924;
-  --surface-2: #1a2230;
-  --border: #263042;
-  --text: #e7edf5;
-  --text-muted: #93a1b7;
+  --bg: #0f1216;
+  --surface: #181c22;
+  --surface-2: #21262e;
+  --border: #2c323b;
+  --text: #f2f4f7;
+  --text-muted: #9aa4b2;
+  --shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.45);
 }
 
 :root[data-theme='light'] {
   color-scheme: light;
-  --bg: #f7f9fc;
+  --bg: #faf7f8;
   --surface: #ffffff;
-  --surface-2: #eef2f8;
-  --border: #dde4ee;
-  --text: #10151f;
-  --text-muted: #57647a;
+  --surface-2: #f6eef1;
+  --border: #ecdfe4;
+  --text: #211619;
+  --text-muted: #706068;
+  --accent-contrast: #ffffff;
+  --shadow: 0 8px 24px -10px rgba(90, 40, 60, 0.18);
 }
 
 * {
@@ -46,4 +51,15 @@ button {
 
 ::selection {
   background: var(--accent-soft);
+}
+
+.flag-gradient {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+
+.flag-gradient-text {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }

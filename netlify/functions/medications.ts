@@ -1,9 +1,41 @@
 import type { Context } from '@netlify/functions'
 import { eq } from 'drizzle-orm'
 import { getDb } from './_shared/db'
-import { medications } from '../../shared/schema'
+import { medications, doseLogs, profile } from '../../shared/schema'
 import { checkAuth, jsonResponse } from './_shared/auth'
 import type { MedicationInput } from '../../shared/types'
+import { isDueOnDate, scheduledInstantFor, dateStrInTimezone } from './_shared/scheduling'
+
+async function backfillDoseLogs(
+  db: ReturnType<typeof getDb>,
+  medicationId: number,
+  medication: MedicationInput,
+  fromDateStr: string,
+  timeZone: string,
+) {
+  const today = dateStrInTimezone(new Date(), timeZone)
+  const cursor = new Date(`${fromDateStr}T00:00:00Z`)
+  const rows: (typeof doseLogs.$inferInsert)[] = []
+
+  while (dateStrInTimezone(cursor, timeZone) < today) {
+    const dateStr = dateStrInTimezone(cursor, timeZone)
+    if (isDueOnDate(medication, dateStr, timeZone)) {
+      const scheduledFor = scheduledInstantFor(medication, dateStr, timeZone)
+      rows.push({
+        medicationId,
+        scheduledFor,
+        takenAt: scheduledFor,
+        status: 'taken',
+      })
+    }
+    cursor.setUTCDate(cursor.getUTCDate() + 1)
+  }
+
+  if (rows.length > 0) {
+    await db.insert(doseLogs).values(rows)
+  }
+  return rows.length
+}
 
 export default async (req: Request, _context: Context) => {
   const authError = checkAuth(req)
@@ -20,9 +52,19 @@ export default async (req: Request, _context: Context) => {
     }
 
     if (req.method === 'POST') {
-      const body = (await req.json()) as MedicationInput
+      const { backfillFrom, ...body } = (await req.json()) as MedicationInput & {
+        backfillFrom?: string
+      }
       const [row] = await db.insert(medications).values(body).returning()
-      return jsonResponse(row, { status: 201 })
+
+      let backfilled = 0
+      if (backfillFrom) {
+        const [profileRow] = await db.select().from(profile).limit(1)
+        const timeZone = profileRow?.timezone ?? 'America/Sao_Paulo'
+        backfilled = await backfillDoseLogs(db, row.id, body, backfillFrom, timeZone)
+      }
+
+      return jsonResponse({ ...row, backfilled }, { status: 201 })
     }
 
     if (req.method === 'PUT') {

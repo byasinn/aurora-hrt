@@ -3,6 +3,7 @@ import { Button, Card, EmptyState, ScreenTitle } from '../../components/ui'
 import { useToday, useLogDose, useUpdateDoseLog, type TodayItem } from '../../api/doses'
 import { formatTime } from '../../lib/dateUtils'
 import MedicationForm from './MedicationForm'
+import WelcomeBanner from '../../components/WelcomeBanner'
 import clsx from 'clsx'
 
 const ROUTE_LABELS: Record<string, string> = {
@@ -13,11 +14,19 @@ const ROUTE_LABELS: Record<string, string> = {
   other: 'Outro',
 }
 
+const ROUTE_ICONS: Record<string, string> = {
+  oral: '💊',
+  injection: '💉',
+  patch: '🩹',
+  gel: '🧴',
+  other: '✨',
+}
+
 const STATUS_STYLES: Record<TodayItem['status'], string> = {
-  pending: 'border-[var(--border)]',
-  taken: 'border-emerald-500/50',
-  skipped: 'border-[var(--border)] opacity-60',
-  missed: 'border-red-500/50',
+  pending: 'border-l-4 border-l-[var(--accent)]',
+  taken: 'border-l-4 border-l-emerald-500 opacity-80',
+  skipped: 'border-l-4 border-l-[var(--border)] opacity-60',
+  missed: 'border-l-4 border-l-red-500',
 }
 
 function DoseCard({ item }: { item: TodayItem }) {
@@ -52,19 +61,22 @@ function DoseCard({ item }: { item: TodayItem }) {
 
   return (
     <Card className={clsx('flex items-center justify-between gap-3', STATUS_STYLES[item.status])}>
-      <div>
-        <p className="font-medium text-[var(--text)]">{item.medication.name}</p>
-        <p className="text-xs text-[var(--text-muted)]">
-          {item.medication.doseAmount}
-          {item.medication.doseUnit} · {ROUTE_LABELS[item.medication.route] ?? item.medication.route} ·{' '}
-          {formatTime(item.scheduledFor)}
-          {item.status === 'missed' && ' · atrasado'}
-        </p>
+      <div className="flex items-center gap-3">
+        <span className="text-2xl">{ROUTE_ICONS[item.medication.route] ?? '✨'}</span>
+        <div>
+          <p className="font-medium text-[var(--text)]">{item.medication.name}</p>
+          <p className="text-xs text-[var(--text-muted)]">
+            {item.medication.doseAmount}
+            {item.medication.doseUnit} · {ROUTE_LABELS[item.medication.route] ?? item.medication.route} ·{' '}
+            {formatTime(item.scheduledFor)}
+            {item.status === 'missed' && ' · atrasado'}
+          </p>
+        </div>
       </div>
       {item.status === 'taken' ? (
-        <span className="text-sm text-emerald-400">✓ Tomado</span>
+        <span className="whitespace-nowrap text-sm text-emerald-500">✓ Tomado</span>
       ) : item.status === 'skipped' ? (
-        <span className="text-sm text-[var(--text-muted)]">Pulado</span>
+        <span className="whitespace-nowrap text-sm text-[var(--text-muted)]">Pulado</span>
       ) : (
         <div className="flex gap-2">
           <Button variant="secondary" onClick={markSkipped} disabled={pending}>
@@ -85,6 +97,8 @@ export default function TodayScreen() {
 
   return (
     <div>
+      <WelcomeBanner />
+
       <div className="mb-4 flex items-center justify-between">
         <ScreenTitle>Hoje</ScreenTitle>
         <Button variant="secondary" onClick={() => setShowForm((s) => !s)}>

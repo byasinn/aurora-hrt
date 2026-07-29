@@ -1,16 +1,21 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import clsx from 'clsx'
+import { useProfile } from '../api/profile'
+import Avatar from './Avatar'
 
 const NAV_ITEMS = [
-  { to: '/', label: 'Hoje', icon: '📅' },
+  { to: '/', label: 'Hoje', icon: '✅' },
   { to: '/mood', label: 'Humor', icon: '💜' },
   { to: '/calendar', label: 'Histórico', icon: '🗓️' },
-  { to: '/profile', label: 'Perfil', icon: '👤' },
+  { to: '/achievements', label: 'Troféus', icon: '🏆' },
 ]
 
 export default function Layout() {
+  const { data: profile } = useProfile()
+
   return (
     <div className="mx-auto flex min-h-svh w-full max-w-md flex-col bg-[var(--bg)] text-[var(--text)]">
+      <div className="h-1 flag-gradient" />
       <main className="flex-1 overflow-y-auto px-4 pb-24 pt-6">
         <Outlet />
       </main>
@@ -33,6 +38,20 @@ export default function Layout() {
               </NavLink>
             </li>
           ))}
+          <li className="flex-1">
+            <NavLink
+              to="/profile"
+              className={({ isActive }) =>
+                clsx(
+                  'flex flex-col items-center gap-0.5 py-2.5 text-xs transition',
+                  isActive ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]',
+                )
+              }
+            >
+              <Avatar src={profile?.avatarUrl} name={profile?.displayName} size={22} />
+              Perfil
+            </NavLink>
+          </li>
         </ul>
       </nav>
     </div>

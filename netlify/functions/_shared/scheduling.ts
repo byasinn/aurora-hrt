@@ -1,4 +1,11 @@
-import type { Medication } from '../../../shared/types'
+import type { FrequencyType, FrequencyValue } from '../../../shared/types'
+
+export interface SchedulableMedication {
+  frequencyType: FrequencyType | string
+  frequencyValue?: FrequencyValue | unknown
+  preferredTime: string
+  active?: boolean
+}
 
 /** Converte 'YYYY-MM-DD' + 'HH:MM' interpretados num timezone IANA para um Date UTC. */
 export function zonedTimeToUtc(dateStr: string, timeStr: string, timeZone: string): Date {
@@ -21,7 +28,7 @@ function weekdayInTimezone(date: Date, timeZone: string): number {
 }
 
 /** Checa se um medicamento está "no calendário" para a data (string YYYY-MM-DD, no timezone do usuário). */
-export function isDueOnDate(med: Medication, dateStr: string, timeZone: string): boolean {
+export function isDueOnDate(med: SchedulableMedication, dateStr: string, timeZone: string): boolean {
   if (med.frequencyType === 'daily') return true
 
   if (med.frequencyType === 'specific_days') {
@@ -47,21 +54,21 @@ export function isDueOnDate(med: Medication, dateStr: string, timeZone: string):
 }
 
 /** Horário UTC exato em que a dose do medicamento está prevista, para uma data (YYYY-MM-DD) no timezone do usuário. */
-export function scheduledInstantFor(med: Medication, dateStr: string, timeZone: string): Date {
+export function scheduledInstantFor(med: SchedulableMedication, dateStr: string, timeZone: string): Date {
   return zonedTimeToUtc(dateStr, med.preferredTime, timeZone)
 }
 
-export interface DueMedication {
-  medication: Medication
+export interface DueMedication<T extends SchedulableMedication = SchedulableMedication> {
+  medication: T
   scheduledFor: Date
 }
 
 /** Lista os medicamentos ativos previstos para a data informada (padrão: hoje no timezone do usuário). */
-export function dueMedicationsForDate(
-  meds: Medication[],
+export function dueMedicationsForDate<T extends SchedulableMedication>(
+  meds: T[],
   dateStr: string,
   timeZone: string,
-): DueMedication[] {
+): DueMedication<T>[] {
   return meds
     .filter((m) => m.active && isDueOnDate(m, dateStr, timeZone))
     .map((m) => ({ medication: m, scheduledFor: scheduledInstantFor(m, dateStr, timeZone) }))

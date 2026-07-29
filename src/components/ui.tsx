@@ -5,7 +5,7 @@ export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={clsx(
-        'rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm',
+        'rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 [box-shadow:var(--shadow)]',
         className,
       )}
       {...props}
@@ -22,7 +22,7 @@ export function Button({
     <button
       className={clsx(
         'rounded-xl px-4 py-2 text-sm font-medium transition disabled:opacity-50',
-        variant === 'primary' && 'bg-[var(--accent)] text-[#0b0f14]',
+        variant === 'primary' && 'bg-[var(--accent)] text-[var(--accent-contrast)]',
         variant === 'secondary' &&
           'border border-[var(--border)] bg-[var(--surface-2)] text-[var(--text)]',
         variant === 'ghost' && 'text-[var(--text-muted)] hover:text-[var(--text)]',

@@ -1,0 +1,77 @@
+import { useEffect } from 'react'
+import { Card, ScreenTitle } from '../../components/ui'
+import { useUnlockedAchievements, useUnlockAchievement } from '../../api/achievements'
+import { ACHIEVEMENTS } from '../../lib/achievementsEngine'
+import { useAchievementStats } from './useAchievementStats'
+
+export default function AchievementsScreen() {
+  const { data: unlocked = [] } = useUnlockedAchievements()
+  const unlockAchievement = useUnlockAchievement()
+  const stats = useAchievementStats()
+
+  const unlockedKeys = new Set(unlocked.map((u) => u.achievementKey))
+
+  useEffect(() => {
+    for (const ach of ACHIEVEMENTS) {
+      if (!unlockedKeys.has(ach.key) && ach.isMet(stats)) {
+        unlockAchievement.mutate(ach.key)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    stats.totalDosesTaken,
+    stats.currentDoseStreakDays,
+    stats.totalMoodEntries,
+    stats.currentMoodStreakDays,
+    stats.daysSinceTransitionStart,
+  ])
+
+  return (
+    <div className="space-y-5">
+      <ScreenTitle>Troféus</ScreenTitle>
+
+      <Card className="space-y-3">
+        <h2 className="text-sm font-medium text-[var(--text-muted)]">Estatísticas</h2>
+        <div className="grid grid-cols-2 gap-3 text-center">
+          <div>
+            <p className="text-2xl font-semibold flag-gradient-text">{stats.currentDoseStreakDays}</p>
+            <p className="text-xs text-[var(--text-muted)]">dias em sequência</p>
+          </div>
+          <div>
+            <p className="text-2xl font-semibold flag-gradient-text">{stats.totalDosesTaken}</p>
+            <p className="text-xs text-[var(--text-muted)]">doses registradas</p>
+          </div>
+          <div>
+            <p className="text-2xl font-semibold flag-gradient-text">{stats.currentMoodStreakDays}</p>
+            <p className="text-xs text-[var(--text-muted)]">dias de check-in</p>
+          </div>
+          <div>
+            <p className="text-2xl font-semibold flag-gradient-text">
+              {stats.daysSinceTransitionStart ?? '–'}
+            </p>
+            <p className="text-xs text-[var(--text-muted)]">dias de jornada</p>
+          </div>
+        </div>
+      </Card>
+
+      <div className="grid grid-cols-3 gap-3">
+        {ACHIEVEMENTS.map((ach) => {
+          const isUnlocked = unlockedKeys.has(ach.key)
+          return (
+            <Card
+              key={ach.key}
+              className={
+                'flex flex-col items-center gap-1 text-center transition ' +
+                (isUnlocked ? '' : 'opacity-35 grayscale')
+              }
+            >
+              <span className="text-3xl">{ach.icon}</span>
+              <span className="text-xs font-medium text-[var(--text)]">{ach.title}</span>
+              <span className="text-[10px] text-[var(--text-muted)]">{ach.description}</span>
+            </Card>
+          )
+        })}
+      </div>
+    </div>
+  )
+}

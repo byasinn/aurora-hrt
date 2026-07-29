@@ -12,8 +12,13 @@ export function useMedications() {
 export function useCreateMedication() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (input: MedicationInput) => api.post<Medication>('/medications', input),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['medications'] }),
+    mutationFn: (input: MedicationInput & { backfillFrom?: string }) =>
+      api.post<Medication>('/medications', input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['medications'] })
+      qc.invalidateQueries({ queryKey: ['today'] })
+      qc.invalidateQueries({ queryKey: ['dose-logs'] })
+    },
   })
 }
 

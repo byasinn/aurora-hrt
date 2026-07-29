@@ -1,50 +1,23 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button, Card, ScreenTitle } from '../../components/ui'
+import Avatar from '../../components/Avatar'
 import { useProfile, useUpdateProfile } from '../../api/profile'
-import { useDoseLogs } from '../../api/doses'
-import { useMoodEntries } from '../../api/moods'
-import { useUnlockedAchievements, useUnlockAchievement } from '../../api/achievements'
-import { useThemeStore, applyTheme } from '../../lib/themeStore'
-import { ACHIEVEMENTS, currentStreak, type AchievementStats } from '../../lib/achievementsEngine'
-import { todayStr, daysBetween } from '../../lib/dateUtils'
+import { useThemeStore, applyTheme, FLAG_PRESETS } from '../../lib/themeStore'
+import { todayStr } from '../../lib/dateUtils'
 import { enablePushNotifications, getNotificationPermissionState } from '../../lib/notifications'
-
-const ACCENTS = ['#7fd4e8', '#f7a8c4', '#c9a2ff', '#9ae6b4', '#ffd166']
-
-function useAchievementStats(): AchievementStats {
-  const { data: doseLogs = [] } = useDoseLogs()
-  const { data: moods = [] } = useMoodEntries()
-  const { data: profile } = useProfile()
-
-  const takenDates = new Set(
-    doseLogs.filter((l) => l.status === 'taken').map((l) => new Date(l.scheduledFor).toISOString().slice(0, 10)),
-  )
-  const moodDates = new Set(moods.map((m) => m.date))
-  const today = todayStr()
-
-  return {
-    totalDosesTaken: doseLogs.filter((l) => l.status === 'taken').length,
-    currentDoseStreakDays: currentStreak(takenDates, today),
-    totalMoodEntries: moods.length,
-    currentMoodStreakDays: currentStreak(moodDates, today),
-    daysSinceTransitionStart: profile?.transitionStartDate
-      ? daysBetween(profile.transitionStartDate, today)
-      : null,
-  }
-}
+import { fileToResizedDataUrl } from '../../lib/image'
 
 export default function ProfileScreen() {
   const { data: profile } = useProfile()
   const updateProfile = useUpdateProfile()
-  const { data: unlocked = [] } = useUnlockedAchievements()
-  const unlockAchievement = useUnlockAchievement()
-  const stats = useAchievementStats()
   const theme = useThemeStore()
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [displayName, setDisplayName] = useState('')
   const [pronouns, setPronouns] = useState('')
   const [transitionStartDate, setTransitionStartDate] = useState('')
   const [pushState, setPushState] = useState<string>('')
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     if (!profile) return
@@ -57,16 +30,6 @@ export default function ProfileScreen() {
     getNotificationPermissionState().then(setPushState)
   }, [])
 
-  const unlockedKeys = new Set(unlocked.map((u) => u.achievementKey))
-  useEffect(() => {
-    for (const ach of ACHIEVEMENTS) {
-      if (!unlockedKeys.has(ach.key) && ach.isMet(stats)) {
-        unlockAchievement.mutate(ach.key)
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stats.totalDosesTaken, stats.currentDoseStreakDays, stats.totalMoodEntries, stats.currentMoodStreakDays, stats.daysSinceTransitionStart])
-
   function saveProfile() {
     updateProfile.mutate({ displayName, pronouns, transitionStartDate: transitionStartDate || null })
   }
@@ -76,9 +39,46 @@ export default function ProfileScreen() {
     setPushState(res.ok ? 'granted' : (res.reason ?? 'erro'))
   }
 
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const dataUrl = await fileToResizedDataUrl(file)
+      await updateProfile.mutateAsync({ avatarUrl: dataUrl })
+    } finally {
+      setUploading(false)
+    }
+  }
+
   return (
     <div className="space-y-5">
       <ScreenTitle>Perfil</ScreenTitle>
+
+      <Card className="flex flex-col items-center gap-3 text-center">
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="relative"
+          disabled={uploading}
+        >
+          <Avatar src={profile?.avatarUrl} name={profile?.displayName} size={88} />
+          <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-[var(--surface)] bg-[var(--accent)] text-xs text-[var(--accent-contrast)]">
+            {uploading ? '…' : '✏️'}
+          </span>
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleAvatarChange}
+        />
+        <div>
+          <p className="font-semibold text-[var(--text)]">{profile?.displayName || 'Sem nome ainda'}</p>
+          <p className="text-xs text-[var(--text-muted)]">{profile?.pronouns || 'Adicione seus pronomes'}</p>
+        </div>
+      </Card>
 
       <Card className="space-y-3">
         <div>
@@ -103,6 +103,7 @@ export default function ProfileScreen() {
           <input
             type="date"
             value={transitionStartDate}
+            max={todayStr()}
             onChange={(e) => setTransitionStartDate(e.target.value)}
             className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-[var(--text)] outline-none focus:border-[var(--accent)]"
           />
@@ -113,41 +114,6 @@ export default function ProfileScreen() {
       </Card>
 
       <Card className="space-y-3">
-        <h2 className="text-sm font-medium text-[var(--text-muted)]">Estatísticas</h2>
-        <div className="grid grid-cols-2 gap-3 text-center">
-          <div>
-            <p className="text-2xl font-semibold text-[var(--accent)]">{stats.currentDoseStreakDays}</p>
-            <p className="text-xs text-[var(--text-muted)]">dias em sequência</p>
-          </div>
-          <div>
-            <p className="text-2xl font-semibold text-[var(--accent)]">{stats.totalDosesTaken}</p>
-            <p className="text-xs text-[var(--text-muted)]">doses registradas</p>
-          </div>
-        </div>
-      </Card>
-
-      <Card className="space-y-3">
-        <h2 className="text-sm font-medium text-[var(--text-muted)]">Troféus</h2>
-        <div className="grid grid-cols-3 gap-3">
-          {ACHIEVEMENTS.map((ach) => {
-            const isUnlocked = unlockedKeys.has(ach.key)
-            return (
-              <div
-                key={ach.key}
-                title={ach.description}
-                className={`flex flex-col items-center gap-1 rounded-xl border p-2 text-center ${
-                  isUnlocked ? 'border-[var(--accent)]' : 'border-[var(--border)] opacity-30'
-                }`}
-              >
-                <span className="text-2xl">{ach.icon}</span>
-                <span className="text-[10px] text-[var(--text-muted)]">{ach.title}</span>
-              </div>
-            )
-          })}
-        </div>
-      </Card>
-
-      <Card className="space-y-3">
         <h2 className="text-sm font-medium text-[var(--text-muted)]">Notificações</h2>
         <p className="text-xs text-[var(--text-muted)]">Status: {pushState || 'verificando…'}</p>
         <Button variant="secondary" className="w-full" onClick={handleEnablePush}>
@@ -155,42 +121,64 @@ export default function ProfileScreen() {
         </Button>
       </Card>
 
-      <Card className="space-y-3">
+      <Card className="space-y-4">
         <h2 className="text-sm font-medium text-[var(--text-muted)]">Aparência</h2>
-        <div className="flex gap-2">
-          <Button
-            variant={theme.mode === 'dark' ? 'primary' : 'secondary'}
-            className="flex-1"
-            onClick={() => {
-              theme.setMode('dark')
-              applyTheme('dark', theme.accent)
-            }}
-          >
-            Escuro
-          </Button>
-          <Button
-            variant={theme.mode === 'light' ? 'primary' : 'secondary'}
-            className="flex-1"
-            onClick={() => {
-              theme.setMode('light')
-              applyTheme('light', theme.accent)
-            }}
-          >
-            Claro
-          </Button>
-        </div>
-        <div className="flex gap-2">
-          {ACCENTS.map((c) => (
-            <button
-              key={c}
+
+        <div>
+          <p className="mb-2 text-xs text-[var(--text-muted)]">Modo</p>
+          <div className="flex gap-2">
+            <Button
+              variant={theme.mode === 'light' ? 'primary' : 'secondary'}
+              className="flex-1"
               onClick={() => {
-                theme.setAccent(c)
-                applyTheme(theme.mode, c)
+                theme.setMode('light')
+                applyTheme('light', theme.accent, theme.accent2)
               }}
-              className="h-8 w-8 rounded-full border-2"
-              style={{ background: c, borderColor: theme.accent === c ? '#fff' : 'transparent' }}
-            />
-          ))}
+            >
+              ☀️ Claro
+            </Button>
+            <Button
+              variant={theme.mode === 'dark' ? 'primary' : 'secondary'}
+              className="flex-1"
+              onClick={() => {
+                theme.setMode('dark')
+                applyTheme('dark', theme.accent, theme.accent2)
+              }}
+            >
+              🌙 Escuro
+            </Button>
+          </div>
+        </div>
+
+        <div>
+          <p className="mb-2 text-xs text-[var(--text-muted)]">Bandeira / cores</p>
+          <div className="grid grid-cols-2 gap-2">
+            {FLAG_PRESETS.map((preset) => (
+              <button
+                key={preset.key}
+                type="button"
+                onClick={() => {
+                  theme.setAccent(preset.accent, preset.accent2)
+                  theme.setPresentation(preset.key)
+                  applyTheme(theme.mode, preset.accent, preset.accent2)
+                }}
+                className={
+                  'flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm transition ' +
+                  (theme.presentation === preset.key
+                    ? 'border-[var(--accent)] bg-[var(--surface-2)]'
+                    : 'border-[var(--border)]')
+                }
+              >
+                <span
+                  className="h-6 w-6 shrink-0 rounded-full"
+                  style={{
+                    background: `linear-gradient(135deg, ${preset.accent}, ${preset.accent2})`,
+                  }}
+                />
+                <span className="text-[var(--text)]">{preset.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </Card>
     </div>

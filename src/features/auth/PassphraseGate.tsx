@@ -55,7 +55,7 @@ export default function PassphraseGate({ children }: { children: ReactNode }) {
         <button
           type="submit"
           disabled={check.isFetching}
-          className="w-full rounded-lg bg-[var(--accent)] px-3 py-2 font-medium text-[#0b0f14] transition disabled:opacity-60"
+          className="w-full rounded-lg bg-[var(--accent)] px-3 py-2 font-medium text-[var(--accent-contrast)] transition disabled:opacity-60"
         >
           {check.isFetching ? 'Verificando…' : 'Entrar'}
         </button>

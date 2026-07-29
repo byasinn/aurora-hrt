@@ -13,6 +13,10 @@ const ROUTES: { value: MedicationRoute; label: string }[] = [
   { value: 'other', label: 'Outro' },
 ]
 
+const inputClass =
+  'w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5 text-[var(--text)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)]'
+const labelClass = 'mb-1.5 block text-xs font-medium text-[var(--text-muted)]'
+
 export default function MedicationForm({ onDone }: { onDone: () => void }) {
   const createMed = useCreateMedication()
   const [name, setName] = useState('')
@@ -24,6 +28,8 @@ export default function MedicationForm({ onDone }: { onDone: () => void }) {
   const [days, setDays] = useState<number[]>([1, 3, 5])
   const [preferredTime, setPreferredTime] = useState('08:00')
   const [notes, setNotes] = useState('')
+  const [hasHistory, setHasHistory] = useState(false)
+  const [sinceDate, setSinceDate] = useState(todayStr())
 
   function toggleDay(d: number) {
     setDays((cur) => (cur.includes(d) ? cur.filter((x) => x !== d) : [...cur, d].sort()))
@@ -33,9 +39,10 @@ export default function MedicationForm({ onDone }: { onDone: () => void }) {
     e.preventDefault()
     if (!name || !doseAmount) return
 
+    const anchorDate = hasHistory ? sinceDate : todayStr()
     const frequencyValue: MedicationInput['frequencyValue'] =
       frequencyType === 'every_n_days'
-        ? { intervalDays, anchorDate: todayStr() }
+        ? { intervalDays, anchorDate }
         : frequencyType === 'specific_days'
           ? { days }
           : {}
@@ -50,65 +57,73 @@ export default function MedicationForm({ onDone }: { onDone: () => void }) {
       preferredTime,
       notes: notes || null,
       active: true,
+      ...(hasHistory ? { backfillFrom: sinceDate } : {}),
     })
     onDone()
   }
 
   return (
-    <Card className="space-y-3">
-      <form onSubmit={handleSubmit} className="space-y-3">
+    <Card className="space-y-4">
+      <h2 className="text-base font-semibold text-[var(--text)]">Novo medicamento</h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="mb-1 block text-xs text-[var(--text-muted)]">Nome do medicamento</label>
+          <label className={labelClass}>Nome do medicamento</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Ex: Estradiol"
-            className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-[var(--text)] outline-none focus:border-[var(--accent)]"
+            placeholder="Ex: Estradiol, Perlutan…"
+            className={inputClass}
           />
         </div>
 
         <div className="flex gap-2">
           <div className="flex-1">
-            <label className="mb-1 block text-xs text-[var(--text-muted)]">Dose</label>
+            <label className={labelClass}>Dose</label>
             <input
               value={doseAmount}
               onChange={(e) => setDoseAmount(e.target.value)}
               placeholder="Ex: 2"
-              className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-[var(--text)] outline-none focus:border-[var(--accent)]"
+              className={inputClass}
             />
           </div>
           <div className="flex-1">
-            <label className="mb-1 block text-xs text-[var(--text-muted)]">Unidade</label>
+            <label className={labelClass}>Unidade</label>
             <input
               value={doseUnit}
               onChange={(e) => setDoseUnit(e.target.value)}
               placeholder="mg, ml..."
-              className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-[var(--text)] outline-none focus:border-[var(--accent)]"
+              className={inputClass}
             />
           </div>
         </div>
 
         <div>
-          <label className="mb-1 block text-xs text-[var(--text-muted)]">Via</label>
-          <select
-            value={route}
-            onChange={(e) => setRoute(e.target.value as MedicationRoute)}
-            className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-[var(--text)] outline-none focus:border-[var(--accent)]"
-          >
+          <label className={labelClass}>Via</label>
+          <div className="flex flex-wrap gap-2">
             {ROUTES.map((r) => (
-              <option key={r.value} value={r.value}>
+              <button
+                type="button"
+                key={r.value}
+                onClick={() => setRoute(r.value)}
+                className={
+                  'rounded-full border px-3 py-1.5 text-sm transition ' +
+                  (route === r.value
+                    ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
+                    : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]')
+                }
+              >
                 {r.label}
-              </option>
+              </button>
             ))}
-          </select>
+          </div>
         </div>
 
         <div>
-          <label className="mb-1 block text-xs text-[var(--text-muted)]">Frequência</label>
+          <label className={labelClass}>Frequência</label>
           <select
             value={frequencyType}
             onChange={(e) => setFrequencyType(e.target.value as FrequencyType)}
-            className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-[var(--text)] outline-none focus:border-[var(--accent)]"
+            className={inputClass}
           >
             <option value="daily">Todos os dias</option>
             <option value="every_n_days">A cada N dias</option>
@@ -118,20 +133,20 @@ export default function MedicationForm({ onDone }: { onDone: () => void }) {
 
         {frequencyType === 'every_n_days' && (
           <div>
-            <label className="mb-1 block text-xs text-[var(--text-muted)]">A cada quantos dias</label>
+            <label className={labelClass}>A cada quantos dias</label>
             <input
               type="number"
               min={1}
               value={intervalDays}
               onChange={(e) => setIntervalDays(Number(e.target.value))}
-              className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-[var(--text)] outline-none focus:border-[var(--accent)]"
+              className={inputClass}
             />
           </div>
         )}
 
         {frequencyType === 'specific_days' && (
           <div>
-            <label className="mb-1 block text-xs text-[var(--text-muted)]">Dias da semana</label>
+            <label className={labelClass}>Dias da semana</label>
             <div className="flex flex-wrap gap-2">
               {[0, 1, 2, 3, 4, 5, 6].map((d) => (
                 <button
@@ -139,9 +154,9 @@ export default function MedicationForm({ onDone }: { onDone: () => void }) {
                   key={d}
                   onClick={() => toggleDay(d)}
                   className={
-                    'rounded-lg border px-2.5 py-1.5 text-xs ' +
+                    'rounded-lg border px-2.5 py-1.5 text-xs transition ' +
                     (days.includes(d)
-                      ? 'border-[var(--accent)] bg-[var(--accent)] text-[#0b0f14]'
+                      ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
                       : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]')
                   }
                 >
@@ -153,22 +168,48 @@ export default function MedicationForm({ onDone }: { onDone: () => void }) {
         )}
 
         <div>
-          <label className="mb-1 block text-xs text-[var(--text-muted)]">Horário preferido</label>
+          <label className={labelClass}>Horário preferido</label>
           <input
             type="time"
             value={preferredTime}
             onChange={(e) => setPreferredTime(e.target.value)}
-            className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-[var(--text)] outline-none focus:border-[var(--accent)]"
+            className={inputClass}
           />
         </div>
 
+        <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5">
+          <input
+            type="checkbox"
+            checked={hasHistory}
+            onChange={(e) => setHasHistory(e.target.checked)}
+            className="h-4 w-4 accent-[var(--accent)]"
+          />
+          <span className="text-sm text-[var(--text)]">Já uso esse medicamento há um tempo</span>
+        </label>
+
+        {hasHistory && (
+          <div>
+            <label className={labelClass}>Uso desde</label>
+            <input
+              type="date"
+              value={sinceDate}
+              max={todayStr()}
+              onChange={(e) => setSinceDate(e.target.value)}
+              className={inputClass}
+            />
+            <p className="mt-1.5 text-xs text-[var(--text-muted)]">
+              Vamos preencher o histórico automaticamente com base na frequência escolhida.
+            </p>
+          </div>
+        )}
+
         <div>
-          <label className="mb-1 block text-xs text-[var(--text-muted)]">Notas (opcional)</label>
+          <label className={labelClass}>Notas (opcional)</label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
-            className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-[var(--text)] outline-none focus:border-[var(--accent)]"
+            className={inputClass}
           />
         </div>
 
