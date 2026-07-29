@@ -21,7 +21,7 @@ export default function Layout() {
   const visibleItems = NAV_ITEMS.filter((item) => !item.module || enabledModules.includes(item.module))
 
   return (
-    <div className="mx-auto flex min-h-svh w-full max-w-md flex-col bg-[var(--bg)] text-[var(--text)]">
+    <div className="mx-auto flex min-h-svh w-full max-w-md flex-col text-[var(--text)]">
       <div className="h-1 flag-gradient" />
       <main className="flex-1 overflow-y-auto px-4 pb-24 pt-6">
         <Outlet />

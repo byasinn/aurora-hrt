@@ -7,6 +7,7 @@ import { useProfile } from '../../api/profile'
 import { formatTime, todayStr } from '../../lib/dateUtils'
 import WelcomeBanner from '../../components/WelcomeBanner'
 import InsightsCard from '../../components/InsightsCard'
+import TipOfDayCard from '../../components/TipOfDayCard'
 import clsx from 'clsx'
 
 const ROUTE_LABELS: Record<string, string> = {
@@ -113,6 +114,7 @@ export default function TodayScreen() {
   return (
     <div>
       <WelcomeBanner />
+      <TipOfDayCard />
       <InsightsCard />
 
       <div className="mb-4 flex items-center justify-between">

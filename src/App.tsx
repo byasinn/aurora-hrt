@@ -13,7 +13,9 @@ import ProfileScreen from './features/profile/ProfileScreen'
 import AchievementsScreen from './features/achievements/AchievementsScreen'
 import MeasurementsScreen from './features/measurements/MeasurementsScreen'
 import LabsScreen from './features/labs/LabsScreen'
+import TipsScreen from './features/tips/TipsScreen'
 import OnboardingScreen from './features/onboarding/OnboardingScreen'
+import GradientBlobs from './components/GradientBlobs'
 import { useProfile } from './api/profile'
 
 function ThemeInitializer() {
@@ -43,6 +45,7 @@ function RootGate() {
         <Route path="achievements" element={<AchievementsScreen />} />
         <Route path="measurements" element={<MeasurementsScreen />} />
         <Route path="labs" element={<LabsScreen />} />
+        <Route path="tips" element={<TipsScreen />} />
         <Route path="profile" element={<ProfileScreen />} />
       </Route>
     </Routes>
@@ -53,6 +56,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeInitializer />
+      <GradientBlobs />
       <BrowserRouter>
         <PassphraseGate>
           <RootGate />

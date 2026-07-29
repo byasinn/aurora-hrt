@@ -134,23 +134,29 @@ export default function ProfileScreen() {
         </div>
       </Card>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-4 gap-2">
         <Link to="/achievements">
-          <Card className="flex flex-col items-center gap-1 py-4 text-center">
-            <span className="text-2xl">🏆</span>
-            <span className="text-xs font-medium text-[var(--text)]">Troféus</span>
+          <Card className="flex flex-col items-center gap-1 py-3 text-center">
+            <span className="text-xl">🏆</span>
+            <span className="text-[11px] font-medium text-[var(--text)]">Troféus</span>
           </Card>
         </Link>
         <Link to="/measurements">
-          <Card className="flex flex-col items-center gap-1 py-4 text-center">
-            <span className="text-2xl">📏</span>
-            <span className="text-xs font-medium text-[var(--text)]">Medidas</span>
+          <Card className="flex flex-col items-center gap-1 py-3 text-center">
+            <span className="text-xl">📏</span>
+            <span className="text-[11px] font-medium text-[var(--text)]">Medidas</span>
           </Card>
         </Link>
         <Link to="/labs">
-          <Card className="flex flex-col items-center gap-1 py-4 text-center">
-            <span className="text-2xl">🧪</span>
-            <span className="text-xs font-medium text-[var(--text)]">Exames</span>
+          <Card className="flex flex-col items-center gap-1 py-3 text-center">
+            <span className="text-xl">🧪</span>
+            <span className="text-[11px] font-medium text-[var(--text)]">Exames</span>
+          </Card>
+        </Link>
+        <Link to="/tips">
+          <Card className="flex flex-col items-center gap-1 py-3 text-center">
+            <span className="text-xl">💡</span>
+            <span className="text-[11px] font-medium text-[var(--text)]">Dicas</span>
           </Card>
         </Link>
       </div>

@@ -18,7 +18,7 @@ interface PushPayload {
 }
 
 self.addEventListener('push', (event: PushEvent) => {
-  let data: PushPayload = { title: 'Trans Track', body: 'Você tem um lembrete.' }
+  let data: PushPayload = { title: 'Metamorfa', body: 'Você tem um lembrete.' }
   try {
     if (event.data) data = event.data.json()
   } catch {

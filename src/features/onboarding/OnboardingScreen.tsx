@@ -148,7 +148,7 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
   const treat = (fem: string, masc: string) => (textStyle === 'masculine' ? masc : fem)
 
   return (
-    <div className="mx-auto flex min-h-svh w-full max-w-md flex-col justify-between bg-[var(--bg)] px-6 py-8 text-[var(--text)]">
+    <div className="mx-auto flex min-h-svh w-full max-w-md flex-col justify-between px-6 py-8 text-[var(--text)]">
       {step > 0 && (
         <div className="mb-4 flex gap-1">
           {Array.from({ length: TOTAL_STEPS - 1 }).map((_, i) => (

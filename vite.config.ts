@@ -14,11 +14,11 @@ export default defineConfig({
       filename: 'sw.ts',
       injectRegister: 'auto',
       manifest: {
-        name: 'Trans Track',
-        short_name: 'TransTrack',
-        description: 'Acompanhamento de transição hormonal: doses, humor e histórico.',
-        theme_color: '#7fd4e8',
-        background_color: '#0b0f14',
+        name: 'Metamorfa',
+        short_name: 'Metamorfa',
+        description: 'Sua jornada de transição hormonal: doses, humor, medidas e exames num só lugar.',
+        theme_color: '#F5A9B8',
+        background_color: '#faf7f8',
         display: 'standalone',
         start_url: '/',
         icons: [

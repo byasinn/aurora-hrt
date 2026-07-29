@@ -45,7 +45,7 @@ export async function registerFaceId(): Promise<boolean> {
   const credential = (await navigator.credentials.create({
     publicKey: {
       challenge,
-      rp: { name: 'Trans Track' },
+      rp: { name: 'Metamorfa' },
       user: { id: userId, name: 'usuário', displayName: 'Usuário do app' },
       pubKeyCredParams: [
         { alg: -7, type: 'public-key' },
