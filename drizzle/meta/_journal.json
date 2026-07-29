@@ -8,6 +8,13 @@
       "when": 1785288365190,
       "tag": "0000_large_the_renegades",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785290219976,
+      "tag": "0001_fluffy_shadowcat",
+      "breakpoints": true
     }
   ]
 }

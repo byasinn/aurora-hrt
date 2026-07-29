@@ -96,26 +96,33 @@ export default function CalendarScreen() {
             const key = toDateStr(day)
             const info = dayInfo.get(key)
             const inMonth = isSameMonth(day, cursor)
+
+            const colors: string[] = []
+            if (info?.taken) colors.push('#10b981')
+            if (info?.missed) colors.push('#ef4444')
+            if (info?.mood) colors.push('var(--accent-2)')
+            const background =
+              colors.length === 0
+                ? undefined
+                : colors.length === 1
+                  ? colors[0]
+                  : `linear-gradient(135deg, ${colors.join(', ')})`
+
             return (
               <button
                 key={key}
                 onClick={() => setSelected(key)}
+                style={background ? { background } : undefined}
                 className={clsx(
-                  'flex aspect-square flex-col items-center justify-center gap-0.5 rounded-lg text-xs transition',
+                  'flex aspect-square flex-col items-center justify-center gap-0.5 rounded-lg text-xs font-medium transition',
                   !inMonth && 'opacity-30',
-                  selected === key
-                    ? 'bg-[var(--accent)] text-[var(--accent-contrast)]'
-                    : isToday(day)
-                      ? 'border border-[var(--accent)] text-[var(--text)]'
-                      : 'text-[var(--text)] hover:bg-[var(--surface-2)]',
+                  colors.length > 0 ? 'text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.45)]' : 'text-[var(--text)]',
+                  !background && 'hover:bg-[var(--surface-2)]',
+                  selected === key && 'ring-2 ring-[var(--accent)] ring-offset-1 ring-offset-[var(--surface)]',
+                  !selected && isToday(day) && 'border border-[var(--accent)]',
                 )}
               >
-                <span>{day.getDate()}</span>
-                <span className="flex gap-0.5">
-                  {info?.taken ? <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> : null}
-                  {info?.missed ? <span className="h-1.5 w-1.5 rounded-full bg-red-500" /> : null}
-                  {info?.mood ? <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-2)]" /> : null}
-                </span>
+                {day.getDate()}
               </button>
             )
           })}
@@ -123,13 +130,16 @@ export default function CalendarScreen() {
 
         <div className="flex flex-wrap gap-3 text-[10px] text-[var(--text-muted)]">
           <span className="flex items-center gap-1">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> dose tomada
+            <span className="h-2 w-2 rounded-full bg-emerald-500" /> dose tomada
           </span>
           <span className="flex items-center gap-1">
-            <span className="h-1.5 w-1.5 rounded-full bg-red-500" /> pulada/perdida
+            <span className="h-2 w-2 rounded-full bg-red-500" /> pulada/perdida
           </span>
           <span className="flex items-center gap-1">
-            <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-2)]" /> check-in de humor
+            <span className="h-2 w-2 rounded-full bg-[var(--accent-2)]" /> check-in de humor
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="h-2 w-2 rounded-full" style={{ background: 'linear-gradient(135deg, #10b981, var(--accent-2))' }} /> combinação = gradiente
           </span>
         </div>
       </Card>

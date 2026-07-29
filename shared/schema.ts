@@ -7,6 +7,7 @@ import {
   timestamp,
   jsonb,
   date,
+  doublePrecision,
 } from 'drizzle-orm/pg-core'
 
 export const profile = pgTable('profile', {
@@ -17,7 +18,9 @@ export const profile = pgTable('profile', {
   transitionStartDate: date('transition_start_date'),
   timezone: text('timezone').notNull().default('America/Sao_Paulo'),
   themeAccent: text('theme_accent').notNull().default('#7fd4e8'),
+  themeAccent2: text('theme_accent_2').notNull().default('#7fd4e8'),
   themeMode: text('theme_mode').notNull().default('dark'), // 'light' | 'dark'
+  contentPreference: text('content_preference').notNull().default('feminine'), // 'feminine' | 'masculine' | 'combined'
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
@@ -33,6 +36,7 @@ export const medications = pgTable('medications', {
   preferredTime: text('preferred_time').notNull(), // 'HH:MM' local time
   notes: text('notes'),
   active: boolean('active').notNull().default(true),
+  remindersEnabled: boolean('reminders_enabled').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
@@ -63,6 +67,17 @@ export const moodEntries = pgTable('mood_entries', {
   moodTagIds: jsonb('mood_tag_ids').notNull().default([]), // number[]
   symptomTagIds: jsonb('symptom_tag_ids').notNull().default([]), // number[]
   energyLevel: integer('energy_level'), // 1-5
+  libidoLevel: integer('libido_level'), // 1-5
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const measurements = pgTable('measurements', {
+  id: serial('id').primaryKey(),
+  type: text('type').notNull(), // ex: 'bust', 'waist', 'hips', 'chest', 'shoulders', 'weight'...
+  value: doublePrecision('value').notNull(),
+  unit: text('unit').notNull(), // 'cm' | 'kg' | '%'
+  date: date('date').notNull(),
   notes: text('notes'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })

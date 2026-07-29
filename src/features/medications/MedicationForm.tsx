@@ -30,6 +30,7 @@ export default function MedicationForm({ onDone }: { onDone: () => void }) {
   const [notes, setNotes] = useState('')
   const [hasHistory, setHasHistory] = useState(false)
   const [sinceDate, setSinceDate] = useState(todayStr())
+  const [remindersEnabled, setRemindersEnabled] = useState(true)
 
   function toggleDay(d: number) {
     setDays((cur) => (cur.includes(d) ? cur.filter((x) => x !== d) : [...cur, d].sort()))
@@ -57,6 +58,7 @@ export default function MedicationForm({ onDone }: { onDone: () => void }) {
       preferredTime,
       notes: notes || null,
       active: true,
+      remindersEnabled,
       ...(hasHistory ? { backfillFrom: sinceDate } : {}),
     })
     onDone()
@@ -176,6 +178,16 @@ export default function MedicationForm({ onDone }: { onDone: () => void }) {
             className={inputClass}
           />
         </div>
+
+        <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5">
+          <input
+            type="checkbox"
+            checked={remindersEnabled}
+            onChange={(e) => setRemindersEnabled(e.target.checked)}
+            className="h-4 w-4 accent-[var(--accent)]"
+          />
+          <span className="text-sm text-[var(--text)]">🔔 Ativar lembretes por notificação</span>
+        </label>
 
         <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5">
           <input

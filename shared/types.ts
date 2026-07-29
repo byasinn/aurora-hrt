@@ -4,6 +4,7 @@ import type {
   doseLogs,
   tags,
   moodEntries,
+  measurements,
   pushSubscriptions,
   unlockedAchievements,
 } from './schema'
@@ -32,6 +33,20 @@ export type TagInput = Omit<typeof tags.$inferInsert, 'id'>
 
 export type MoodEntry = typeof moodEntries.$inferSelect
 export type MoodEntryInput = Omit<typeof moodEntries.$inferInsert, 'id' | 'createdAt'>
+
+export type MeasurementType =
+  | 'weight'
+  | 'bust'
+  | 'waist'
+  | 'hips'
+  | 'thigh'
+  | 'chest'
+  | 'shoulders'
+  | 'biceps'
+  | 'body_fat'
+  | 'height'
+export type Measurement = typeof measurements.$inferSelect
+export type MeasurementInput = Omit<typeof measurements.$inferInsert, 'id' | 'createdAt'>
 
 export type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect
 export type PushSubscriptionInput = Omit<typeof pushSubscriptions.$inferInsert, 'id' | 'createdAt'>

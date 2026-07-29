@@ -1,11 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Button, Card, ScreenTitle } from '../../components/ui'
 import Avatar from '../../components/Avatar'
 import { useProfile, useUpdateProfile } from '../../api/profile'
-import { useThemeStore, applyTheme, FLAG_PRESETS } from '../../lib/themeStore'
+import { useThemeStore, applyTheme, COLOR_SHORTCUTS } from '../../lib/themeStore'
 import { todayStr } from '../../lib/dateUtils'
 import { enablePushNotifications, getNotificationPermissionState } from '../../lib/notifications'
 import { fileToResizedDataUrl } from '../../lib/image'
+
+const CONTENT_OPTIONS: { value: string; label: string }[] = [
+  { value: 'feminine', label: 'Feminino' },
+  { value: 'masculine', label: 'Masculino' },
+  { value: 'combined', label: 'Combinado' },
+]
 
 export default function ProfileScreen() {
   const { data: profile } = useProfile()
@@ -80,6 +87,21 @@ export default function ProfileScreen() {
         </div>
       </Card>
 
+      <div className="grid grid-cols-2 gap-3">
+        <Link to="/achievements">
+          <Card className="flex flex-col items-center gap-1 py-5 text-center">
+            <span className="text-2xl">🏆</span>
+            <span className="text-sm font-medium text-[var(--text)]">Troféus</span>
+          </Card>
+        </Link>
+        <Link to="/measurements">
+          <Card className="flex flex-col items-center gap-1 py-5 text-center">
+            <span className="text-2xl">📏</span>
+            <span className="text-sm font-medium text-[var(--text)]">Medidas</span>
+          </Card>
+        </Link>
+      </div>
+
       <Card className="space-y-3">
         <div>
           <label className="mb-1 block text-xs text-[var(--text-muted)]">Nome</label>
@@ -121,6 +143,25 @@ export default function ProfileScreen() {
         </Button>
       </Card>
 
+      <Card className="space-y-3">
+        <h2 className="text-sm font-medium text-[var(--text-muted)]">Conteúdo de medidas</h2>
+        <p className="text-xs text-[var(--text-muted)]">
+          Define quais medidas e tutoriais aparecem na aba Medidas.
+        </p>
+        <div className="flex gap-2">
+          {CONTENT_OPTIONS.map((opt) => (
+            <Button
+              key={opt.value}
+              variant={profile?.contentPreference === opt.value ? 'primary' : 'secondary'}
+              className="flex-1"
+              onClick={() => updateProfile.mutate({ contentPreference: opt.value })}
+            >
+              {opt.label}
+            </Button>
+          ))}
+        </div>
+      </Card>
+
       <Card className="space-y-4">
         <h2 className="text-sm font-medium text-[var(--text-muted)]">Aparência</h2>
 
@@ -151,33 +192,52 @@ export default function ProfileScreen() {
         </div>
 
         <div>
-          <p className="mb-2 text-xs text-[var(--text-muted)]">Bandeira / cores</p>
-          <div className="grid grid-cols-2 gap-2">
-            {FLAG_PRESETS.map((preset) => (
+          <p className="mb-2 text-xs text-[var(--text-muted)]">Atalhos de cor</p>
+          <div className="flex flex-wrap gap-2">
+            {COLOR_SHORTCUTS.map((s) => (
               <button
-                key={preset.key}
+                key={s.key}
                 type="button"
                 onClick={() => {
-                  theme.setAccent(preset.accent, preset.accent2)
-                  theme.setPresentation(preset.key)
-                  applyTheme(theme.mode, preset.accent, preset.accent2)
+                  theme.setAccent(s.accent, s.accent2)
+                  applyTheme(theme.mode, s.accent, s.accent2)
                 }}
-                className={
-                  'flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm transition ' +
-                  (theme.presentation === preset.key
-                    ? 'border-[var(--accent)] bg-[var(--surface-2)]'
-                    : 'border-[var(--border)]')
-                }
-              >
-                <span
-                  className="h-6 w-6 shrink-0 rounded-full"
-                  style={{
-                    background: `linear-gradient(135deg, ${preset.accent}, ${preset.accent2})`,
-                  }}
-                />
-                <span className="text-[var(--text)]">{preset.label}</span>
-              </button>
+                className="h-9 w-9 rounded-full border-2 border-[var(--border)] transition hover:scale-110"
+                style={{ background: `linear-gradient(135deg, ${s.accent}, ${s.accent2})` }}
+              />
             ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="mb-2 text-xs text-[var(--text-muted)]">
+            Cores livres — escolha qualquer combinação, do seu jeito
+          </p>
+          <div className="flex gap-4">
+            <label className="flex flex-1 flex-col items-center gap-1 text-xs text-[var(--text-muted)]">
+              Cor principal
+              <input
+                type="color"
+                value={theme.accent}
+                onChange={(e) => {
+                  theme.setAccent(e.target.value, theme.accent2)
+                  applyTheme(theme.mode, e.target.value, theme.accent2)
+                }}
+                className="h-10 w-full cursor-pointer rounded-lg border border-[var(--border)] bg-transparent"
+              />
+            </label>
+            <label className="flex flex-1 flex-col items-center gap-1 text-xs text-[var(--text-muted)]">
+              Cor secundária
+              <input
+                type="color"
+                value={theme.accent2}
+                onChange={(e) => {
+                  theme.setAccent(theme.accent, e.target.value)
+                  applyTheme(theme.mode, theme.accent, e.target.value)
+                }}
+                className="h-10 w-full cursor-pointer rounded-lg border border-[var(--border)] bg-transparent"
+              />
+            </label>
           </div>
         </div>
       </Card>

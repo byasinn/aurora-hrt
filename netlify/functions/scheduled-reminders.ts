@@ -1,6 +1,6 @@
 import type { Config } from '@netlify/functions'
 import webpush from 'web-push'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { getDb } from './_shared/db'
 import { medications, profile, pushSubscriptions } from '../../shared/schema'
 import { dueMedicationsForDate, dateStrInTimezone } from './_shared/scheduling'
@@ -24,7 +24,10 @@ export default async () => {
   const now = new Date()
   const dateStr = dateStrInTimezone(now, timeZone)
 
-  const activeMeds = await db.select().from(medications).where(eq(medications.active, true))
+  const activeMeds = await db
+    .select()
+    .from(medications)
+    .where(and(eq(medications.active, true), eq(medications.remindersEnabled, true)))
   const due = dueMedicationsForDate(activeMeds, dateStr, timeZone)
 
   const windowMs = WINDOW_MINUTES * 60_000

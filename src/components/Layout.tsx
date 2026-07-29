@@ -5,9 +5,9 @@ import Avatar from './Avatar'
 
 const NAV_ITEMS = [
   { to: '/', label: 'Hoje', icon: '✅' },
+  { to: '/medications', label: 'Remédios', icon: '💊' },
   { to: '/mood', label: 'Humor', icon: '💜' },
   { to: '/calendar', label: 'Histórico', icon: '🗓️' },
-  { to: '/achievements', label: 'Troféus', icon: '🏆' },
 ]
 
 export default function Layout() {

@@ -47,6 +47,41 @@ const SYMPTOM_SUGGESTIONS = [
   'Dor de barriga',
 ]
 
+function ScaleRow({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string
+  value: number
+  onChange: (v: number) => void
+  options: { lvl: number; emoji: string }[]
+}) {
+  return (
+    <div>
+      <h2 className="mb-2 text-sm font-medium text-[var(--text-muted)]">{label}</h2>
+      <div className="flex gap-2">
+        {options.map(({ lvl, emoji }) => (
+          <button
+            key={lvl}
+            type="button"
+            onClick={() => onChange(lvl)}
+            className={clsx(
+              'h-12 flex-1 rounded-xl border text-lg transition',
+              value === lvl
+                ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
+                : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]',
+            )}
+          >
+            {emoji}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function TagPicker({
   type,
   suggestions,
@@ -108,6 +143,7 @@ export default function MoodCheckIn() {
   const [moodTagIds, setMoodTagIds] = useState<number[]>([])
   const [symptomTagIds, setSymptomTagIds] = useState<number[]>([])
   const [energyLevel, setEnergyLevel] = useState(3)
+  const [libidoLevel, setLibidoLevel] = useState(3)
   const [notes, setNotes] = useState('')
   const [saved, setSaved] = useState(false)
 
@@ -123,6 +159,7 @@ export default function MoodCheckIn() {
       moodTagIds,
       symptomTagIds,
       energyLevel,
+      libidoLevel,
       notes: notes || null,
     })
     setSaved(true)
@@ -159,32 +196,31 @@ export default function MoodCheckIn() {
         />
       </div>
 
-      <div>
-        <h2 className="mb-2 text-sm font-medium text-[var(--text-muted)]">Energia</h2>
-        <div className="flex gap-2">
-          {[
-            { lvl: 1, emoji: '🪫' },
-            { lvl: 2, emoji: '😴' },
-            { lvl: 3, emoji: '🙂' },
-            { lvl: 4, emoji: '⚡' },
-            { lvl: 5, emoji: '🚀' },
-          ].map(({ lvl, emoji }) => (
-            <button
-              key={lvl}
-              type="button"
-              onClick={() => setEnergyLevel(lvl)}
-              className={clsx(
-                'h-12 flex-1 rounded-xl border text-lg transition',
-                energyLevel === lvl
-                  ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
-                  : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]',
-              )}
-            >
-              {emoji}
-            </button>
-          ))}
-        </div>
-      </div>
+      <ScaleRow
+        label="Energia"
+        value={energyLevel}
+        onChange={setEnergyLevel}
+        options={[
+          { lvl: 1, emoji: '🪫' },
+          { lvl: 2, emoji: '😴' },
+          { lvl: 3, emoji: '🙂' },
+          { lvl: 4, emoji: '⚡' },
+          { lvl: 5, emoji: '🚀' },
+        ]}
+      />
+
+      <ScaleRow
+        label="Libido"
+        value={libidoLevel}
+        onChange={setLibidoLevel}
+        options={[
+          { lvl: 1, emoji: '❄️' },
+          { lvl: 2, emoji: '🙅' },
+          { lvl: 3, emoji: '🤷' },
+          { lvl: 4, emoji: '💗' },
+          { lvl: 5, emoji: '🔥' },
+        ]}
+      />
 
       <div>
         <h2 className="mb-2 text-sm font-medium text-[var(--text-muted)]">Notas (opcional)</h2>

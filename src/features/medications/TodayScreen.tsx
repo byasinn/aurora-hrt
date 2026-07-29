@@ -1,8 +1,9 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Button, Card, EmptyState, ScreenTitle } from '../../components/ui'
 import { useToday, useLogDose, useUpdateDoseLog, type TodayItem } from '../../api/doses'
-import { formatTime } from '../../lib/dateUtils'
-import MedicationForm from './MedicationForm'
+import { useMoodEntries } from '../../api/moods'
+import { formatTime, todayStr } from '../../lib/dateUtils'
 import WelcomeBanner from '../../components/WelcomeBanner'
 import clsx from 'clsx'
 
@@ -29,21 +30,27 @@ const STATUS_STYLES: Record<TodayItem['status'], string> = {
   missed: 'border-l-4 border-l-red-500',
 }
 
-function DoseCard({ item }: { item: TodayItem }) {
+function DoseCard({ item, onTaken }: { item: TodayItem; onTaken: () => void }) {
   const logDose = useLogDose()
   const updateDose = useUpdateDoseLog()
   const pending = logDose.isPending || updateDose.isPending
 
   function markTaken() {
     if (item.doseLogId) {
-      updateDose.mutate({ id: item.doseLogId, status: 'taken', takenAt: new Date() })
+      updateDose.mutate(
+        { id: item.doseLogId, status: 'taken', takenAt: new Date() },
+        { onSuccess: onTaken },
+      )
     } else {
-      logDose.mutate({
-        medicationId: item.medication.id,
-        scheduledFor: new Date(item.scheduledFor),
-        status: 'taken',
-        takenAt: new Date(),
-      })
+      logDose.mutate(
+        {
+          medicationId: item.medication.id,
+          scheduledFor: new Date(item.scheduledFor),
+          status: 'taken',
+          takenAt: new Date(),
+        },
+        { onSuccess: onTaken },
+      )
     }
   }
 
@@ -93,7 +100,12 @@ function DoseCard({ item }: { item: TodayItem }) {
 
 export default function TodayScreen() {
   const { data, isLoading, isError } = useToday()
-  const [showForm, setShowForm] = useState(false)
+  const today = todayStr()
+  const { data: moodToday } = useMoodEntries({ from: today, to: today })
+  const [moodPromptDismissed, setMoodPromptDismissed] = useState(false)
+  const [justTookDose, setJustTookDose] = useState(false)
+
+  const showMoodPrompt = justTookDose && !moodPromptDismissed && (moodToday?.length ?? 0) === 0
 
   return (
     <div>
@@ -101,15 +113,23 @@ export default function TodayScreen() {
 
       <div className="mb-4 flex items-center justify-between">
         <ScreenTitle>Hoje</ScreenTitle>
-        <Button variant="secondary" onClick={() => setShowForm((s) => !s)}>
-          {showForm ? 'Fechar' : '+ Medicamento'}
-        </Button>
+        <Link to="/medications">
+          <Button variant="secondary">+ Medicamento</Button>
+        </Link>
       </div>
 
-      {showForm && (
-        <div className="mb-4">
-          <MedicationForm onDone={() => setShowForm(false)} />
-        </div>
+      {showMoodPrompt && (
+        <Card className="mb-4 flex items-center justify-between gap-3 border-[var(--accent)]">
+          <p className="text-sm text-[var(--text)]">Boa! Quer registrar seu humor agora? 💜</p>
+          <div className="flex shrink-0 gap-2">
+            <Button variant="ghost" onClick={() => setMoodPromptDismissed(true)}>
+              Depois
+            </Button>
+            <Link to="/mood">
+              <Button>Registrar</Button>
+            </Link>
+          </div>
+        </Card>
       )}
 
       {isLoading && <p className="text-sm text-[var(--text-muted)]">Carregando…</p>}
@@ -119,13 +139,17 @@ export default function TodayScreen() {
         </EmptyState>
       )}
 
-      {data && data.items.length === 0 && !showForm && (
+      {data && data.items.length === 0 && (
         <EmptyState>Nenhum medicamento cadastrado ainda. Toque em "+ Medicamento" para começar.</EmptyState>
       )}
 
       <div className="space-y-3">
         {data?.items.map((item) => (
-          <DoseCard key={`${item.medication.id}-${item.scheduledFor}`} item={item} />
+          <DoseCard
+            key={`${item.medication.id}-${item.scheduledFor}`}
+            item={item}
+            onTaken={() => setJustTookDose(true)}
+          />
         ))}
       </div>
     </div>
