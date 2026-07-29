@@ -1,8 +1,8 @@
 import type { Context } from '@netlify/functions'
 import { eq } from 'drizzle-orm'
-import { getDb } from './_db'
+import { getDb } from './_shared/db'
 import { profile } from '../../shared/schema'
-import { checkAuth, jsonResponse } from './_auth'
+import { checkAuth, jsonResponse } from './_shared/auth'
 import type { ProfileInput } from '../../shared/types'
 
 // App de uso pessoal (single-user): sempre lemos/criamos a única linha de perfil.

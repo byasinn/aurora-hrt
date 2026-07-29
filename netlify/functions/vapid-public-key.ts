@@ -1,5 +1,5 @@
 import type { Context } from '@netlify/functions'
-import { checkAuth, jsonResponse } from './_auth'
+import { checkAuth, jsonResponse } from './_shared/auth'
 
 export default async (req: Request, _context: Context) => {
   const authError = checkAuth(req)

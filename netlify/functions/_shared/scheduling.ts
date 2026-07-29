@@ -1,4 +1,4 @@
-import type { Medication } from '../../shared/types'
+import type { Medication } from '../../../shared/types'
 
 /** Converte 'YYYY-MM-DD' + 'HH:MM' interpretados num timezone IANA para um Date UTC. */
 export function zonedTimeToUtc(dateStr: string, timeStr: string, timeZone: string): Date {

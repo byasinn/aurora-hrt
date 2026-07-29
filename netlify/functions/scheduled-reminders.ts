@@ -1,9 +1,9 @@
 import type { Config } from '@netlify/functions'
 import webpush from 'web-push'
 import { eq } from 'drizzle-orm'
-import { getDb } from './_db'
+import { getDb } from './_shared/db'
 import { medications, profile, pushSubscriptions } from '../../shared/schema'
-import { dueMedicationsForDate, dateStrInTimezone } from './_scheduling'
+import { dueMedicationsForDate, dateStrInTimezone } from './_shared/scheduling'
 
 const WINDOW_MINUTES = 15
 

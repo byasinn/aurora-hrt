@@ -15,6 +15,7 @@ dist-ssr
 .netlify
 dev-dist
 .claude/settings.local.json
+deno.lock
 
 # Editor directories and files
 .vscode/*

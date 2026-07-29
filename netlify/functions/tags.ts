@@ -1,8 +1,8 @@
 import type { Context } from '@netlify/functions'
 import { eq } from 'drizzle-orm'
-import { getDb } from './_db'
+import { getDb } from './_shared/db'
 import { tags } from '../../shared/schema'
-import { checkAuth, jsonResponse } from './_auth'
+import { checkAuth, jsonResponse } from './_shared/auth'
 import type { TagInput } from '../../shared/types'
 
 export default async (req: Request, _context: Context) => {

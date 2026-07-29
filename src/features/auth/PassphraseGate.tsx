@@ -16,6 +16,15 @@ export default function PassphraseGate({ children }: { children: ReactNode }) {
     enabled: getStoredPassphrase() !== '' || attempt > 0,
   })
 
+  useEffect(() => {
+    if (!check.isError) return
+    setError(
+      check.error instanceof ApiError && check.error.status === 401
+        ? 'Senha incorreta.'
+        : 'Não foi possível conectar ao servidor.',
+    )
+  }, [check.isError, check.error])
+
   if (check.isSuccess) return <>{children}</>
 
   function handleSubmit(e: FormEvent) {
@@ -25,15 +34,6 @@ export default function PassphraseGate({ children }: { children: ReactNode }) {
     queryClient.removeQueries({ queryKey: ['auth-check'] })
     setAttempt((a) => a + 1)
   }
-
-  useEffect(() => {
-    if (!check.isError) return
-    setError(
-      check.error instanceof ApiError && check.error.status === 401
-        ? 'Senha incorreta.'
-        : 'Não foi possível conectar ao servidor.',
-    )
-  }, [check.isError, check.error])
 
   return (
     <div className="flex min-h-svh items-center justify-center bg-[var(--bg)] px-6">

@@ -1,9 +1,9 @@
 import type { Context } from '@netlify/functions'
 import { eq } from 'drizzle-orm'
-import { getDb } from './_db'
+import { getDb } from './_shared/db'
 import { medications, doseLogs, profile } from '../../shared/schema'
-import { checkAuth, jsonResponse } from './_auth'
-import { dueMedicationsForDate, dateStrInTimezone } from './_scheduling'
+import { checkAuth, jsonResponse } from './_shared/auth'
+import { dueMedicationsForDate, dateStrInTimezone } from './_shared/scheduling'
 
 const GRACE_HOURS = 3
 

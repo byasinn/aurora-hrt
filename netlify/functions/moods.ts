@@ -1,8 +1,8 @@
 import type { Context } from '@netlify/functions'
 import { and, eq, gte, lte } from 'drizzle-orm'
-import { getDb } from './_db'
+import { getDb } from './_shared/db'
 import { moodEntries } from '../../shared/schema'
-import { checkAuth, jsonResponse } from './_auth'
+import { checkAuth, jsonResponse } from './_shared/auth'
 import type { MoodEntryInput } from '../../shared/types'
 
 export default async (req: Request, _context: Context) => {
