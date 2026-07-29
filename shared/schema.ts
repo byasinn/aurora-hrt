@@ -91,6 +91,17 @@ export const measurements = pgTable('measurements', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
+export const labResults = pgTable('lab_results', {
+  id: serial('id').primaryKey(),
+  type: text('type').notNull(), // ex: 'estradiol', 'testosterone_total', 'prolactin', 'custom'...
+  label: text('label'), // rótulo livre quando type = 'custom'
+  value: doublePrecision('value').notNull(),
+  unit: text('unit').notNull(), // 'pg/mL' | 'ng/dL' | 'mIU/mL' ...
+  date: date('date').notNull(),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
 export const pushSubscriptions = pgTable('push_subscriptions', {
   id: serial('id').primaryKey(),
   endpoint: text('endpoint').notNull().unique(),

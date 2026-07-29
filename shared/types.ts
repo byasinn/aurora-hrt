@@ -5,6 +5,7 @@ import type {
   tags,
   moodEntries,
   measurements,
+  labResults,
   pushSubscriptions,
   unlockedAchievements,
 } from './schema'
@@ -52,6 +53,19 @@ export type MeasurementType =
   | 'height'
 export type Measurement = typeof measurements.$inferSelect
 export type MeasurementInput = Omit<typeof measurements.$inferInsert, 'id' | 'createdAt'>
+
+export type LabType =
+  | 'estradiol'
+  | 'testosterone_total'
+  | 'testosterone_free'
+  | 'prolactin'
+  | 'lh'
+  | 'fsh'
+  | 'shbg'
+  | 'potassium'
+  | 'custom'
+export type LabResult = typeof labResults.$inferSelect
+export type LabResultInput = Omit<typeof labResults.$inferInsert, 'id' | 'createdAt'>
 
 export type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect
 export type PushSubscriptionInput = Omit<typeof pushSubscriptions.$inferInsert, 'id' | 'createdAt'>

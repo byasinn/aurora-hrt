@@ -7,6 +7,13 @@ import { useThemeStore, applyTheme, COLOR_SHORTCUTS } from '../../lib/themeStore
 import { todayStr } from '../../lib/dateUtils'
 import { enablePushNotifications, getNotificationPermissionState } from '../../lib/notifications'
 import { fileToResizedDataUrl } from '../../lib/image'
+import { downloadBackup } from '../../lib/exportData'
+import {
+  isFaceIdSupported,
+  isFaceIdEnabled,
+  registerFaceId,
+  disableFaceId,
+} from '../../lib/faceId'
 
 const CONTENT_OPTIONS: { value: string; label: string }[] = [
   { value: 'feminine', label: 'Feminino' },
@@ -32,6 +39,10 @@ export default function ProfileScreen() {
   const [transitionStartDate, setTransitionStartDate] = useState('')
   const [pushState, setPushState] = useState<string>('')
   const [uploading, setUploading] = useState(false)
+  const [faceIdSupported, setFaceIdSupported] = useState(false)
+  const [faceIdOn, setFaceIdOn] = useState(false)
+  const [faceIdBusy, setFaceIdBusy] = useState(false)
+  const [exporting, setExporting] = useState(false)
 
   useEffect(() => {
     if (!profile) return
@@ -42,6 +53,11 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     getNotificationPermissionState().then(setPushState)
+  }, [])
+
+  useEffect(() => {
+    isFaceIdSupported().then(setFaceIdSupported)
+    setFaceIdOn(isFaceIdEnabled())
   }, [])
 
   function saveProfile() {
@@ -62,6 +78,30 @@ export default function ProfileScreen() {
       await updateProfile.mutateAsync({ avatarUrl: dataUrl })
     } finally {
       setUploading(false)
+    }
+  }
+
+  async function handleToggleFaceId() {
+    setFaceIdBusy(true)
+    try {
+      if (faceIdOn) {
+        disableFaceId()
+        setFaceIdOn(false)
+      } else {
+        const ok = await registerFaceId()
+        setFaceIdOn(ok)
+      }
+    } finally {
+      setFaceIdBusy(false)
+    }
+  }
+
+  async function handleExport() {
+    setExporting(true)
+    try {
+      await downloadBackup()
+    } finally {
+      setExporting(false)
     }
   }
 
@@ -94,17 +134,23 @@ export default function ProfileScreen() {
         </div>
       </Card>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <Link to="/achievements">
-          <Card className="flex flex-col items-center gap-1 py-5 text-center">
+          <Card className="flex flex-col items-center gap-1 py-4 text-center">
             <span className="text-2xl">🏆</span>
-            <span className="text-sm font-medium text-[var(--text)]">Troféus</span>
+            <span className="text-xs font-medium text-[var(--text)]">Troféus</span>
           </Card>
         </Link>
         <Link to="/measurements">
-          <Card className="flex flex-col items-center gap-1 py-5 text-center">
+          <Card className="flex flex-col items-center gap-1 py-4 text-center">
             <span className="text-2xl">📏</span>
-            <span className="text-sm font-medium text-[var(--text)]">Medidas</span>
+            <span className="text-xs font-medium text-[var(--text)]">Medidas</span>
+          </Card>
+        </Link>
+        <Link to="/labs">
+          <Card className="flex flex-col items-center gap-1 py-4 text-center">
+            <span className="text-2xl">🧪</span>
+            <span className="text-xs font-medium text-[var(--text)]">Exames</span>
           </Card>
         </Link>
       </div>
@@ -147,6 +193,29 @@ export default function ProfileScreen() {
         <p className="text-xs text-[var(--text-muted)]">Status: {pushState || 'verificando…'}</p>
         <Button variant="secondary" className="w-full" onClick={handleEnablePush}>
           Ativar lembretes por notificação
+        </Button>
+      </Card>
+
+      <Card className="space-y-3">
+        <h2 className="text-sm font-medium text-[var(--text-muted)]">Segurança e backup</h2>
+
+        {faceIdSupported && (
+          <>
+            <p className="text-xs text-[var(--text-muted)]">
+              Pede Face ID/Touch ID neste aparelho antes de abrir o app (a senha continua sendo a
+              autenticação real do servidor).
+            </p>
+            <Button variant="secondary" className="w-full" onClick={handleToggleFaceId} disabled={faceIdBusy}>
+              {faceIdOn ? '🔓 Desativar Face ID / Touch ID' : '🔐 Ativar Face ID / Touch ID'}
+            </Button>
+          </>
+        )}
+
+        <p className="text-xs text-[var(--text-muted)]">
+          Exporta tudo (doses, humor, medidas, exames) em um arquivo JSON, pra nunca perder nada.
+        </p>
+        <Button variant="secondary" className="w-full" onClick={handleExport} disabled={exporting}>
+          {exporting ? 'Exportando…' : '⬇️ Exportar meus dados'}
         </Button>
       </Card>
 

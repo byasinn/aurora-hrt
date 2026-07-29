@@ -6,6 +6,7 @@ import { useMoodEntries } from '../../api/moods'
 import { useProfile } from '../../api/profile'
 import { formatTime, todayStr } from '../../lib/dateUtils'
 import WelcomeBanner from '../../components/WelcomeBanner'
+import InsightsCard from '../../components/InsightsCard'
 import clsx from 'clsx'
 
 const ROUTE_LABELS: Record<string, string> = {
@@ -112,6 +113,7 @@ export default function TodayScreen() {
   return (
     <div>
       <WelcomeBanner />
+      <InsightsCard />
 
       <div className="mb-4 flex items-center justify-between">
         <ScreenTitle>Hoje</ScreenTitle>

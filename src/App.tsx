@@ -12,6 +12,7 @@ import CalendarScreen from './features/calendar/CalendarScreen'
 import ProfileScreen from './features/profile/ProfileScreen'
 import AchievementsScreen from './features/achievements/AchievementsScreen'
 import MeasurementsScreen from './features/measurements/MeasurementsScreen'
+import LabsScreen from './features/labs/LabsScreen'
 import OnboardingScreen from './features/onboarding/OnboardingScreen'
 import { useProfile } from './api/profile'
 
@@ -41,6 +42,7 @@ function RootGate() {
         <Route path="calendar" element={<CalendarScreen />} />
         <Route path="achievements" element={<AchievementsScreen />} />
         <Route path="measurements" element={<MeasurementsScreen />} />
+        <Route path="labs" element={<LabsScreen />} />
         <Route path="profile" element={<ProfileScreen />} />
       </Route>
     </Routes>

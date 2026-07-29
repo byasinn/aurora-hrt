@@ -1,13 +1,19 @@
 import { useEffect } from 'react'
 import { Card, ScreenTitle } from '../../components/ui'
 import { useUnlockedAchievements, useUnlockAchievement } from '../../api/achievements'
+import { useDoseLogs } from '../../api/doses'
+import { useMoodEntries } from '../../api/moods'
 import { ACHIEVEMENTS } from '../../lib/achievementsEngine'
+import { computeWeeklySummary } from '../../lib/insights'
 import { useAchievementStats } from './useAchievementStats'
 
 export default function AchievementsScreen() {
   const { data: unlocked = [] } = useUnlockedAchievements()
   const unlockAchievement = useUnlockAchievement()
   const stats = useAchievementStats()
+  const { data: doseLogs = [] } = useDoseLogs()
+  const { data: moodEntries = [] } = useMoodEntries()
+  const weekly = computeWeeklySummary({ doseLogs, moodEntries })
 
   const unlockedKeys = new Set(unlocked.map((u) => u.achievementKey))
 
@@ -29,6 +35,24 @@ export default function AchievementsScreen() {
   return (
     <div className="space-y-5">
       <ScreenTitle>Troféus</ScreenTitle>
+
+      <Card className="space-y-2">
+        <h2 className="text-sm font-medium text-[var(--text-muted)]">Resumo da semana</h2>
+        <p className="text-sm text-[var(--text)]">
+          {weekly.dosesTracked > 0
+            ? `${weekly.dosesTaken}/${weekly.dosesTracked} doses em dia`
+            : 'Nenhuma dose registrada ainda'}
+          {' · '}
+          {weekly.moodCheckIns} check-in{weekly.moodCheckIns === 1 ? '' : 's'} de humor
+        </p>
+        {(weekly.avgEnergy !== null || weekly.avgLibido !== null) && (
+          <p className="text-xs text-[var(--text-muted)]">
+            {weekly.avgEnergy !== null && `Energia média: ${weekly.avgEnergy.toFixed(1)}/5`}
+            {weekly.avgEnergy !== null && weekly.avgLibido !== null && ' · '}
+            {weekly.avgLibido !== null && `Libido média: ${weekly.avgLibido.toFixed(1)}/5`}
+          </p>
+        )}
+      </Card>
 
       <Card className="space-y-3">
         <h2 className="text-sm font-medium text-[var(--text-muted)]">Estatísticas</h2>
