@@ -1,5 +1,5 @@
-import { NavLink, Outlet } from 'react-router-dom'
-import { Home, Image, UserCircle2 } from 'lucide-react'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Home, Image } from 'lucide-react'
 import clsx from 'clsx'
 import { useProfile } from '../api/profile'
 import Avatar from './Avatar'
@@ -12,6 +12,8 @@ const NAV_ITEMS = [
 
 export default function Layout() {
   const { data: profile } = useProfile()
+  const location = useLocation()
+  const spaceActive = location.pathname === '/profile' || location.pathname === '/perfil'
 
   return (
     <div className="mx-auto flex min-h-svh w-full max-w-md flex-col text-[var(--text)]">
@@ -44,29 +46,13 @@ export default function Layout() {
           <li className="flex-1">
             <NavLink
               to="/profile"
-              className={({ isActive }) =>
-                clsx(
-                  'flex flex-col items-center gap-0.5 py-2.5 text-xs transition',
-                  isActive ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]',
-                )
-              }
+              className={clsx(
+                'flex flex-col items-center gap-0.5 py-2.5 text-xs transition',
+                spaceActive ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]',
+              )}
             >
               <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} size={22} />
               Meu espaço
-            </NavLink>
-          </li>
-          <li className="flex-1">
-            <NavLink
-              to="/perfil"
-              className={({ isActive }) =>
-                clsx(
-                  'flex flex-col items-center gap-0.5 py-2.5 text-xs transition',
-                  isActive ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]',
-                )
-              }
-            >
-              <UserCircle2 size={22} />
-              Perfil
             </NavLink>
           </li>
         </ul>

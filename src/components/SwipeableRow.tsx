@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, useMotionValue, animate, type PanInfo } from 'framer-motion'
 import { Pencil, Trash2 } from 'lucide-react'
 
@@ -9,14 +9,31 @@ export default function SwipeableRow({
   onEdit,
   onDelete,
   onTap,
+  completing,
+  onCompleteAnimationDone,
 }: {
   children: React.ReactNode
   onEdit: () => void
   onDelete: () => void
   onTap?: () => void
+  completing?: boolean
+  onCompleteAnimationDone?: () => void
 }) {
   const x = useMotionValue(0)
+  const opacity = useMotionValue(1)
   const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    if (!completing) return
+    animate(opacity, [1, 1, 0], { duration: 0.55, times: [0, 0.35, 1] })
+    const controls = animate(x, [0, 0, 380], {
+      duration: 0.55,
+      times: [0, 0.35, 1],
+      onComplete: () => onCompleteAnimationDone?.(),
+    })
+    return () => controls.stop()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [completing])
 
   function close() {
     animate(x, 0, { type: 'spring', stiffness: 500, damping: 40 })
@@ -24,12 +41,14 @@ export default function SwipeableRow({
   }
 
   function handleDragEnd(_e: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) {
+    if (completing) return
     const shouldOpen = info.offset.x < -ACTIONS_WIDTH / 2
     animate(x, shouldOpen ? -ACTIONS_WIDTH : 0, { type: 'spring', stiffness: 500, damping: 40 })
     setOpen(shouldOpen)
   }
 
   function handleTap() {
+    if (completing) return
     if (open) {
       close()
       return
@@ -60,10 +79,10 @@ export default function SwipeableRow({
         </button>
       </div>
       <motion.div
-        drag="x"
+        drag={completing ? false : 'x'}
         dragConstraints={{ left: -ACTIONS_WIDTH, right: 0 }}
         dragElastic={0.06}
-        style={{ x }}
+        style={{ x, opacity }}
         onDragEnd={handleDragEnd}
         onTap={handleTap}
         className="relative z-10 touch-pan-y"

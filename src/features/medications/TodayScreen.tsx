@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Heart, Calendar, Pill, Syringe, Bandage, Droplet, Sparkles, ChevronDown, Undo2 } from 'lucide-react'
+import { Plus, Heart, Calendar, Pill, Syringe, Bandage, Droplet, Sparkles, Undo2 } from 'lucide-react'
 import { EmptyState } from '../../components/ui'
 import SwipeableRow from '../../components/SwipeableRow'
 import { useToday, useLogDose, useUpdateDoseLog, type TodayItem } from '../../api/doses'
@@ -69,19 +69,16 @@ function DoseRow({
   }
 
   return (
-    <SwipeableRow onTap={markTaken} onEdit={() => onEdit(item.medication.id)} onDelete={handleDelete}>
-      <motion.div
-        animate={
-          completing
-            ? { x: [0, 0, 380], opacity: [1, 1, 0], backgroundColor: ['var(--surface)', 'var(--accent)', 'var(--accent)'] }
-            : { x: 0, opacity: 1 }
-        }
-        transition={{ duration: 0.55, times: completing ? [0, 0.35, 1] : undefined }}
-        onAnimationComplete={() => {
-          if (completing) onAnimationDone()
-        }}
+    <SwipeableRow
+      onTap={markTaken}
+      onEdit={() => onEdit(item.medication.id)}
+      onDelete={handleDelete}
+      completing={completing}
+      onCompleteAnimationDone={onAnimationDone}
+    >
+      <div
         className={
-          'flex items-center gap-3 rounded-2xl border border-[var(--border)] p-4 [box-shadow:var(--shadow)] border-l-4 ' +
+          'flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 [box-shadow:var(--shadow)] border-l-4 ' +
           (item.status === 'missed' ? 'border-l-red-500' : 'border-l-[var(--accent)]')
         }
       >
@@ -95,7 +92,7 @@ function DoseRow({
             {item.status === 'missed' && ' · atrasado'}
           </p>
         </div>
-      </motion.div>
+      </div>
     </SwipeableRow>
   )
 }
@@ -161,7 +158,6 @@ export default function TodayScreen() {
   const { data: profile } = useProfile()
   const { data: medications } = useMedications()
   const [formState, setFormState] = useState<'closed' | 'create' | Medication>('closed')
-  const [exploreOpen, setExploreOpen] = useState(false)
   const [completingKeys, setCompletingKeys] = useState<Set<string>>(new Set())
 
   const keyFor = (item: TodayItem) => `${item.medication.id}-${item.scheduledFor}`
@@ -256,38 +252,6 @@ export default function TodayScreen() {
         <BigLinkButton to="/mood" icon={Heart} label="Registrar humor" variant="accent" />
         <BigLinkButton to="/calendar" icon={Calendar} label="Ver calendário" variant="accent2" />
       </div>
-
-      <div className="mt-8 flex justify-center">
-        <motion.button
-          type="button"
-          onClick={() => setExploreOpen((o) => !o)}
-          drag="y"
-          dragConstraints={{ top: 0, bottom: 0 }}
-          dragElastic={0.3}
-          onDragEnd={(_e, info) => {
-            if (info.offset.y > 30) setExploreOpen(true)
-          }}
-          animate={{ y: [0, 6, 0] }}
-          transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-          className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--text-muted)]"
-        >
-          <ChevronDown size={22} className={exploreOpen ? 'rotate-180 transition-transform' : 'transition-transform'} />
-        </motion.button>
-      </div>
-
-      <AnimatePresence>
-        {exploreOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden"
-          >
-            <h2 className="mb-2 mt-2 text-sm font-medium text-[var(--text-muted)]">Explorar</h2>
-            <EmptyState>Em breve: conteúdo pra explorar por aqui.</EmptyState>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   )
 }

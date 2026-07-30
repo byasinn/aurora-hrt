@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import clsx from 'clsx'
+import { Pencil } from 'lucide-react'
 import { Button, Card, ScreenTitle } from '../../components/ui'
 import { useTags, useCreateTag } from '../../api/tags'
-import { useCreateMoodEntry, useMoodEntries } from '../../api/moods'
+import { useCreateMoodEntry, useUpdateMoodEntry, useMoodEntries } from '../../api/moods'
 import { todayStr } from '../../lib/dateUtils'
-import type { Tag } from '../../../shared/types'
+import type { Tag, MoodEntry } from '../../../shared/types'
 
 const MOOD_SUGGESTIONS = [
   '😊 Feliz',
@@ -45,6 +46,21 @@ const SYMPTOM_SUGGESTIONS = [
   'Retenção de líquido',
   'Dor no local da aplicação',
   'Dor de barriga',
+]
+
+const ENERGY_OPTIONS = [
+  { lvl: 1, emoji: '🪫' },
+  { lvl: 2, emoji: '😴' },
+  { lvl: 3, emoji: '🙂' },
+  { lvl: 4, emoji: '⚡' },
+  { lvl: 5, emoji: '🚀' },
+]
+const LIBIDO_OPTIONS = [
+  { lvl: 1, emoji: '❄️' },
+  { lvl: 2, emoji: '🙅' },
+  { lvl: 3, emoji: '🤷' },
+  { lvl: 4, emoji: '💗' },
+  { lvl: 5, emoji: '🔥' },
 ]
 
 function ScaleRow({
@@ -135,51 +151,120 @@ function TagPicker({
   )
 }
 
+function TagNames({ ids }: { ids: number[] }) {
+  const { data: moodTags = [] } = useTags('mood')
+  const { data: symptomTags = [] } = useTags('symptom')
+  const all = [...moodTags, ...symptomTags]
+  const names = ids.map((id) => all.find((t) => t.id === id)?.label).filter(Boolean)
+  if (names.length === 0) return <span className="text-[var(--text-muted)]">—</span>
+  return <>{names.join(', ')}</>
+}
+
+function EntrySummary({ entry, onEdit }: { entry: MoodEntry; onEdit: () => void }) {
+  const energy = ENERGY_OPTIONS.find((o) => o.lvl === entry.energyLevel)
+  const libido = LIBIDO_OPTIONS.find((o) => o.lvl === entry.libidoLevel)
+
+  return (
+    <div>
+      <div className="mb-4 flex items-center justify-between">
+        <ScreenTitle>Humor de hoje</ScreenTitle>
+        <Button variant="secondary" onClick={onEdit} className="flex items-center gap-1.5">
+          <Pencil size={14} />
+          Alterar
+        </Button>
+      </div>
+      <Card className="space-y-3">
+        <div>
+          <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Humor</p>
+          <p className="text-sm text-[var(--text)]">
+            <TagNames ids={(entry.moodTagIds as number[]) ?? []} />
+          </p>
+        </div>
+        <div>
+          <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Sintomas</p>
+          <p className="text-sm text-[var(--text)]">
+            <TagNames ids={(entry.symptomTagIds as number[]) ?? []} />
+          </p>
+        </div>
+        <div className="flex gap-6">
+          <div>
+            <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Energia</p>
+            <p className="text-lg">{energy?.emoji ?? '—'}</p>
+          </div>
+          <div>
+            <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Libido</p>
+            <p className="text-lg">{libido?.emoji ?? '—'}</p>
+          </div>
+        </div>
+        {entry.notes && (
+          <div>
+            <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Notas</p>
+            <p className="text-sm text-[var(--text)]">{entry.notes}</p>
+          </div>
+        )}
+      </Card>
+    </div>
+  )
+}
+
 export default function MoodCheckIn() {
   const today = todayStr()
   const { data: entries } = useMoodEntries({ from: today, to: today })
   const createEntry = useCreateMoodEntry()
+  const updateEntry = useUpdateMoodEntry()
+
+  const existing = entries?.[0]
+  const [editing, setEditing] = useState(false)
 
   const [moodTagIds, setMoodTagIds] = useState<number[]>([])
   const [symptomTagIds, setSymptomTagIds] = useState<number[]>([])
   const [energyLevel, setEnergyLevel] = useState(3)
   const [libidoLevel, setLibidoLevel] = useState(3)
   const [notes, setNotes] = useState('')
-  const [saved, setSaved] = useState(false)
 
-  const alreadyLoggedToday = (entries?.length ?? 0) > 0 || saved
+  useEffect(() => {
+    if (!existing) return
+    setMoodTagIds((existing.moodTagIds as number[]) ?? [])
+    setSymptomTagIds((existing.symptomTagIds as number[]) ?? [])
+    setEnergyLevel(existing.energyLevel ?? 3)
+    setLibidoLevel(existing.libidoLevel ?? 3)
+    setNotes(existing.notes ?? '')
+  }, [existing])
 
   function toggle(setFn: React.Dispatch<React.SetStateAction<number[]>>) {
     return (id: number) => setFn((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]))
   }
 
   async function handleSave() {
-    await createEntry.mutateAsync({
-      date: today,
-      moodTagIds,
-      symptomTagIds,
-      energyLevel,
-      libidoLevel,
-      notes: notes || null,
-    })
-    setSaved(true)
+    if (existing) {
+      await updateEntry.mutateAsync({
+        id: existing.id,
+        moodTagIds,
+        symptomTagIds,
+        energyLevel,
+        libidoLevel,
+        notes: notes || null,
+      })
+    } else {
+      await createEntry.mutateAsync({
+        date: today,
+        moodTagIds,
+        symptomTagIds,
+        energyLevel,
+        libidoLevel,
+        notes: notes || null,
+      })
+    }
+    setEditing(false)
   }
 
-  if (alreadyLoggedToday) {
-    return (
-      <div>
-        <ScreenTitle>Humor</ScreenTitle>
-        <Card>
-          <p className="text-sm text-[var(--text)]">Você já registrou como está hoje. 💜</p>
-          <p className="mt-1 text-xs text-[var(--text-muted)]">Volte amanhã para um novo check-in.</p>
-        </Card>
-      </div>
-    )
+  if (existing && !editing) {
+    return <EntrySummary entry={existing} onEdit={() => setEditing(true)} />
   }
 
   return (
     <div className="space-y-5">
-      <ScreenTitle>Como você está hoje?</ScreenTitle>
+      <ScreenTitle>{existing ? 'Alterar humor de hoje' : 'Como você está hoje?'}</ScreenTitle>
 
       <div>
         <h2 className="mb-2 text-sm font-medium text-[var(--text-muted)]">Humor</h2>
@@ -196,31 +281,8 @@ export default function MoodCheckIn() {
         />
       </div>
 
-      <ScaleRow
-        label="Energia"
-        value={energyLevel}
-        onChange={setEnergyLevel}
-        options={[
-          { lvl: 1, emoji: '🪫' },
-          { lvl: 2, emoji: '😴' },
-          { lvl: 3, emoji: '🙂' },
-          { lvl: 4, emoji: '⚡' },
-          { lvl: 5, emoji: '🚀' },
-        ]}
-      />
-
-      <ScaleRow
-        label="Libido"
-        value={libidoLevel}
-        onChange={setLibidoLevel}
-        options={[
-          { lvl: 1, emoji: '❄️' },
-          { lvl: 2, emoji: '🙅' },
-          { lvl: 3, emoji: '🤷' },
-          { lvl: 4, emoji: '💗' },
-          { lvl: 5, emoji: '🔥' },
-        ]}
-      />
+      <ScaleRow label="Energia" value={energyLevel} onChange={setEnergyLevel} options={ENERGY_OPTIONS} />
+      <ScaleRow label="Libido" value={libidoLevel} onChange={setLibidoLevel} options={LIBIDO_OPTIONS} />
 
       <div>
         <h2 className="mb-2 text-sm font-medium text-[var(--text-muted)]">Notas (opcional)</h2>
@@ -232,9 +294,16 @@ export default function MoodCheckIn() {
         />
       </div>
 
-      <Button className="w-full" onClick={handleSave} disabled={createEntry.isPending}>
-        {createEntry.isPending ? 'Salvando…' : 'Salvar check-in'}
-      </Button>
+      <div className="flex gap-2">
+        {existing && (
+          <Button variant="secondary" className="flex-1" onClick={() => setEditing(false)}>
+            Cancelar
+          </Button>
+        )}
+        <Button className="flex-1" onClick={handleSave} disabled={createEntry.isPending || updateEntry.isPending}>
+          {createEntry.isPending || updateEntry.isPending ? 'Salvando…' : 'Salvar check-in'}
+        </Button>
+      </div>
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
-import { Camera, Pencil, Check, Trophy } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Camera, Pencil, Check, Trophy, ArrowLeft } from 'lucide-react'
 import { useProfile, useUpdateProfile } from '../../api/profile'
 import { useUnlockedAchievements } from '../../api/achievements'
 import { useMoodEntries } from '../../api/moods'
@@ -53,20 +54,24 @@ export default function PublicProfileScreen() {
 
   return (
     <div className="-mx-4 -mt-2">
-      <button
-        type="button"
-        onClick={() => coverInputRef.current?.click()}
-        className="relative block h-32 w-full bg-[var(--surface-2)]"
-      >
-        {profile?.coverUrl ? (
-          <img src={profile.coverUrl} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <div className="flag-gradient h-full w-full" />
-        )}
-        <span className="absolute bottom-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white">
+      <div className="relative h-32 w-full bg-[var(--surface-2)]">
+        <button type="button" onClick={() => coverInputRef.current?.click()} className="block h-full w-full">
+          {profile?.coverUrl ? (
+            <img src={profile.coverUrl} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <div className="flag-gradient h-full w-full" />
+          )}
+        </button>
+        <Link
+          to="/profile"
+          className="absolute left-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white"
+        >
+          <ArrowLeft size={16} />
+        </Link>
+        <span className="pointer-events-none absolute bottom-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white">
           <Camera size={14} />
         </span>
-      </button>
+      </div>
       <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
 
       <div className="px-4">
