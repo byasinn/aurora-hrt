@@ -7,6 +7,8 @@ import type {
   measurements,
   labResults,
   posts,
+  routines,
+  routineLogs,
   messages,
   pushSubscriptions,
   unlockedAchievements,
@@ -71,6 +73,12 @@ export type LabResultInput = Omit<typeof labResults.$inferInsert, 'id' | 'create
 
 export type Post = typeof posts.$inferSelect
 export type PostInput = Omit<typeof posts.$inferInsert, 'id' | 'createdAt'>
+
+export type RoutineType = 'checkbox' | 'counter'
+export type Routine = typeof routines.$inferSelect
+export type RoutineInput = Omit<typeof routines.$inferInsert, 'id' | 'createdAt'>
+export type RoutineLog = typeof routineLogs.$inferSelect
+export type RoutineLogInput = Omit<typeof routineLogs.$inferInsert, 'id' | 'createdAt'>
 
 export type Message = typeof messages.$inferSelect
 export type MessageInput = Omit<typeof messages.$inferInsert, 'id' | 'createdAt'>

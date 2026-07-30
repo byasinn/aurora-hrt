@@ -11,6 +11,7 @@ import CalendarScreen from './features/calendar/CalendarScreen'
 import ProfileScreen from './features/profile/ProfileScreen'
 import PublicProfileScreen from './features/profile/PublicProfileScreen'
 import MessagesScreen from './features/messages/MessagesScreen'
+import RoutinesScreen from './features/routines/RoutinesScreen'
 import AchievementsScreen from './features/achievements/AchievementsScreen'
 import MeasurementsScreen from './features/measurements/MeasurementsScreen'
 import LabsScreen from './features/labs/LabsScreen'
@@ -53,6 +54,7 @@ function RootGate() {
         <Route path="profile" element={<ProfileScreen />} />
         <Route path="perfil" element={<PublicProfileScreen />} />
         <Route path="messages" element={<MessagesScreen />} />
+        <Route path="routines" element={<RoutinesScreen />} />
       </Route>
     </Routes>
   )

@@ -129,6 +129,30 @@ function DoneRow({ item }: { item: TodayItem }) {
   )
 }
 
+function AddDoseButton({ prominent, onClick }: { prominent: boolean; onClick: () => void }) {
+  if (prominent) {
+    return (
+      <button
+        onClick={onClick}
+        className="flex w-full flex-col items-center justify-center gap-1.5 rounded-2xl py-6 text-[var(--accent-contrast)] [box-shadow:var(--shadow)]"
+        style={{ background: 'var(--accent)' }}
+      >
+        <Plus size={24} />
+        <span className="text-sm font-medium">Adicionar dose</span>
+      </button>
+    )
+  }
+  return (
+    <button
+      onClick={onClick}
+      className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--border)] py-3 text-sm text-[var(--text-muted)]"
+    >
+      <Plus size={16} />
+      Adicionar dose
+    </button>
+  )
+}
+
 function BigLinkButton({
   to,
   icon: Icon,
@@ -178,26 +202,7 @@ export default function TodayScreen() {
     <div>
       <WelcomeBanner />
 
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-medium text-[var(--text-muted)]">Remédios</h2>
-        <button
-          onClick={() => setFormState(formState === 'closed' ? 'create' : 'closed')}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-contrast)]"
-        >
-          <Plus size={18} />
-        </button>
-      </div>
-
       <TipOfDayCard />
-
-      {formState !== 'closed' && (
-        <div className="mb-4">
-          <MedicationForm
-            medication={formState === 'create' ? undefined : formState}
-            onDone={() => setFormState('closed')}
-          />
-        </div>
-      )}
 
       {isLoading && <p className="text-sm text-[var(--text-muted)]">Carregando…</p>}
       {isError && (
@@ -207,11 +212,29 @@ export default function TodayScreen() {
       )}
 
       {data && data.items.length === 0 && formState === 'closed' && (
-        <EmptyState>
-          {profile?.notOnMedsYet
-            ? 'Você ainda não começou a tomar nada — sem pressa. Quando decidir, é só tocar no + acima.'
-            : 'Nenhum medicamento cadastrado ainda. Toque no + acima pra começar.'}
-        </EmptyState>
+        <div className="mb-4 space-y-2">
+          <AddDoseButton prominent onClick={() => setFormState('create')} />
+          {profile?.notOnMedsYet && (
+            <p className="text-center text-xs text-[var(--text-muted)]">
+              Sem pressa — quando decidir começar, é só tocar aqui.
+            </p>
+          )}
+        </div>
+      )}
+
+      {data && data.items.length > 0 && formState === 'closed' && (
+        <div className="mb-4">
+          <AddDoseButton prominent={false} onClick={() => setFormState('create')} />
+        </div>
+      )}
+
+      {formState !== 'closed' && (
+        <div className="mb-4">
+          <MedicationForm
+            medication={formState === 'create' ? undefined : formState}
+            onDone={() => setFormState('closed')}
+          />
+        </div>
       )}
 
       <div className="space-y-3">

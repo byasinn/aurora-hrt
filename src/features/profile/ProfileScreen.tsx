@@ -1,15 +1,18 @@
 import { Link } from 'react-router-dom'
-import { Settings, ChevronRight, Trophy, Pill, Calendar, Ruler, FlaskConical, Lightbulb } from 'lucide-react'
+import { Settings, ChevronRight, Trophy, Pill, Calendar, Ruler, FlaskConical, Lightbulb, ListChecks } from 'lucide-react'
 import { Card } from '../../components/ui'
 import Avatar from '../../components/Avatar'
 import { useProfile } from '../../api/profile'
 import { useUnlockedAchievements } from '../../api/achievements'
 import { useDoseLogs } from '../../api/doses'
 import { useMoodEntries } from '../../api/moods'
+import { useRoutines, useRoutineLogs } from '../../api/routines'
 import { computeWeeklySummary } from '../../lib/insights'
+import { todayStr } from '../../lib/dateUtils'
 
 const QUICK_LINKS = [
-  { to: '/', label: 'Remédios', icon: Pill },
+  { to: '/', label: 'Doses', icon: Pill },
+  { to: '/routines', label: 'Rotinas', icon: ListChecks },
   { to: '/calendar', label: 'Histórico', icon: Calendar },
   { to: '/measurements', label: 'Medidas', icon: Ruler },
   { to: '/labs', label: 'Exames', icon: FlaskConical },
@@ -23,12 +26,22 @@ export default function ProfileScreen() {
   const { data: moodEntries = [] } = useMoodEntries()
   const weekly = computeWeeklySummary({ doseLogs, moodEntries })
 
+  const today = todayStr()
+  const { data: routines = [] } = useRoutines()
+  const { data: routineLogsToday = [] } = useRoutineLogs({ from: today, to: today })
+  const activeRoutines = routines.filter((r) => r.active)
+  const routinesDoneToday = activeRoutines.filter((r) => {
+    const log = routineLogsToday.find((l) => l.routineId === r.id)
+    if (!log) return false
+    return r.type === 'checkbox' ? log.count > 0 : r.targetCount != null && log.count >= r.targetCount
+  }).length
+
   return (
     <div className="space-y-5">
       <div className="relative">
         <Link to="/perfil">
-          <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] [box-shadow:var(--shadow)]">
-            <div className="relative h-20">
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] [box-shadow:var(--shadow)]">
+            <div className="relative h-20 overflow-hidden rounded-t-2xl">
               {profile?.coverUrl ? (
                 <img src={profile.coverUrl} alt="" className="h-full w-full object-cover" />
               ) : (
@@ -87,6 +100,12 @@ export default function ProfileScreen() {
             : 'Nenhuma dose registrada ainda'}
           {' · '}
           {weekly.moodCheckIns} check-in{weekly.moodCheckIns === 1 ? '' : 's'} de humor
+          {activeRoutines.length > 0 && (
+            <>
+              {' · '}
+              {routinesDoneToday}/{activeRoutines.length} rotinas hoje
+            </>
+          )}
         </p>
         {(weekly.avgEnergy !== null || weekly.avgLibido !== null) && (
           <p className="text-xs text-[var(--text-muted)]">

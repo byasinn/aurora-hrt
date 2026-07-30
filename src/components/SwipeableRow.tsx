@@ -24,7 +24,12 @@ export default function SwipeableRow({
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
-    if (!completing) return
+    if (!completing) {
+      // Garante que nunca fique preso num estado invisível/deslocado (ex: mutação falhou e o item voltou a pendente).
+      x.set(0)
+      opacity.set(1)
+      return
+    }
     animate(opacity, [1, 1, 0], { duration: 0.55, times: [0, 0.35, 1] })
     const controls = animate(x, [0, 0, 380], {
       duration: 0.55,

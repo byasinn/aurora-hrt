@@ -113,6 +113,26 @@ export const posts = pgTable('posts', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
+export const routines = pgTable('routines', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  icon: text('icon').notNull().default('✅'),
+  type: text('type').notNull().default('checkbox'), // 'checkbox' | 'counter'
+  targetCount: integer('target_count'), // usado quando type = 'counter'
+  active: boolean('active').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const routineLogs = pgTable('routine_logs', {
+  id: serial('id').primaryKey(),
+  routineId: integer('routine_id')
+    .notNull()
+    .references(() => routines.id, { onDelete: 'cascade' }),
+  date: date('date').notNull(),
+  count: integer('count').notNull().default(0),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
 export const messages = pgTable('messages', {
   id: serial('id').primaryKey(),
   icon: text('icon').notNull().default('💜'),

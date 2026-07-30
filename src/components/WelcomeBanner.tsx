@@ -30,7 +30,7 @@ export default function WelcomeBanner() {
     if (sessionStorage.getItem(SEEN_KEY)) return
     sessionStorage.setItem(SEEN_KEY, String(Date.now()))
     setVisible(true)
-    const t = setTimeout(() => setVisible(false), 5000)
+    const t = setTimeout(() => setVisible(false), 3200)
     return () => clearTimeout(t)
   }, [])
 
@@ -41,23 +41,26 @@ export default function WelcomeBanner() {
     <AnimatePresence>
       {visible && (
         <motion.div
-          initial={{ y: -30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -30, opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           onClick={() => setVisible(false)}
-          className="fixed left-1/2 top-[max(3.5rem,env(safe-area-inset-top))] z-40 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 cursor-pointer"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-8 backdrop-blur-md"
         >
-          <div className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 [box-shadow:var(--shadow)]">
-            <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} size={44} />
-            <div>
-              <p className="text-sm text-[var(--text-muted)]">
-                {greeting()}
-                {name ? `, ${name}` : ''}
-              </p>
-              <p className="text-sm font-medium flag-gradient-text">{MESSAGES[dayIndex]}</p>
-            </div>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 24 }}
+            className="flex flex-col items-center gap-3 text-center"
+          >
+            <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} size={64} />
+            <p className="text-lg text-white/80">
+              {greeting()}
+              {name ? `, ${name}` : ''}
+            </p>
+            <p className="max-w-xs text-2xl font-semibold text-white">{MESSAGES[dayIndex]}</p>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>

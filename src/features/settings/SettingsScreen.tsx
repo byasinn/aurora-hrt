@@ -15,13 +15,6 @@ const CONTENT_OPTIONS: { value: string; label: string }[] = [
   { value: 'combined', label: 'Combinado' },
 ]
 
-const MODULE_OPTIONS: { value: string; label: string }[] = [
-  { value: 'medications', label: 'Remédios' },
-  { value: 'mood', label: 'Humor' },
-  { value: 'calendar', label: 'Histórico' },
-  { value: 'measurements', label: 'Medidas' },
-]
-
 function SectionHeader({ icon: Icon, title }: { icon: typeof User; title: string }) {
   return (
     <div className="flex items-center gap-2">
@@ -280,29 +273,6 @@ export default function SettingsScreen() {
           </div>
         </div>
 
-        <div>
-          <p className="mb-2 text-xs text-[var(--text-muted)]">Módulos visíveis no menu</p>
-          <div className="space-y-1">
-            {MODULE_OPTIONS.map((opt) => {
-              const enabled = (profile?.enabledModules as string[] | undefined)?.includes(opt.value) ?? true
-              return (
-                <div key={opt.value} className="flex items-center justify-between py-1">
-                  <span className="text-sm text-[var(--text)]">{opt.label}</span>
-                  <Switch
-                    checked={enabled}
-                    onChange={() => {
-                      const current = (profile?.enabledModules as string[] | undefined) ?? []
-                      const updated = enabled
-                        ? current.filter((m) => m !== opt.value)
-                        : [...current, opt.value]
-                      updateProfile.mutate({ enabledModules: updated })
-                    }}
-                  />
-                </div>
-              )
-            })}
-          </div>
-        </div>
       </Card>
 
       <Card className="space-y-2">
