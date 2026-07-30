@@ -5,6 +5,15 @@ import { doseLogs } from '../../shared/schema'
 import { checkAuth, jsonResponse } from './_shared/auth'
 import type { DoseLogInput } from '../../shared/types'
 
+function coerceDates<T extends Record<string, unknown>>(body: T): T {
+  const out = { ...body }
+  for (const key of ['scheduledFor', 'takenAt'] as const) {
+    const value = out[key]
+    if (typeof value === 'string') (out as Record<string, unknown>)[key] = new Date(value)
+  }
+  return out
+}
+
 export default async (req: Request, _context: Context) => {
   const authError = checkAuth(req)
   if (authError) return authError
@@ -30,14 +39,14 @@ export default async (req: Request, _context: Context) => {
     }
 
     if (req.method === 'POST') {
-      const body = (await req.json()) as DoseLogInput
+      const body = coerceDates((await req.json()) as DoseLogInput)
       const [row] = await db.insert(doseLogs).values(body).returning()
       return jsonResponse(row, { status: 201 })
     }
 
     if (req.method === 'PUT') {
       if (!id) return jsonResponse({ error: 'id é obrigatório' }, { status: 400 })
-      const body = (await req.json()) as Partial<DoseLogInput>
+      const body = coerceDates((await req.json()) as Partial<DoseLogInput>)
       const [row] = await db
         .update(doseLogs)
         .set(body)
