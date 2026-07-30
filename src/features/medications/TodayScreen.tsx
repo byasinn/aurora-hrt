@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Button, Card, EmptyState, ScreenTitle } from '../../components/ui'
+import { Plus, Heart, Calendar, Pill, Syringe, Bandage, Droplet, Sparkles } from 'lucide-react'
+import { Button, Card, EmptyState } from '../../components/ui'
+import SwipeableRow from '../../components/SwipeableRow'
 import { useToday, useLogDose, useUpdateDoseLog, type TodayItem } from '../../api/doses'
-import { useMoodEntries } from '../../api/moods'
 import { useProfile } from '../../api/profile'
-import { formatTime, todayStr } from '../../lib/dateUtils'
+import { useDeleteMedication, useMedications } from '../../api/medications'
+import { formatTime } from '../../lib/dateUtils'
 import WelcomeBanner from '../../components/WelcomeBanner'
 import InsightsCard from '../../components/InsightsCard'
 import TipOfDayCard from '../../components/TipOfDayCard'
-import clsx from 'clsx'
+import MedicationForm from './MedicationForm'
+import type { Medication } from '../../../shared/types'
 
 const ROUTE_LABELS: Record<string, string> = {
   oral: 'Oral',
@@ -18,62 +21,53 @@ const ROUTE_LABELS: Record<string, string> = {
   other: 'Outro',
 }
 
-const ROUTE_ICONS: Record<string, string> = {
-  oral: '💊',
-  injection: '💉',
-  patch: '🩹',
-  gel: '🧴',
-  other: '✨',
+const ROUTE_ICONS: Record<string, typeof Pill> = {
+  oral: Pill,
+  injection: Syringe,
+  patch: Bandage,
+  gel: Droplet,
+  other: Sparkles,
 }
 
-const STATUS_STYLES: Record<TodayItem['status'], string> = {
-  pending: 'border-l-4 border-l-[var(--accent)]',
-  taken: 'border-l-4 border-l-emerald-500 opacity-80',
-  skipped: 'border-l-4 border-l-[var(--border)] opacity-60',
-  missed: 'border-l-4 border-l-red-500',
-}
-
-function DoseCard({ item, onTaken }: { item: TodayItem; onTaken: () => void }) {
+function DoseRow({ item, onEdit }: { item: TodayItem; onEdit: (medicationId: number) => void }) {
   const logDose = useLogDose()
   const updateDose = useUpdateDoseLog()
-  const pending = logDose.isPending || updateDose.isPending
+  const deleteMed = useDeleteMedication()
+  const RouteIcon = ROUTE_ICONS[item.medication.route] ?? Sparkles
 
   function markTaken() {
     if (item.doseLogId) {
-      updateDose.mutate(
-        { id: item.doseLogId, status: 'taken', takenAt: new Date() },
-        { onSuccess: onTaken },
-      )
-    } else {
-      logDose.mutate(
-        {
-          medicationId: item.medication.id,
-          scheduledFor: new Date(item.scheduledFor),
-          status: 'taken',
-          takenAt: new Date(),
-        },
-        { onSuccess: onTaken },
-      )
-    }
-  }
-
-  function markSkipped() {
-    if (item.doseLogId) {
-      updateDose.mutate({ id: item.doseLogId, status: 'skipped' })
+      updateDose.mutate({ id: item.doseLogId, status: 'taken', takenAt: new Date() })
     } else {
       logDose.mutate({
         medicationId: item.medication.id,
         scheduledFor: new Date(item.scheduledFor),
-        status: 'skipped',
+        status: 'taken',
+        takenAt: new Date(),
       })
     }
   }
 
+  function handleDelete() {
+    if (confirm(`Excluir "${item.medication.name}"? Isso remove o medicamento e seu histórico.`)) {
+      deleteMed.mutate(item.medication.id)
+    }
+  }
+
   return (
-    <Card className={clsx('flex items-center justify-between gap-3', STATUS_STYLES[item.status])}>
-      <div className="flex items-center gap-3">
-        <span className="text-2xl">{ROUTE_ICONS[item.medication.route] ?? '✨'}</span>
-        <div>
+    <SwipeableRow
+      onTap={item.status === 'pending' || item.status === 'missed' ? markTaken : undefined}
+      onEdit={() => onEdit(item.medication.id)}
+      onDelete={handleDelete}
+    >
+      <Card
+        className={
+          'flex items-center gap-3 border-l-4 ' +
+          (item.status === 'missed' ? 'border-l-red-500' : 'border-l-[var(--accent)]')
+        }
+      >
+        <RouteIcon size={22} className="text-[var(--accent)]" />
+        <div className="flex-1">
           <p className="font-medium text-[var(--text)]">{item.medication.name}</p>
           <p className="text-xs text-[var(--text-muted)]">
             {item.medication.doseAmount}
@@ -82,34 +76,24 @@ function DoseCard({ item, onTaken }: { item: TodayItem; onTaken: () => void }) {
             {item.status === 'missed' && ' · atrasado'}
           </p>
         </div>
-      </div>
-      {item.status === 'taken' ? (
-        <span className="whitespace-nowrap text-sm text-emerald-500">✓ Tomado</span>
-      ) : item.status === 'skipped' ? (
-        <span className="whitespace-nowrap text-sm text-[var(--text-muted)]">Pulado</span>
-      ) : (
-        <div className="flex gap-2">
-          <Button variant="secondary" onClick={markSkipped} disabled={pending}>
-            Pular
-          </Button>
-          <Button onClick={markTaken} disabled={pending}>
-            Tomei
-          </Button>
-        </div>
-      )}
-    </Card>
+      </Card>
+    </SwipeableRow>
   )
 }
 
 export default function TodayScreen() {
   const { data, isLoading, isError } = useToday()
   const { data: profile } = useProfile()
-  const today = todayStr()
-  const { data: moodToday } = useMoodEntries({ from: today, to: today })
-  const [moodPromptDismissed, setMoodPromptDismissed] = useState(false)
-  const [justTookDose, setJustTookDose] = useState(false)
+  const { data: medications } = useMedications()
+  const [formState, setFormState] = useState<'closed' | 'create' | Medication>('closed')
 
-  const showMoodPrompt = justTookDose && !moodPromptDismissed && (moodToday?.length ?? 0) === 0
+  const pending = data?.items.filter((i) => i.status === 'pending' || i.status === 'missed') ?? []
+  const done = data?.items.filter((i) => i.status === 'taken' || i.status === 'skipped') ?? []
+
+  function openEdit(medicationId: number) {
+    const med = medications?.find((m) => m.id === medicationId)
+    if (med) setFormState(med)
+  }
 
   return (
     <div>
@@ -117,25 +101,23 @@ export default function TodayScreen() {
       <TipOfDayCard />
       <InsightsCard />
 
-      <div className="mb-4 flex items-center justify-between">
-        <ScreenTitle>Hoje</ScreenTitle>
-        <Link to="/medications">
-          <Button variant="secondary">+ Medicamento</Button>
-        </Link>
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-medium text-[var(--text-muted)]">Remédios</h2>
+        <button
+          onClick={() => setFormState(formState === 'closed' ? 'create' : 'closed')}
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-contrast)]"
+        >
+          <Plus size={18} />
+        </button>
       </div>
 
-      {showMoodPrompt && (
-        <Card className="mb-4 flex items-center justify-between gap-3 border-[var(--accent)]">
-          <p className="text-sm text-[var(--text)]">Boa! Quer registrar seu humor agora? 💜</p>
-          <div className="flex shrink-0 gap-2">
-            <Button variant="ghost" onClick={() => setMoodPromptDismissed(true)}>
-              Depois
-            </Button>
-            <Link to="/mood">
-              <Button>Registrar</Button>
-            </Link>
-          </div>
-        </Card>
+      {formState !== 'closed' && (
+        <div className="mb-4">
+          <MedicationForm
+            medication={formState === 'create' ? undefined : formState}
+            onDone={() => setFormState('closed')}
+          />
+        </div>
       )}
 
       {isLoading && <p className="text-sm text-[var(--text-muted)]">Carregando…</p>}
@@ -145,27 +127,55 @@ export default function TodayScreen() {
         </EmptyState>
       )}
 
-      {data && data.items.length === 0 && (
+      {data && data.items.length === 0 && formState === 'closed' && (
         <EmptyState>
           {profile?.notOnMedsYet
-            ? 'Você ainda não começou a tomar nada — sem pressa. Quando decidir, é só tocar em "+ Medicamento" que a gente te ajuda a organizar os horários.'
-            : 'Nenhum medicamento cadastrado ainda. Toque em "+ Medicamento" para começar.'}
+            ? 'Você ainda não começou a tomar nada — sem pressa. Quando decidir, é só tocar no + acima.'
+            : 'Nenhum medicamento cadastrado ainda. Toque no + acima pra começar.'}
         </EmptyState>
       )}
 
       <div className="space-y-3">
-        {data?.items.map((item) => (
-          <DoseCard
+        {pending.map((item) => (
+          <DoseRow
             key={`${item.medication.id}-${item.scheduledFor}`}
             item={item}
-            onTaken={() => setJustTookDose(true)}
+            onEdit={openEdit}
           />
         ))}
       </div>
 
+      {done.length > 0 && (
+        <div className="mt-4 space-y-2 opacity-50">
+          {done.map((item) => (
+            <Card key={`${item.medication.id}-${item.scheduledFor}`} className="flex items-center gap-3 py-2.5">
+              <span className="text-xs text-[var(--text-muted)]">
+                {item.status === 'taken' ? '✓' : '–'}
+              </span>
+              <p className="flex-1 text-sm text-[var(--text)] line-through">{item.medication.name}</p>
+              <span className="text-xs text-[var(--text-muted)]">{formatTime(item.scheduledFor)}</span>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Link to="/mood" className="mt-4 block">
+        <Button variant="secondary" className="flex w-full items-center justify-center gap-2">
+          <Heart size={16} />
+          Registrar humor
+        </Button>
+      </Link>
+
+      <Link to="/calendar" className="mt-2 block">
+        <Button variant="ghost" className="flex w-full items-center justify-center gap-2">
+          <Calendar size={16} />
+          Ver calendário
+        </Button>
+      </Link>
+
       <div className="mt-6">
         <h2 className="mb-2 text-sm font-medium text-[var(--text-muted)]">Explorar</h2>
-        <EmptyState>Em breve: conteúdo pra explorar por aqui. 🌈</EmptyState>
+        <EmptyState>Em breve: conteúdo pra explorar por aqui.</EmptyState>
       </div>
     </div>
   )

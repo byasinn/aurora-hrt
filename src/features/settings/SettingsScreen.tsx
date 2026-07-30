@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
+import { User, Shield, Bell, Download, Palette, Terminal } from 'lucide-react'
 import { Button, Card, ScreenTitle } from '../../components/ui'
+import Switch from '../../components/Switch'
 import { useProfile, useUpdateProfile } from '../../api/profile'
 import { useThemeStore, applyTheme, COLOR_SHORTCUTS } from '../../lib/themeStore'
 import { todayStr } from '../../lib/dateUtils'
@@ -14,11 +16,20 @@ const CONTENT_OPTIONS: { value: string; label: string }[] = [
 ]
 
 const MODULE_OPTIONS: { value: string; label: string }[] = [
-  { value: 'medications', label: '💊 Remédios' },
-  { value: 'mood', label: '💜 Humor' },
-  { value: 'calendar', label: '🗓️ Histórico' },
-  { value: 'measurements', label: '📏 Medidas' },
+  { value: 'medications', label: 'Remédios' },
+  { value: 'mood', label: 'Humor' },
+  { value: 'calendar', label: 'Histórico' },
+  { value: 'measurements', label: 'Medidas' },
 ]
+
+function SectionHeader({ icon: Icon, title }: { icon: typeof User; title: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <Icon size={16} className="text-[var(--accent)]" />
+      <h2 className="text-sm font-medium text-[var(--text-muted)]">{title}</h2>
+    </div>
+  )
+}
 
 export default function SettingsScreen() {
   const { data: profile } = useProfile()
@@ -59,10 +70,10 @@ export default function SettingsScreen() {
     setPushState(res.ok ? 'granted' : (res.reason ?? 'erro'))
   }
 
-  async function handleToggleFaceId() {
+  async function handleToggleFaceId(next: boolean) {
     setFaceIdBusy(true)
     try {
-      if (faceIdOn) {
+      if (!next) {
         disableFaceId()
         setFaceIdOn(false)
       } else {
@@ -88,7 +99,7 @@ export default function SettingsScreen() {
       <ScreenTitle>Configurações</ScreenTitle>
 
       <Card className="space-y-3">
-        <h2 className="text-sm font-medium text-[var(--text-muted)]">Preferências</h2>
+        <SectionHeader icon={User} title="Preferências" />
         <div>
           <label className="mb-1 block text-xs text-[var(--text-muted)]">Nome</label>
           <input
@@ -118,7 +129,7 @@ export default function SettingsScreen() {
         </div>
 
         <div>
-          <p className="mb-2 text-xs text-[var(--text-muted)]">Conteúdo de medidas (define o que aparece em Medidas)</p>
+          <p className="mb-2 text-xs text-[var(--text-muted)]">Conteúdo de medidas</p>
           <div className="flex gap-2">
             {CONTENT_OPTIONS.map((opt) => (
               <Button
@@ -133,58 +144,59 @@ export default function SettingsScreen() {
           </div>
         </div>
 
-        <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5">
-          <input
-            type="checkbox"
+        <div className="flex items-center justify-between py-1">
+          <span className="text-sm text-[var(--text)]">Mostrar dica do dia na Home</span>
+          <Switch
             checked={profile?.showTipsOnHome ?? true}
-            onChange={(e) => updateProfile.mutate({ showTipsOnHome: e.target.checked })}
-            className="h-4 w-4 accent-[var(--accent)]"
+            onChange={(v) => updateProfile.mutate({ showTipsOnHome: v })}
           />
-          <span className="text-sm text-[var(--text)]">💡 Mostrar dica do dia na Home</span>
-        </label>
+        </div>
 
         <Button className="w-full" onClick={savePreferences} disabled={updateProfile.isPending}>
-          Salvar preferências
+          Salvar
         </Button>
       </Card>
 
-      <Card className="space-y-3">
-        <h2 className="text-sm font-medium text-[var(--text-muted)]">Segurança</h2>
+      <Card className="space-y-2">
+        <SectionHeader icon={Shield} title="Segurança" />
         {faceIdSupported ? (
-          <>
-            <p className="text-xs text-[var(--text-muted)]">
-              Pede Face ID/Touch ID neste aparelho antes de abrir o app (a senha continua sendo a
-              autenticação real do servidor).
-            </p>
-            <Button variant="secondary" className="w-full" onClick={handleToggleFaceId} disabled={faceIdBusy}>
-              {faceIdOn ? '🔓 Desativar Face ID / Touch ID' : '🔐 Ativar Face ID / Touch ID'}
-            </Button>
-          </>
+          <div className="flex items-center justify-between py-1">
+            <div>
+              <p className="text-sm text-[var(--text)]">Face ID / Touch ID</p>
+              <p className="text-xs text-[var(--text-muted)]">Pede biometria neste aparelho antes de abrir o app.</p>
+            </div>
+            <Switch checked={faceIdOn} onChange={handleToggleFaceId} disabled={faceIdBusy} />
+          </div>
         ) : (
           <p className="text-xs text-[var(--text-muted)]">Face ID/Touch ID não disponível neste navegador.</p>
         )}
       </Card>
 
-      <Card className="space-y-3">
-        <h2 className="text-sm font-medium text-[var(--text-muted)]">Notificações</h2>
-        <p className="text-xs text-[var(--text-muted)]">Status: {pushState || 'verificando…'}</p>
-        <Button variant="secondary" className="w-full" onClick={handleEnablePush}>
-          Ativar lembretes por notificação
-        </Button>
+      <Card className="space-y-2">
+        <SectionHeader icon={Bell} title="Notificações" />
+        <div className="flex items-center justify-between py-1">
+          <div>
+            <p className="text-sm text-[var(--text)]">Lembretes de dose</p>
+            <p className="text-xs text-[var(--text-muted)]">Status: {pushState || 'verificando…'}</p>
+          </div>
+          <Button variant="secondary" onClick={handleEnablePush}>
+            Ativar
+          </Button>
+        </div>
       </Card>
 
-      <Card className="space-y-3">
-        <h2 className="text-sm font-medium text-[var(--text-muted)]">Dados</h2>
+      <Card className="space-y-2">
+        <SectionHeader icon={Download} title="Dados" />
         <p className="text-xs text-[var(--text-muted)]">
-          Exporta tudo (doses, humor, medidas, exames) em um arquivo JSON, pra nunca perder nada.
+          Exporta tudo (doses, humor, medidas, exames) em um arquivo JSON.
         </p>
         <Button variant="secondary" className="w-full" onClick={handleExport} disabled={exporting}>
-          {exporting ? 'Exportando…' : '⬇️ Exportar meus dados'}
+          {exporting ? 'Exportando…' : 'Exportar meus dados'}
         </Button>
       </Card>
 
       <Card className="space-y-4">
-        <h2 className="text-sm font-medium text-[var(--text-muted)]">Customização do app</h2>
+        <SectionHeader icon={Palette} title="Customização do app" />
 
         <div>
           <p className="mb-2 text-xs text-[var(--text-muted)]">Modo</p>
@@ -197,7 +209,7 @@ export default function SettingsScreen() {
                 applyTheme('light', theme.accent, theme.accent2)
               }}
             >
-              ☀️ Claro
+              Claro
             </Button>
             <Button
               variant={theme.mode === 'dark' ? 'primary' : 'secondary'}
@@ -207,7 +219,7 @@ export default function SettingsScreen() {
                 applyTheme('dark', theme.accent, theme.accent2)
               }}
             >
-              🌙 Escuro
+              Escuro
             </Button>
           </div>
         </div>
@@ -231,12 +243,10 @@ export default function SettingsScreen() {
         </div>
 
         <div>
-          <p className="mb-2 text-xs text-[var(--text-muted)]">
-            Cores livres — escolha qualquer combinação, do seu jeito
-          </p>
+          <p className="mb-2 text-xs text-[var(--text-muted)]">Cores livres</p>
           <div className="flex gap-4">
             <label className="flex flex-1 flex-col items-center gap-1 text-xs text-[var(--text-muted)]">
-              Cor principal
+              Principal
               <input
                 type="color"
                 value={theme.accent}
@@ -248,7 +258,7 @@ export default function SettingsScreen() {
               />
             </label>
             <label className="flex flex-1 flex-col items-center gap-1 text-xs text-[var(--text-muted)]">
-              Cor secundária
+              Secundária
               <input
                 type="color"
                 value={theme.accent2}
@@ -264,16 +274,13 @@ export default function SettingsScreen() {
 
         <div>
           <p className="mb-2 text-xs text-[var(--text-muted)]">Módulos visíveis no menu</p>
-          <div className="flex flex-col gap-2">
+          <div className="space-y-1">
             {MODULE_OPTIONS.map((opt) => {
               const enabled = (profile?.enabledModules as string[] | undefined)?.includes(opt.value) ?? true
               return (
-                <label
-                  key={opt.value}
-                  className="flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5"
-                >
-                  <input
-                    type="checkbox"
+                <div key={opt.value} className="flex items-center justify-between py-1">
+                  <span className="text-sm text-[var(--text)]">{opt.label}</span>
+                  <Switch
                     checked={enabled}
                     onChange={() => {
                       const current = (profile?.enabledModules as string[] | undefined) ?? []
@@ -282,18 +289,16 @@ export default function SettingsScreen() {
                         : [...current, opt.value]
                       updateProfile.mutate({ enabledModules: updated })
                     }}
-                    className="h-4 w-4 accent-[var(--accent)]"
                   />
-                  <span className="text-sm text-[var(--text)]">{opt.label}</span>
-                </label>
+                </div>
               )
             })}
           </div>
         </div>
       </Card>
 
-      <Card className="space-y-3">
-        <h2 className="text-sm font-medium text-[var(--text-muted)]">Modo dev</h2>
+      <Card className="space-y-2">
+        <SectionHeader icon={Terminal} title="Modo dev" />
         <Button
           variant="secondary"
           className="w-full"

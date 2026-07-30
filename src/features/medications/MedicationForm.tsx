@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from 'react'
+import { Bell } from 'lucide-react'
 import { Button, Card } from '../../components/ui'
-import { useCreateMedication } from '../../api/medications'
-import type { FrequencyType, MedicationInput, MedicationRoute } from '../../../shared/types'
+import Switch from '../../components/Switch'
+import { useCreateMedication, useUpdateMedication } from '../../api/medications'
+import type { FrequencyType, Medication, MedicationInput, MedicationRoute } from '../../../shared/types'
 import { weekdayLabel } from '../../lib/dateUtils'
 import { todayStr } from '../../lib/dateUtils'
 
@@ -17,20 +19,34 @@ const inputClass =
   'w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5 text-[var(--text)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)]'
 const labelClass = 'mb-1.5 block text-xs font-medium text-[var(--text-muted)]'
 
-export default function MedicationForm({ onDone }: { onDone: () => void }) {
+export default function MedicationForm({
+  medication,
+  onDone,
+}: {
+  medication?: Medication
+  onDone: () => void
+}) {
+  const isEdit = !!medication
   const createMed = useCreateMedication()
-  const [name, setName] = useState('')
-  const [doseAmount, setDoseAmount] = useState('')
-  const [doseUnit, setDoseUnit] = useState('mg')
-  const [route, setRoute] = useState<MedicationRoute>('oral')
-  const [frequencyType, setFrequencyType] = useState<FrequencyType>('daily')
-  const [intervalDays, setIntervalDays] = useState(2)
-  const [days, setDays] = useState<number[]>([1, 3, 5])
-  const [preferredTime, setPreferredTime] = useState('08:00')
-  const [notes, setNotes] = useState('')
+  const updateMed = useUpdateMedication()
+  const saving = createMed.isPending || updateMed.isPending
+
+  const initialFreq = (medication?.frequencyValue ?? {}) as { intervalDays?: number; days?: number[] }
+
+  const [name, setName] = useState(medication?.name ?? '')
+  const [doseAmount, setDoseAmount] = useState(medication?.doseAmount ?? '')
+  const [doseUnit, setDoseUnit] = useState(medication?.doseUnit ?? 'mg')
+  const [route, setRoute] = useState<MedicationRoute>((medication?.route as MedicationRoute) ?? 'oral')
+  const [frequencyType, setFrequencyType] = useState<FrequencyType>(
+    (medication?.frequencyType as FrequencyType) ?? 'daily',
+  )
+  const [intervalDays, setIntervalDays] = useState(initialFreq.intervalDays ?? 2)
+  const [days, setDays] = useState<number[]>(initialFreq.days ?? [1, 3, 5])
+  const [preferredTime, setPreferredTime] = useState(medication?.preferredTime ?? '08:00')
+  const [notes, setNotes] = useState(medication?.notes ?? '')
   const [hasHistory, setHasHistory] = useState(false)
   const [sinceDate, setSinceDate] = useState(todayStr())
-  const [remindersEnabled, setRemindersEnabled] = useState(true)
+  const [remindersEnabled, setRemindersEnabled] = useState(medication?.remindersEnabled ?? true)
 
   function toggleDay(d: number) {
     setDays((cur) => (cur.includes(d) ? cur.filter((x) => x !== d) : [...cur, d].sort()))
@@ -48,25 +64,42 @@ export default function MedicationForm({ onDone }: { onDone: () => void }) {
           ? { days }
           : {}
 
-    await createMed.mutateAsync({
-      name,
-      doseAmount,
-      doseUnit,
-      route,
-      frequencyType,
-      frequencyValue,
-      preferredTime,
-      notes: notes || null,
-      active: true,
-      remindersEnabled,
-      ...(hasHistory ? { backfillFrom: sinceDate } : {}),
-    })
+    if (isEdit) {
+      await updateMed.mutateAsync({
+        id: medication.id,
+        name,
+        doseAmount,
+        doseUnit,
+        route,
+        frequencyType,
+        frequencyValue,
+        preferredTime,
+        notes: notes || null,
+        remindersEnabled,
+      })
+    } else {
+      await createMed.mutateAsync({
+        name,
+        doseAmount,
+        doseUnit,
+        route,
+        frequencyType,
+        frequencyValue,
+        preferredTime,
+        notes: notes || null,
+        active: true,
+        remindersEnabled,
+        ...(hasHistory ? { backfillFrom: sinceDate } : {}),
+      })
+    }
     onDone()
   }
 
   return (
     <Card className="space-y-4">
-      <h2 className="text-base font-semibold text-[var(--text)]">Novo medicamento</h2>
+      <h2 className="text-base font-semibold text-[var(--text)]">
+        {isEdit ? 'Editar medicamento' : 'Novo medicamento'}
+      </h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className={labelClass}>Nome do medicamento</label>
@@ -179,40 +212,37 @@ export default function MedicationForm({ onDone }: { onDone: () => void }) {
           />
         </div>
 
-        <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5">
-          <input
-            type="checkbox"
-            checked={remindersEnabled}
-            onChange={(e) => setRemindersEnabled(e.target.checked)}
-            className="h-4 w-4 accent-[var(--accent)]"
-          />
-          <span className="text-sm text-[var(--text)]">🔔 Ativar lembretes por notificação</span>
-        </label>
+        <div className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5">
+          <span className="flex items-center gap-2 text-sm text-[var(--text)]">
+            <Bell size={16} className="text-[var(--text-muted)]" />
+            Lembretes por notificação
+          </span>
+          <Switch checked={remindersEnabled} onChange={setRemindersEnabled} />
+        </div>
 
-        <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5">
-          <input
-            type="checkbox"
-            checked={hasHistory}
-            onChange={(e) => setHasHistory(e.target.checked)}
-            className="h-4 w-4 accent-[var(--accent)]"
-          />
-          <span className="text-sm text-[var(--text)]">Já uso esse medicamento há um tempo</span>
-        </label>
+        {!isEdit && (
+          <>
+            <label className="flex cursor-pointer items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5">
+              <span className="text-sm text-[var(--text)]">Já uso esse medicamento há um tempo</span>
+              <Switch checked={hasHistory} onChange={setHasHistory} />
+            </label>
 
-        {hasHistory && (
-          <div>
-            <label className={labelClass}>Uso desde</label>
-            <input
-              type="date"
-              value={sinceDate}
-              max={todayStr()}
-              onChange={(e) => setSinceDate(e.target.value)}
-              className={inputClass}
-            />
-            <p className="mt-1.5 text-xs text-[var(--text-muted)]">
-              Vamos preencher o histórico automaticamente com base na frequência escolhida.
-            </p>
-          </div>
+            {hasHistory && (
+              <div>
+                <label className={labelClass}>Uso desde</label>
+                <input
+                  type="date"
+                  value={sinceDate}
+                  max={todayStr()}
+                  onChange={(e) => setSinceDate(e.target.value)}
+                  className={inputClass}
+                />
+                <p className="mt-1.5 text-xs text-[var(--text-muted)]">
+                  Vamos preencher o histórico automaticamente com base na frequência escolhida.
+                </p>
+              </div>
+            )}
+          </>
         )}
 
         <div>
@@ -229,8 +259,8 @@ export default function MedicationForm({ onDone }: { onDone: () => void }) {
           <Button type="button" variant="secondary" className="flex-1" onClick={onDone}>
             Cancelar
           </Button>
-          <Button type="submit" className="flex-1" disabled={createMed.isPending}>
-            {createMed.isPending ? 'Salvando…' : 'Salvar'}
+          <Button type="submit" className="flex-1" disabled={saving}>
+            {saving ? 'Salvando…' : 'Salvar'}
           </Button>
         </div>
       </form>

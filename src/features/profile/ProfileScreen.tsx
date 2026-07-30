@@ -1,10 +1,19 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Card, ScreenTitle } from '../../components/ui'
+import { Settings, Calendar, Ruler, Trophy, FlaskConical, Lightbulb, Pencil, Loader2 } from 'lucide-react'
+import { Card } from '../../components/ui'
 import Avatar from '../../components/Avatar'
 import PhotoWall from '../../components/PhotoWall'
 import { useProfile, useUpdateProfile } from '../../api/profile'
 import { fileToResizedDataUrl } from '../../lib/image'
+
+const QUICK_LINKS = [
+  { to: '/calendar', label: 'Histórico', icon: Calendar },
+  { to: '/measurements', label: 'Medidas', icon: Ruler },
+  { to: '/achievements', label: 'Troféus', icon: Trophy },
+  { to: '/labs', label: 'Exames', icon: FlaskConical },
+  { to: '/tips', label: 'Dicas', icon: Lightbulb },
+]
 
 export default function ProfileScreen() {
   const { data: profile } = useProfile()
@@ -26,9 +35,10 @@ export default function ProfileScreen() {
 
   return (
     <div className="space-y-5">
-      <ScreenTitle>Perfil</ScreenTitle>
-
-      <Card className="flex flex-col items-center gap-3 text-center">
+      <Card className="relative flex flex-col items-center gap-3 text-center">
+        <Link to="/settings" className="absolute right-3 top-3 text-[var(--text-muted)]">
+          <Settings size={20} />
+        </Link>
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
@@ -36,8 +46,8 @@ export default function ProfileScreen() {
           disabled={uploading}
         >
           <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} size={88} />
-          <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-[var(--surface)] bg-[var(--accent)] text-xs text-[var(--accent-contrast)]">
-            {uploading ? '…' : '✏️'}
+          <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-[var(--surface)] bg-[var(--accent)] text-[var(--accent-contrast)]">
+            {uploading ? <Loader2 size={14} className="animate-spin" /> : <Pencil size={14} />}
           </span>
         </button>
         <input
@@ -54,42 +64,14 @@ export default function ProfileScreen() {
       </Card>
 
       <div className="grid grid-cols-3 gap-2">
-        <Link to="/calendar">
-          <Card className="flex flex-col items-center gap-1 py-3 text-center">
-            <span className="text-xl">🗓️</span>
-            <span className="text-[11px] font-medium text-[var(--text)]">Histórico</span>
-          </Card>
-        </Link>
-        <Link to="/measurements">
-          <Card className="flex flex-col items-center gap-1 py-3 text-center">
-            <span className="text-xl">📏</span>
-            <span className="text-[11px] font-medium text-[var(--text)]">Medidas</span>
-          </Card>
-        </Link>
-        <Link to="/achievements">
-          <Card className="flex flex-col items-center gap-1 py-3 text-center">
-            <span className="text-xl">🏆</span>
-            <span className="text-[11px] font-medium text-[var(--text)]">Troféus</span>
-          </Card>
-        </Link>
-        <Link to="/labs">
-          <Card className="flex flex-col items-center gap-1 py-3 text-center">
-            <span className="text-xl">🧪</span>
-            <span className="text-[11px] font-medium text-[var(--text)]">Exames</span>
-          </Card>
-        </Link>
-        <Link to="/tips">
-          <Card className="flex flex-col items-center gap-1 py-3 text-center">
-            <span className="text-xl">💡</span>
-            <span className="text-[11px] font-medium text-[var(--text)]">Dicas</span>
-          </Card>
-        </Link>
-        <Link to="/feed">
-          <Card className="flex flex-col items-center gap-1 py-3 text-center">
-            <span className="text-xl">🖼️</span>
-            <span className="text-[11px] font-medium text-[var(--text)]">Feed</span>
-          </Card>
-        </Link>
+        {QUICK_LINKS.map(({ to, label, icon: Icon }) => (
+          <Link key={to} to={to}>
+            <Card className="flex flex-col items-center gap-1 py-3 text-center">
+              <Icon size={20} className="text-[var(--accent)]" />
+              <span className="text-[11px] font-medium text-[var(--text)]">{label}</span>
+            </Card>
+          </Link>
+        ))}
       </div>
 
       <div>
@@ -101,13 +83,6 @@ export default function ProfileScreen() {
         </div>
         <PhotoWall />
       </div>
-
-      <Link to="/settings">
-        <Card className="flex items-center justify-between">
-          <span className="text-sm font-medium text-[var(--text)]">⚙️ Conta</span>
-          <span className="text-[var(--text-muted)]">›</span>
-        </Card>
-      </Link>
     </div>
   )
 }

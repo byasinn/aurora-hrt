@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
-import { Button, Card, EmptyState, ScreenTitle } from '../../components/ui'
+import { Camera, Plus, X, Trash2 } from 'lucide-react'
+import { Button, Card, EmptyState } from '../../components/ui'
 import Avatar from '../../components/Avatar'
 import MediaCollage from '../../components/MediaCollage'
 import { usePosts, useCreatePost, useDeletePost } from '../../api/posts'
@@ -16,6 +17,32 @@ function timeAgo(iso: string): string {
   const days = Math.floor(hours / 24)
   if (days < 7) return `${days}d`
   return new Date(iso).toLocaleDateString('pt-BR')
+}
+
+function QuickPhotoButton() {
+  const createPost = useCreatePost()
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+
+  async function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []).slice(0, 4)
+    if (files.length === 0) return
+    setUploading(true)
+    try {
+      const images = await Promise.all(files.map((f) => fileToFittedDataUrl(f)))
+      await createPost.mutateAsync({ text: null, images })
+    } finally {
+      setUploading(false)
+      if (inputRef.current) inputRef.current.value = ''
+    }
+  }
+
+  return (
+    <label className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-contrast)]">
+      <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFiles} />
+      {uploading ? <span className="h-4 w-4 animate-pulse rounded-full bg-white/60" /> : <Plus size={18} />}
+    </label>
+  )
 }
 
 function Composer() {
@@ -66,9 +93,9 @@ function Composer() {
               <img src={src} alt="" className="aspect-square w-full rounded-lg object-cover" />
               <button
                 onClick={() => setImages((cur) => cur.filter((_, idx) => idx !== i))}
-                className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-xs text-white"
+                className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white"
               >
-                ×
+                <X size={12} />
               </button>
             </div>
           ))}
@@ -76,7 +103,7 @@ function Composer() {
       )}
 
       <div className="flex items-center justify-between">
-        <label className="cursor-pointer text-sm text-[var(--accent)]">
+        <label className="flex cursor-pointer items-center gap-1.5 text-sm text-[var(--accent)]">
           <input
             ref={fileInputRef}
             type="file"
@@ -86,7 +113,8 @@ function Composer() {
             onChange={handleFiles}
             disabled={images.length >= 4}
           />
-          {uploading ? 'Carregando…' : '📷 Fotos'}
+          <Camera size={16} />
+          {uploading ? 'Carregando…' : 'Fotos'}
         </label>
         <Button onClick={handlePost} disabled={createPost.isPending || (!text.trim() && images.length === 0)}>
           Postar
@@ -103,13 +131,15 @@ export default function FeedScreen() {
 
   return (
     <div className="space-y-4">
-      <ScreenTitle>Feed</ScreenTitle>
+      <div className="flex items-center justify-end">
+        <QuickPhotoButton />
+      </div>
 
       <Composer />
 
       {isLoading && <p className="text-sm text-[var(--text-muted)]">Carregando…</p>}
       {posts && posts.length === 0 && (
-        <EmptyState>Nenhum post ainda. Registre um momento da sua jornada acima. 💜</EmptyState>
+        <EmptyState>Nenhum post ainda. Registre um momento da sua jornada acima.</EmptyState>
       )}
 
       <div className="space-y-3">
@@ -121,8 +151,8 @@ export default function FeedScreen() {
                 <p className="text-sm font-medium text-[var(--text)]">{profile?.displayName || 'Você'}</p>
                 <p className="text-xs text-[var(--text-muted)]">{timeAgo(post.createdAt as unknown as string)}</p>
               </div>
-              <button onClick={() => deletePost.mutate(post.id)} className="text-xs text-red-400">
-                excluir
+              <button onClick={() => deletePost.mutate(post.id)} className="text-[var(--text-muted)]">
+                <Trash2 size={16} />
               </button>
             </div>
             {post.text && <p className="whitespace-pre-wrap text-sm text-[var(--text)]">{post.text}</p>}

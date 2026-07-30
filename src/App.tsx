@@ -6,7 +6,6 @@ import { useThemeStore, applyTheme } from './lib/themeStore'
 import PassphraseGate from './features/auth/PassphraseGate'
 import Layout from './components/Layout'
 import TodayScreen from './features/medications/TodayScreen'
-import MedicationsScreen from './features/medications/MedicationsScreen'
 import MoodCheckIn from './features/mood/MoodCheckIn'
 import CalendarScreen from './features/calendar/CalendarScreen'
 import ProfileScreen from './features/profile/ProfileScreen'
@@ -41,7 +40,6 @@ function RootGate() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<TodayScreen />} />
-        <Route path="medications" element={<MedicationsScreen />} />
         <Route path="mood" element={<MoodCheckIn />} />
         <Route path="calendar" element={<CalendarScreen />} />
         <Route path="achievements" element={<AchievementsScreen />} />
