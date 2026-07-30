@@ -162,6 +162,11 @@ export default function TodayScreen() {
           />
         ))}
       </div>
+
+      <div className="mt-6">
+        <h2 className="mb-2 text-sm font-medium text-[var(--text-muted)]">Explorar</h2>
+        <EmptyState>Em breve: conteúdo pra explorar por aqui. 🌈</EmptyState>
+      </div>
     </div>
   )
 }

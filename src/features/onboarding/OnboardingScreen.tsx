@@ -169,7 +169,7 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
               <motion.p variants={lineVariants} className="text-4xl">
                 🦋
               </motion.p>
-              <motion.p variants={lineVariants} className="font-logo flag-gradient-text text-2xl">
+              <motion.p variants={lineVariants} className="font-logo flag-gradient-text text-2xl uppercase tracking-wide">
                 Aurora
               </motion.p>
               <motion.h1 variants={lineVariants} className="text-2xl font-semibold">

@@ -30,6 +30,7 @@ export const profile = pgTable('profile', {
     .notNull()
     .default(['medications', 'mood', 'calendar', 'measurements']), // string[]
   onboardingCompleted: boolean('onboarding_completed').notNull().default(false),
+  showTipsOnHome: boolean('show_tips_on_home').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
@@ -99,6 +100,13 @@ export const labResults = pgTable('lab_results', {
   unit: text('unit').notNull(), // 'pg/mL' | 'ng/dL' | 'mIU/mL' ...
   date: date('date').notNull(),
   notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const posts = pgTable('posts', {
+  id: serial('id').primaryKey(),
+  text: text('text'),
+  images: jsonb('images').notNull().default([]), // string[] data URLs
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 

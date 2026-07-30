@@ -6,6 +6,7 @@ import type {
   moodEntries,
   measurements,
   labResults,
+  posts,
   pushSubscriptions,
   unlockedAchievements,
 } from './schema'
@@ -66,6 +67,9 @@ export type LabType =
   | 'custom'
 export type LabResult = typeof labResults.$inferSelect
 export type LabResultInput = Omit<typeof labResults.$inferInsert, 'id' | 'createdAt'>
+
+export type Post = typeof posts.$inferSelect
+export type PostInput = Omit<typeof posts.$inferInsert, 'id' | 'createdAt'>
 
 export type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect
 export type PushSubscriptionInput = Omit<typeof pushSubscriptions.$inferInsert, 'id' | 'createdAt'>

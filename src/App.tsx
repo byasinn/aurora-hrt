@@ -14,6 +14,8 @@ import AchievementsScreen from './features/achievements/AchievementsScreen'
 import MeasurementsScreen from './features/measurements/MeasurementsScreen'
 import LabsScreen from './features/labs/LabsScreen'
 import TipsScreen from './features/tips/TipsScreen'
+import FeedScreen from './features/feed/FeedScreen'
+import SettingsScreen from './features/settings/SettingsScreen'
 import OnboardingScreen from './features/onboarding/OnboardingScreen'
 import GradientBlobs from './components/GradientBlobs'
 import { useProfile } from './api/profile'
@@ -46,6 +48,8 @@ function RootGate() {
         <Route path="measurements" element={<MeasurementsScreen />} />
         <Route path="labs" element={<LabsScreen />} />
         <Route path="tips" element={<TipsScreen />} />
+        <Route path="feed" element={<FeedScreen />} />
+        <Route path="settings" element={<SettingsScreen />} />
         <Route path="profile" element={<ProfileScreen />} />
       </Route>
     </Routes>
