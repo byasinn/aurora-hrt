@@ -152,6 +152,14 @@ export default function SettingsScreen() {
           />
         </div>
 
+        <div className="flex items-center justify-between py-1">
+          <span className="text-sm text-[var(--text)]">Mostrar humor/libido médios no Perfil</span>
+          <Switch
+            checked={profile?.showStatsOnProfile ?? false}
+            onChange={(v) => updateProfile.mutate({ showStatsOnProfile: v })}
+          />
+        </div>
+
         <Button className="w-full" onClick={savePreferences} disabled={updateProfile.isPending}>
           Salvar
         </Button>

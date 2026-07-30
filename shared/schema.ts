@@ -31,6 +31,9 @@ export const profile = pgTable('profile', {
     .default(['medications', 'mood', 'calendar', 'measurements']), // string[]
   onboardingCompleted: boolean('onboarding_completed').notNull().default(false),
   showTipsOnHome: boolean('show_tips_on_home').notNull().default(true),
+  bio: text('bio'),
+  coverUrl: text('cover_url'),
+  showStatsOnProfile: boolean('show_stats_on_profile').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
@@ -107,6 +110,15 @@ export const posts = pgTable('posts', {
   id: serial('id').primaryKey(),
   text: text('text'),
   images: jsonb('images').notNull().default([]), // string[] data URLs
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const messages = pgTable('messages', {
+  id: serial('id').primaryKey(),
+  icon: text('icon').notNull().default('💜'),
+  title: text('title').notNull(),
+  body: text('body').notNull(),
+  read: boolean('read').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 

@@ -1,10 +1,13 @@
 import { useRef, useState } from 'react'
-import { Camera, Plus, X, Trash2 } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Search, Plus, X, Trash2, Mail } from 'lucide-react'
 import { Button, Card, EmptyState } from '../../components/ui'
 import Avatar from '../../components/Avatar'
 import MediaCollage from '../../components/MediaCollage'
 import { usePosts, useCreatePost, useDeletePost } from '../../api/posts'
 import { useProfile } from '../../api/profile'
+import { useMessages } from '../../api/messages'
 import { fileToFittedDataUrl } from '../../lib/image'
 
 function timeAgo(iso: string): string {
@@ -19,29 +22,59 @@ function timeAgo(iso: string): string {
   return new Date(iso).toLocaleDateString('pt-BR')
 }
 
-function QuickPhotoButton() {
-  const createPost = useCreatePost()
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [uploading, setUploading] = useState(false)
+function SearchBox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false)
 
-  async function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []).slice(0, 4)
-    if (files.length === 0) return
-    setUploading(true)
-    try {
-      const images = await Promise.all(files.map((f) => fileToFittedDataUrl(f)))
-      await createPost.mutateAsync({ text: null, images })
-    } finally {
-      setUploading(false)
-      if (inputRef.current) inputRef.current.value = ''
-    }
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--text-muted)]"
+      >
+        <Search size={20} />
+      </button>
+    )
   }
 
   return (
-    <label className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-contrast)]">
-      <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFiles} />
-      {uploading ? <span className="h-4 w-4 animate-pulse rounded-full bg-white/60" /> : <Plus size={18} />}
-    </label>
+    <motion.div
+      initial={{ width: 36 }}
+      animate={{ width: '100%' }}
+      className="flex items-center gap-1 rounded-full border border-[var(--accent)] bg-[var(--surface-2)] px-3 py-1.5"
+    >
+      <Search size={16} className="text-[var(--accent)]" />
+      <input
+        autoFocus
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Buscar nos posts…"
+        className="flex-1 bg-transparent text-sm text-[var(--text)] outline-none"
+      />
+      <button
+        onClick={() => {
+          setOpen(false)
+          onChange('')
+        }}
+      >
+        <X size={16} className="text-[var(--text-muted)]" />
+      </button>
+    </motion.div>
+  )
+}
+
+function MessagesIcon() {
+  const { data: messages } = useMessages()
+  const unread = messages?.filter((m) => !m.read).length ?? 0
+
+  return (
+    <Link to="/messages" className="relative flex h-9 w-9 items-center justify-center text-[var(--text-muted)]">
+      <Mail size={20} />
+      {unread > 0 && (
+        <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white">
+          {unread}
+        </span>
+      )}
+    </Link>
   )
 }
 
@@ -103,7 +136,7 @@ function Composer() {
       )}
 
       <div className="flex items-center justify-between">
-        <label className="flex cursor-pointer items-center gap-1.5 text-sm text-[var(--accent)]">
+        <label className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-[var(--border)] text-[var(--accent)]">
           <input
             ref={fileInputRef}
             type="file"
@@ -113,8 +146,7 @@ function Composer() {
             onChange={handleFiles}
             disabled={images.length >= 4}
           />
-          <Camera size={16} />
-          {uploading ? 'Carregando…' : 'Fotos'}
+          {uploading ? <span className="h-3 w-3 animate-pulse rounded-full bg-[var(--accent)]" /> : <Plus size={16} />}
         </label>
         <Button onClick={handlePost} disabled={createPost.isPending || (!text.trim() && images.length === 0)}>
           Postar
@@ -128,22 +160,51 @@ export default function FeedScreen() {
   const { data: posts, isLoading } = usePosts()
   const { data: profile } = useProfile()
   const deletePost = useDeletePost()
+  const [composerOpen, setComposerOpen] = useState(false)
+  const [query, setQuery] = useState('')
+
+  const filteredPosts = posts?.filter(
+    (p) => !query.trim() || p.text?.toLowerCase().includes(query.trim().toLowerCase()),
+  )
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-end">
-        <QuickPhotoButton />
+      <div className="flex items-center gap-2">
+        <SearchBox value={query} onChange={setQuery} />
+        <div className="flex-1" />
+        <MessagesIcon />
+        <button
+          onClick={() => setComposerOpen((o) => !o)}
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-contrast)]"
+        >
+          <motion.span animate={{ rotate: composerOpen ? 45 : 0 }} className="flex">
+            <Plus size={20} />
+          </motion.span>
+        </button>
       </div>
 
-      <Composer />
+      <AnimatePresence>
+        {composerOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <Composer />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {isLoading && <p className="text-sm text-[var(--text-muted)]">Carregando…</p>}
-      {posts && posts.length === 0 && (
-        <EmptyState>Nenhum post ainda. Registre um momento da sua jornada acima.</EmptyState>
+      {filteredPosts && filteredPosts.length === 0 && (
+        <EmptyState>
+          {query ? 'Nenhum post encontrado.' : 'Nenhum post ainda. Toque no + pra registrar um momento.'}
+        </EmptyState>
       )}
 
       <div className="space-y-3">
-        {posts?.map((post) => (
+        {filteredPosts?.map((post) => (
           <Card key={post.id} className="space-y-2">
             <div className="flex items-center gap-2">
               <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} size={32} />

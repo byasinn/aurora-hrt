@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Heart, Calendar, Pill, Syringe, Bandage, Droplet, Sparkles } from 'lucide-react'
-import { Button, Card, EmptyState } from '../../components/ui'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Plus, Heart, Calendar, Pill, Syringe, Bandage, Droplet, Sparkles, ChevronDown, Undo2 } from 'lucide-react'
+import { EmptyState } from '../../components/ui'
 import SwipeableRow from '../../components/SwipeableRow'
 import { useToday, useLogDose, useUpdateDoseLog, type TodayItem } from '../../api/doses'
 import { useProfile } from '../../api/profile'
 import { useDeleteMedication, useMedications } from '../../api/medications'
 import { formatTime } from '../../lib/dateUtils'
 import WelcomeBanner from '../../components/WelcomeBanner'
-import InsightsCard from '../../components/InsightsCard'
 import TipOfDayCard from '../../components/TipOfDayCard'
 import MedicationForm from './MedicationForm'
 import type { Medication } from '../../../shared/types'
@@ -29,13 +29,27 @@ const ROUTE_ICONS: Record<string, typeof Pill> = {
   other: Sparkles,
 }
 
-function DoseRow({ item, onEdit }: { item: TodayItem; onEdit: (medicationId: number) => void }) {
+function DoseRow({
+  item,
+  completing,
+  onEdit,
+  onStartComplete,
+  onAnimationDone,
+}: {
+  item: TodayItem
+  completing: boolean
+  onEdit: (medicationId: number) => void
+  onStartComplete: () => void
+  onAnimationDone: () => void
+}) {
   const logDose = useLogDose()
   const updateDose = useUpdateDoseLog()
   const deleteMed = useDeleteMedication()
   const RouteIcon = ROUTE_ICONS[item.medication.route] ?? Sparkles
 
   function markTaken() {
+    if (completing) return
+    onStartComplete()
     if (item.doseLogId) {
       updateDose.mutate({ id: item.doseLogId, status: 'taken', takenAt: new Date() })
     } else {
@@ -55,14 +69,19 @@ function DoseRow({ item, onEdit }: { item: TodayItem; onEdit: (medicationId: num
   }
 
   return (
-    <SwipeableRow
-      onTap={item.status === 'pending' || item.status === 'missed' ? markTaken : undefined}
-      onEdit={() => onEdit(item.medication.id)}
-      onDelete={handleDelete}
-    >
-      <Card
+    <SwipeableRow onTap={markTaken} onEdit={() => onEdit(item.medication.id)} onDelete={handleDelete}>
+      <motion.div
+        animate={
+          completing
+            ? { x: [0, 0, 380], opacity: [1, 1, 0], backgroundColor: ['var(--surface)', 'var(--accent)', 'var(--accent)'] }
+            : { x: 0, opacity: 1 }
+        }
+        transition={{ duration: 0.55, times: completing ? [0, 0.35, 1] : undefined }}
+        onAnimationComplete={() => {
+          if (completing) onAnimationDone()
+        }}
         className={
-          'flex items-center gap-3 border-l-4 ' +
+          'flex items-center gap-3 rounded-2xl border border-[var(--border)] p-4 [box-shadow:var(--shadow)] border-l-4 ' +
           (item.status === 'missed' ? 'border-l-red-500' : 'border-l-[var(--accent)]')
         }
       >
@@ -76,8 +95,64 @@ function DoseRow({ item, onEdit }: { item: TodayItem; onEdit: (medicationId: num
             {item.status === 'missed' && ' · atrasado'}
           </p>
         </div>
-      </Card>
+      </motion.div>
     </SwipeableRow>
+  )
+}
+
+function DoneRow({ item }: { item: TodayItem }) {
+  const updateDose = useUpdateDoseLog()
+  const logDose = useLogDose()
+
+  function undo() {
+    if (item.doseLogId) {
+      updateDose.mutate({ id: item.doseLogId, status: 'pending', takenAt: null })
+    } else {
+      logDose.mutate({
+        medicationId: item.medication.id,
+        scheduledFor: new Date(item.scheduledFor),
+        status: 'pending',
+      })
+    }
+  }
+
+  return (
+    <motion.button
+      type="button"
+      onClick={undo}
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 0.5, y: 0 }}
+      whileTap={{ opacity: 0.9 }}
+      className="flex w-full items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-2.5 text-left"
+    >
+      <span className="text-xs text-[var(--text-muted)]">{item.status === 'taken' ? '✓' : '–'}</span>
+      <p className="flex-1 text-sm text-[var(--text)] line-through">{item.medication.name}</p>
+      <Undo2 size={14} className="text-[var(--text-muted)]" />
+    </motion.button>
+  )
+}
+
+function BigLinkButton({
+  to,
+  icon: Icon,
+  label,
+  variant,
+}: {
+  to: string
+  icon: typeof Heart
+  label: string
+  variant: 'accent' | 'accent2'
+}) {
+  return (
+    <Link to={to} className="flex-1">
+      <div
+        className="flex flex-col items-center justify-center gap-1.5 rounded-2xl py-5 text-[var(--accent-contrast)] [box-shadow:var(--shadow)]"
+        style={{ background: variant === 'accent' ? 'var(--accent)' : 'var(--accent-2)' }}
+      >
+        <Icon size={22} />
+        <span className="text-sm font-medium">{label}</span>
+      </div>
+    </Link>
   )
 }
 
@@ -86,9 +161,17 @@ export default function TodayScreen() {
   const { data: profile } = useProfile()
   const { data: medications } = useMedications()
   const [formState, setFormState] = useState<'closed' | 'create' | Medication>('closed')
+  const [exploreOpen, setExploreOpen] = useState(false)
+  const [completingKeys, setCompletingKeys] = useState<Set<string>>(new Set())
 
-  const pending = data?.items.filter((i) => i.status === 'pending' || i.status === 'missed') ?? []
-  const done = data?.items.filter((i) => i.status === 'taken' || i.status === 'skipped') ?? []
+  const keyFor = (item: TodayItem) => `${item.medication.id}-${item.scheduledFor}`
+  const allItems = data?.items ?? []
+  const pending = allItems.filter(
+    (i) => completingKeys.has(keyFor(i)) || i.status === 'pending' || i.status === 'missed',
+  )
+  const done = allItems.filter(
+    (i) => !completingKeys.has(keyFor(i)) && (i.status === 'taken' || i.status === 'skipped'),
+  )
 
   function openEdit(medicationId: number) {
     const med = medications?.find((m) => m.id === medicationId)
@@ -98,8 +181,6 @@ export default function TodayScreen() {
   return (
     <div>
       <WelcomeBanner />
-      <TipOfDayCard />
-      <InsightsCard />
 
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-medium text-[var(--text-muted)]">Remédios</h2>
@@ -110,6 +191,8 @@ export default function TodayScreen() {
           <Plus size={18} />
         </button>
       </div>
+
+      <TipOfDayCard />
 
       {formState !== 'closed' && (
         <div className="mb-4">
@@ -136,47 +219,75 @@ export default function TodayScreen() {
       )}
 
       <div className="space-y-3">
-        {pending.map((item) => (
-          <DoseRow
-            key={`${item.medication.id}-${item.scheduledFor}`}
-            item={item}
-            onEdit={openEdit}
-          />
-        ))}
+        <AnimatePresence initial={false}>
+          {pending.map((item) => {
+            const key = keyFor(item)
+            return (
+              <DoseRow
+                key={key}
+                item={item}
+                completing={completingKeys.has(key)}
+                onEdit={openEdit}
+                onStartComplete={() => setCompletingKeys((cur) => new Set(cur).add(key))}
+                onAnimationDone={() =>
+                  setCompletingKeys((cur) => {
+                    const next = new Set(cur)
+                    next.delete(key)
+                    return next
+                  })
+                }
+              />
+            )
+          })}
+        </AnimatePresence>
       </div>
 
       {done.length > 0 && (
-        <div className="mt-4 space-y-2 opacity-50">
-          {done.map((item) => (
-            <Card key={`${item.medication.id}-${item.scheduledFor}`} className="flex items-center gap-3 py-2.5">
-              <span className="text-xs text-[var(--text-muted)]">
-                {item.status === 'taken' ? '✓' : '–'}
-              </span>
-              <p className="flex-1 text-sm text-[var(--text)] line-through">{item.medication.name}</p>
-              <span className="text-xs text-[var(--text-muted)]">{formatTime(item.scheduledFor)}</span>
-            </Card>
-          ))}
+        <div className="mt-4 space-y-2">
+          <AnimatePresence initial={false}>
+            {done.map((item) => (
+              <DoneRow key={`${item.medication.id}-${item.scheduledFor}`} item={item} />
+            ))}
+          </AnimatePresence>
         </div>
       )}
 
-      <Link to="/mood" className="mt-4 block">
-        <Button variant="secondary" className="flex w-full items-center justify-center gap-2">
-          <Heart size={16} />
-          Registrar humor
-        </Button>
-      </Link>
-
-      <Link to="/calendar" className="mt-2 block">
-        <Button variant="ghost" className="flex w-full items-center justify-center gap-2">
-          <Calendar size={16} />
-          Ver calendário
-        </Button>
-      </Link>
-
-      <div className="mt-6">
-        <h2 className="mb-2 text-sm font-medium text-[var(--text-muted)]">Explorar</h2>
-        <EmptyState>Em breve: conteúdo pra explorar por aqui.</EmptyState>
+      <div className="mt-5 flex gap-3">
+        <BigLinkButton to="/mood" icon={Heart} label="Registrar humor" variant="accent" />
+        <BigLinkButton to="/calendar" icon={Calendar} label="Ver calendário" variant="accent2" />
       </div>
+
+      <div className="mt-8 flex justify-center">
+        <motion.button
+          type="button"
+          onClick={() => setExploreOpen((o) => !o)}
+          drag="y"
+          dragConstraints={{ top: 0, bottom: 0 }}
+          dragElastic={0.3}
+          onDragEnd={(_e, info) => {
+            if (info.offset.y > 30) setExploreOpen(true)
+          }}
+          animate={{ y: [0, 6, 0] }}
+          transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+          className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--text-muted)]"
+        >
+          <ChevronDown size={22} className={exploreOpen ? 'rotate-180 transition-transform' : 'transition-transform'} />
+        </motion.button>
+      </div>
+
+      <AnimatePresence>
+        {exploreOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <h2 className="mb-2 mt-2 text-sm font-medium text-[var(--text-muted)]">Explorar</h2>
+            <EmptyState>Em breve: conteúdo pra explorar por aqui.</EmptyState>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

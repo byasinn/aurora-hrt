@@ -9,6 +9,8 @@ import TodayScreen from './features/medications/TodayScreen'
 import MoodCheckIn from './features/mood/MoodCheckIn'
 import CalendarScreen from './features/calendar/CalendarScreen'
 import ProfileScreen from './features/profile/ProfileScreen'
+import PublicProfileScreen from './features/profile/PublicProfileScreen'
+import MessagesScreen from './features/messages/MessagesScreen'
 import AchievementsScreen from './features/achievements/AchievementsScreen'
 import MeasurementsScreen from './features/measurements/MeasurementsScreen'
 import LabsScreen from './features/labs/LabsScreen'
@@ -49,6 +51,8 @@ function RootGate() {
         <Route path="feed" element={<FeedScreen />} />
         <Route path="settings" element={<SettingsScreen />} />
         <Route path="profile" element={<ProfileScreen />} />
+        <Route path="perfil" element={<PublicProfileScreen />} />
+        <Route path="messages" element={<MessagesScreen />} />
       </Route>
     </Routes>
   )

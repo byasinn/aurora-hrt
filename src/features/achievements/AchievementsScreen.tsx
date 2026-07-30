@@ -3,6 +3,7 @@ import { Card, ScreenTitle } from '../../components/ui'
 import { useUnlockedAchievements, useUnlockAchievement } from '../../api/achievements'
 import { useDoseLogs } from '../../api/doses'
 import { useMoodEntries } from '../../api/moods'
+import { useCreateMessage } from '../../api/messages'
 import { ACHIEVEMENTS } from '../../lib/achievementsEngine'
 import { computeWeeklySummary } from '../../lib/insights'
 import { useAchievementStats } from './useAchievementStats'
@@ -10,6 +11,7 @@ import { useAchievementStats } from './useAchievementStats'
 export default function AchievementsScreen() {
   const { data: unlocked = [] } = useUnlockedAchievements()
   const unlockAchievement = useUnlockAchievement()
+  const createMessage = useCreateMessage()
   const stats = useAchievementStats()
   const { data: doseLogs = [] } = useDoseLogs()
   const { data: moodEntries = [] } = useMoodEntries()
@@ -21,6 +23,11 @@ export default function AchievementsScreen() {
     for (const ach of ACHIEVEMENTS) {
       if (!unlockedKeys.has(ach.key) && ach.isMet(stats)) {
         unlockAchievement.mutate(ach.key)
+        createMessage.mutate({
+          icon: ach.icon,
+          title: 'Novo troféu!',
+          body: `${ach.title} — ${ach.description}`,
+        })
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

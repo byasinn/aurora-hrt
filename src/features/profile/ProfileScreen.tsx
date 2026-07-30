@@ -1,13 +1,13 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Settings, Calendar, Ruler, Trophy, FlaskConical, Lightbulb, Pencil, Loader2 } from 'lucide-react'
+import { Settings, Pill, Calendar, Ruler, Trophy, FlaskConical, Lightbulb, Pencil, Loader2 } from 'lucide-react'
 import { Card } from '../../components/ui'
 import Avatar from '../../components/Avatar'
-import PhotoWall from '../../components/PhotoWall'
 import { useProfile, useUpdateProfile } from '../../api/profile'
 import { fileToResizedDataUrl } from '../../lib/image'
 
 const QUICK_LINKS = [
+  { to: '/', label: 'Remédios', icon: Pill },
   { to: '/calendar', label: 'Histórico', icon: Calendar },
   { to: '/measurements', label: 'Medidas', icon: Ruler },
   { to: '/achievements', label: 'Troféus', icon: Trophy },
@@ -72,16 +72,6 @@ export default function ProfileScreen() {
             </Card>
           </Link>
         ))}
-      </div>
-
-      <div>
-        <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-sm font-medium text-[var(--text-muted)]">Seus momentos</h2>
-          <Link to="/feed" className="text-xs text-[var(--accent)]">
-            Ver feed
-          </Link>
-        </div>
-        <PhotoWall />
       </div>
     </div>
   )

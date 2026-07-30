@@ -7,6 +7,7 @@ import type {
   measurements,
   labResults,
   posts,
+  messages,
   pushSubscriptions,
   unlockedAchievements,
 } from './schema'
@@ -70,6 +71,9 @@ export type LabResultInput = Omit<typeof labResults.$inferInsert, 'id' | 'create
 
 export type Post = typeof posts.$inferSelect
 export type PostInput = Omit<typeof posts.$inferInsert, 'id' | 'createdAt'>
+
+export type Message = typeof messages.$inferSelect
+export type MessageInput = Omit<typeof messages.$inferInsert, 'id' | 'createdAt'>
 
 export type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect
 export type PushSubscriptionInput = Omit<typeof pushSubscriptions.$inferInsert, 'id' | 'createdAt'>
