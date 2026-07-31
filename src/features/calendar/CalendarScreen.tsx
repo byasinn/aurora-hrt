@@ -17,6 +17,7 @@ import { Card, EmptyState, ScreenTitle } from '../../components/ui'
 import { useDoseLogs } from '../../api/doses'
 import { useMoodEntries } from '../../api/moods'
 import { useMedications } from '../../api/medications'
+import { useRoutines, useRoutineLogs } from '../../api/routines'
 import { formatDateBR } from '../../lib/dateUtils'
 
 function toDateStr(d: Date): string {
@@ -38,29 +39,47 @@ export default function CalendarScreen() {
   const { data: doseLogs } = useDoseLogs({ from: `${from}T00:00:00.000Z`, to: `${to}T23:59:59.999Z` })
   const { data: moods } = useMoodEntries({ from, to })
   const { data: meds } = useMedications()
+  const { data: routines } = useRoutines()
+  const { data: routineLogs } = useRoutineLogs({ from, to })
   const medById = new Map((meds ?? []).map((m) => [m.id, m]))
+  const routineById = new Map((routines ?? []).map((r) => [r.id, r]))
 
   const dayInfo = useMemo(() => {
-    const map = new Map<string, { taken: number; missed: number; mood: boolean }>()
+    const map = new Map<string, { taken: number; missed: number; mood: boolean; routine: boolean }>()
     for (const log of doseLogs ?? []) {
       const key = new Date(log.scheduledFor).toISOString().slice(0, 10)
-      const entry = map.get(key) ?? { taken: 0, missed: 0, mood: false }
+      const entry = map.get(key) ?? { taken: 0, missed: 0, mood: false, routine: false }
       if (log.status === 'taken') entry.taken += 1
       else if (log.status === 'missed' || log.status === 'skipped') entry.missed += 1
       map.set(key, entry)
     }
     for (const m of moods ?? []) {
-      const entry = map.get(m.date) ?? { taken: 0, missed: 0, mood: false }
+      const entry = map.get(m.date) ?? { taken: 0, missed: 0, mood: false, routine: false }
       entry.mood = true
       map.set(m.date, entry)
     }
+    for (const log of routineLogs ?? []) {
+      const routine = routineById.get(log.routineId)
+      if (!routine) continue
+      const done = routine.type === 'checkbox' ? log.count > 0 : routine.targetCount != null && log.count >= routine.targetCount
+      if (!done) continue
+      const entry = map.get(log.date) ?? { taken: 0, missed: 0, mood: false, routine: false }
+      entry.routine = true
+      map.set(log.date, entry)
+    }
     return map
-  }, [doseLogs, moods])
+  }, [doseLogs, moods, routineLogs, routineById])
 
   const selectedLogs = (doseLogs ?? []).filter(
     (l) => selected && new Date(l.scheduledFor).toISOString().slice(0, 10) === selected,
   )
   const selectedMood = (moods ?? []).find((m) => m.date === selected)
+  const selectedRoutineLogs = (routineLogs ?? []).filter((l) => {
+    if (l.date !== selected) return false
+    const routine = routineById.get(l.routineId)
+    if (!routine) return false
+    return routine.type === 'checkbox' ? l.count > 0 : routine.targetCount != null && l.count >= routine.targetCount
+  })
 
   return (
     <div className="space-y-4">
@@ -101,6 +120,7 @@ export default function CalendarScreen() {
             if (info?.taken) colors.push('#10b981')
             if (info?.missed) colors.push('#ef4444')
             if (info?.mood) colors.push('var(--accent-2)')
+            if (info?.routine) colors.push('#f59e0b')
             const background =
               colors.length === 0
                 ? undefined
@@ -139,6 +159,9 @@ export default function CalendarScreen() {
             <span className="h-2 w-2 rounded-full bg-[var(--accent-2)]" /> check-in de humor
           </span>
           <span className="flex items-center gap-1">
+            <span className="h-2 w-2 rounded-full bg-amber-500" /> rotinas concluídas
+          </span>
+          <span className="flex items-center gap-1">
             <span className="h-2 w-2 rounded-full" style={{ background: 'linear-gradient(135deg, #10b981, var(--accent-2))' }} /> combinação = gradiente
           </span>
         </div>
@@ -147,7 +170,7 @@ export default function CalendarScreen() {
       {selected && (
         <Card className="space-y-2">
           <p className="text-sm font-medium text-[var(--text)]">{formatDateBR(selected)}</p>
-          {selectedLogs.length === 0 && !selectedMood && (
+          {selectedLogs.length === 0 && !selectedMood && selectedRoutineLogs.length === 0 && (
             <p className="text-xs text-[var(--text-muted)]">Nenhum registro nesse dia.</p>
           )}
           {selectedLogs.map((log) => (
@@ -161,10 +184,17 @@ export default function CalendarScreen() {
               Humor registrado · energia {selectedMood.energyLevel ?? '-'}/5
             </p>
           )}
+          {selectedRoutineLogs.map((log) => (
+            <p key={log.id} className="text-sm text-[var(--text)]">
+              {routineById.get(log.routineId)?.icon} {routineById.get(log.routineId)?.name}
+            </p>
+          ))}
         </Card>
       )}
 
-      {!doseLogs?.length && !moods?.length && <EmptyState>Ainda não há registros neste mês.</EmptyState>}
+      {!doseLogs?.length && !moods?.length && !routineLogs?.length && (
+        <EmptyState>Ainda não há registros neste mês.</EmptyState>
+      )}
     </div>
   )
 }

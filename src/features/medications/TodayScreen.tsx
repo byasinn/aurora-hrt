@@ -1,16 +1,18 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Heart, Calendar, Pill, Syringe, Bandage, Droplet, Sparkles, Undo2 } from 'lucide-react'
+import { Plus, Heart, Calendar, Pill, Syringe, Bandage, Droplet, Sparkles, Undo2, ListChecks } from 'lucide-react'
 import { EmptyState } from '../../components/ui'
 import SwipeableRow from '../../components/SwipeableRow'
 import { useToday, useLogDose, useUpdateDoseLog, type TodayItem } from '../../api/doses'
 import { useProfile } from '../../api/profile'
 import { useDeleteMedication, useMedications } from '../../api/medications'
+import { useRoutines } from '../../api/routines'
 import { formatTime } from '../../lib/dateUtils'
 import WelcomeBanner from '../../components/WelcomeBanner'
 import TipOfDayCard from '../../components/TipOfDayCard'
 import MedicationForm from './MedicationForm'
+import RoutineRow from '../routines/RoutineRow'
 import type { Medication } from '../../../shared/types'
 
 const ROUTE_LABELS: Record<string, string> = {
@@ -181,6 +183,8 @@ export default function TodayScreen() {
   const { data, isLoading, isError } = useToday()
   const { data: profile } = useProfile()
   const { data: medications } = useMedications()
+  const { data: routines } = useRoutines()
+  const activeRoutines = (routines ?? []).filter((r) => r.active)
   const [formState, setFormState] = useState<'closed' | 'create' | Medication>('closed')
   const [completingKeys, setCompletingKeys] = useState<Set<string>>(new Set())
 
@@ -201,8 +205,6 @@ export default function TodayScreen() {
   return (
     <div>
       <WelcomeBanner />
-
-      <TipOfDayCard />
 
       {isLoading && <p className="text-sm text-[var(--text-muted)]">Carregando…</p>}
       {isError && (
@@ -271,7 +273,29 @@ export default function TodayScreen() {
         </div>
       )}
 
-      <div className="mt-5 flex gap-3">
+      {activeRoutines.length > 0 && (
+        <div className="mt-5 space-y-2">
+          <div className="flex items-center justify-between">
+            <h2 className="flex items-center gap-1.5 text-sm font-medium text-[var(--text-muted)]">
+              <ListChecks size={14} /> Rotinas de hoje
+            </h2>
+            <Link to="/routines" className="text-xs text-[var(--accent)]">
+              Ver todas
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {activeRoutines.map((r) => (
+              <RoutineRow key={r.id} routine={r} compact />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="mt-5">
+        <TipOfDayCard />
+      </div>
+
+      <div className="mt-1 flex gap-3">
         <BigLinkButton to="/mood" icon={Heart} label="Registrar humor" variant="accent" />
         <BigLinkButton to="/calendar" icon={Calendar} label="Ver calendário" variant="accent2" />
       </div>

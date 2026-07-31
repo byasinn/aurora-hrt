@@ -54,6 +54,7 @@ export default function ProfileScreen() {
                 icon={profile?.avatarIcon}
                 name={profile?.displayName}
                 size={64}
+                ring={false}
                 className="ring-4 ring-[var(--surface)]"
               />
               <p className="mt-2 font-semibold text-[var(--text)]">{profile?.displayName || 'Sem nome ainda'}</p>

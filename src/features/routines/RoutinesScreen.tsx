@@ -1,94 +1,10 @@
 import { useState } from 'react'
-import { Plus, Pencil, Trash2, Check, Minus } from 'lucide-react'
-import { Card, EmptyState, ScreenTitle } from '../../components/ui'
-import {
-  useRoutines,
-  useDeleteRoutine,
-  useRoutineLogs,
-  useCreateRoutineLog,
-  useUpdateRoutineLog,
-} from '../../api/routines'
-import { todayStr } from '../../lib/dateUtils'
+import { Plus } from 'lucide-react'
+import { EmptyState, ScreenTitle } from '../../components/ui'
+import { useRoutines } from '../../api/routines'
 import RoutineForm from './RoutineForm'
+import RoutineRow from './RoutineRow'
 import type { Routine } from '../../../shared/types'
-
-function RoutineRow({ routine, onEdit }: { routine: Routine; onEdit: () => void }) {
-  const today = todayStr()
-  const { data: logs } = useRoutineLogs({ from: today, to: today })
-  const createLog = useCreateRoutineLog()
-  const updateLog = useUpdateRoutineLog()
-  const deleteRoutine = useDeleteRoutine()
-
-  const todayLog = logs?.find((l) => l.routineId === routine.id)
-  const count = todayLog?.count ?? 0
-  const isCheckbox = routine.type === 'checkbox'
-  const done = isCheckbox ? count > 0 : routine.targetCount != null && count >= routine.targetCount
-
-  function setCount(next: number) {
-    const clamped = Math.max(0, next)
-    if (todayLog) {
-      updateLog.mutate({ id: todayLog.id, count: clamped })
-    } else {
-      createLog.mutate({ routineId: routine.id, date: today, count: clamped })
-    }
-  }
-
-  function handleDelete() {
-    if (confirm(`Excluir a rotina "${routine.name}"?`)) {
-      deleteRoutine.mutate(routine.id)
-    }
-  }
-
-  return (
-    <Card className={'flex items-center gap-3 ' + (done ? 'border-[var(--accent)]' : '')}>
-      <span className="text-xl">{routine.icon}</span>
-      <div className="flex-1">
-        <p className="font-medium text-[var(--text)]">{routine.name}</p>
-        {!isCheckbox && (
-          <p className="text-xs text-[var(--text-muted)]">
-            {count}/{routine.targetCount}
-          </p>
-        )}
-      </div>
-
-      {isCheckbox ? (
-        <button
-          onClick={() => setCount(done ? 0 : 1)}
-          className={
-            'flex h-9 w-9 items-center justify-center rounded-full border transition ' +
-            (done
-              ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
-              : 'border-[var(--border)] text-[var(--text-muted)]')
-          }
-        >
-          <Check size={16} />
-        </button>
-      ) : (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setCount(count - 1)}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-muted)]"
-          >
-            <Minus size={14} />
-          </button>
-          <button
-            onClick={() => setCount(count + 1)}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--accent)] text-[var(--accent)]"
-          >
-            <Plus size={14} />
-          </button>
-        </div>
-      )}
-
-      <button onClick={onEdit} className="text-[var(--text-muted)]">
-        <Pencil size={14} />
-      </button>
-      <button onClick={handleDelete} className="text-[var(--text-muted)]">
-        <Trash2 size={14} />
-      </button>
-    </Card>
-  )
-}
 
 export default function RoutinesScreen() {
   const { data: routines, isLoading } = useRoutines()
