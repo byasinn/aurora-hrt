@@ -48,7 +48,7 @@ export default function ProfileScreen() {
                 <div className="flag-gradient h-full w-full" />
               )}
             </div>
-            <div className="-mt-8 px-4 pb-4">
+            <div className="relative z-10 -mt-8 px-4 pb-4">
               <Avatar
                 src={profile?.avatarUrl}
                 icon={profile?.avatarIcon}

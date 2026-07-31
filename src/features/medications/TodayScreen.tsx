@@ -160,14 +160,26 @@ function BigLinkButton({
   icon: Icon,
   label,
   variant,
+  state,
 }: {
   to: string
   icon: typeof Heart
   label: string
-  variant: 'accent' | 'accent2'
+  variant: 'accent' | 'accent2' | 'outline'
+  state?: unknown
 }) {
+  if (variant === 'outline') {
+    return (
+      <Link to={to} state={state} className="flex-1">
+        <div className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--border)] py-3.5 text-sm text-[var(--text-muted)]">
+          <Icon size={18} />
+          <span className="font-medium">{label}</span>
+        </div>
+      </Link>
+    )
+  }
   return (
-    <Link to={to} className="flex-1">
+    <Link to={to} state={state} className="flex-1">
       <div
         className="flex flex-col items-center justify-center gap-1.5 rounded-2xl py-5 text-[var(--accent-contrast)] [box-shadow:var(--shadow)]"
         style={{ background: variant === 'accent' ? 'var(--accent)' : 'var(--accent-2)' }}
@@ -298,6 +310,9 @@ export default function TodayScreen() {
       <div className="mt-1 flex gap-3">
         <BigLinkButton to="/mood" icon={Heart} label="Registrar humor" variant="accent" />
         <BigLinkButton to="/calendar" icon={Calendar} label="Ver calendário" variant="accent2" />
+      </div>
+      <div className="mt-2">
+        <BigLinkButton to="/routines" icon={ListChecks} label="Criar rotina" variant="outline" state={{ create: true }} />
       </div>
     </div>
   )

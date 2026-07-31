@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { EmptyState, ScreenTitle } from '../../components/ui'
 import { useRoutines } from '../../api/routines'
@@ -7,8 +8,11 @@ import RoutineRow from './RoutineRow'
 import type { Routine } from '../../../shared/types'
 
 export default function RoutinesScreen() {
+  const location = useLocation()
   const { data: routines, isLoading } = useRoutines()
-  const [formState, setFormState] = useState<'closed' | 'create' | Routine>('closed')
+  const [formState, setFormState] = useState<'closed' | 'create' | Routine>(
+    (location.state as { create?: boolean } | null)?.create ? 'create' : 'closed',
+  )
 
   const active = routines?.filter((r) => r.active) ?? []
 
