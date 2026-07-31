@@ -2,10 +2,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/apiClient'
 import type { Post, PostInput } from '../../shared/types'
 
-export function usePosts() {
+export function usePosts(enabled = true) {
   return useQuery({
     queryKey: ['posts'],
     queryFn: () => api.get<Post[]>('/posts'),
+    enabled,
   })
 }
 

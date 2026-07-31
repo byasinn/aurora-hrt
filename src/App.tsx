@@ -10,7 +10,10 @@ import MoodCheckIn from './features/mood/MoodCheckIn'
 import CalendarScreen from './features/calendar/CalendarScreen'
 import ProfileScreen from './features/profile/ProfileScreen'
 import PublicProfileScreen from './features/profile/PublicProfileScreen'
+import UserProfileScreen from './features/profile/UserProfileScreen'
 import MessagesScreen from './features/messages/MessagesScreen'
+import ConversationsScreen from './features/dm/ConversationsScreen'
+import ConversationScreen from './features/dm/ConversationScreen'
 import RoutinesScreen from './features/routines/RoutinesScreen'
 import AchievementsScreen from './features/achievements/AchievementsScreen'
 import MeasurementsScreen from './features/measurements/MeasurementsScreen'
@@ -53,7 +56,10 @@ function RootGate() {
         <Route path="settings" element={<SettingsScreen />} />
         <Route path="profile" element={<ProfileScreen />} />
         <Route path="perfil" element={<PublicProfileScreen />} />
+        <Route path="u/:userId" element={<UserProfileScreen />} />
         <Route path="messages" element={<MessagesScreen />} />
+        <Route path="conversas" element={<ConversationsScreen />} />
+        <Route path="conversas/:userId" element={<ConversationScreen />} />
         <Route path="routines" element={<RoutinesScreen />} />
       </Route>
     </Routes>

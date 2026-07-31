@@ -15,6 +15,10 @@ import type {
   messages,
   pushSubscriptions,
   unlockedAchievements,
+  follows,
+  postLikes,
+  postComments,
+  directMessages,
 } from './schema'
 
 export type User = typeof users.$inferSelect
@@ -102,4 +106,61 @@ export interface AchievementDef {
   title: string
   description: string
   icon: string
+}
+
+export type Follow = typeof follows.$inferSelect
+export type PostLike = typeof postLikes.$inferSelect
+
+export type PostComment = typeof postComments.$inferSelect
+export type PostCommentInput = Omit<typeof postComments.$inferInsert, 'id' | 'userId' | 'createdAt'>
+export interface PostCommentWithAuthor extends PostComment {
+  author: { userId: number; displayName: string; avatarUrl: string | null; avatarIcon: string | null }
+}
+
+export type DirectMessage = typeof directMessages.$inferSelect
+export type DirectMessageInput = Omit<typeof directMessages.$inferInsert, 'id' | 'senderId' | 'readAt' | 'createdAt'>
+
+export interface PublicUserSummary {
+  userId: number
+  displayName: string
+  avatarUrl: string | null
+  avatarIcon: string | null
+  pronouns: string
+  isFollowedByMe: boolean
+}
+
+export interface SharedMedicationSummary {
+  name: string
+  doseAmount: string
+  doseUnit: string
+  route: string
+}
+
+export interface UserProfileDetail extends PublicUserSummary {
+  bio: string | null
+  coverUrl: string | null
+  followerCount: number
+  followingCount: number
+  avgMood: number | null
+  avgLibido: number | null
+  medications: SharedMedicationSummary[] | null
+  hrtDurationDays: number | null
+  posts: FeedPost[]
+}
+
+export interface FeedPost extends Post {
+  author: PublicUserSummary
+  likeCount: number
+  commentCount: number
+  likedByMe: boolean
+}
+
+export interface DmThread {
+  userId: number
+  displayName: string
+  avatarUrl: string | null
+  avatarIcon: string | null
+  lastMessage: string
+  lastMessageAt: string
+  unreadCount: number
 }

@@ -64,7 +64,11 @@ export const profile = pgTable('profile', {
   showTipsOnHome: boolean('show_tips_on_home').notNull().default(true),
   bio: text('bio'),
   coverUrl: text('cover_url'),
-  showStatsOnProfile: boolean('show_stats_on_profile').notNull().default(false),
+  showStatsOnProfile: boolean('show_stats_on_profile').notNull().default(false), // substituído pelos 4 toggles abaixo
+  shareAvgMood: boolean('share_avg_mood').notNull().default(false),
+  shareLibido: boolean('share_libido').notNull().default(false),
+  shareMedications: boolean('share_medications').notNull().default(false),
+  shareHrtDuration: boolean('share_hrt_duration').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
@@ -202,3 +206,58 @@ export const unlockedAchievements = pgTable(
   },
   (table) => [uniqueIndex('unlocked_achievements_user_key').on(table.userId, table.achievementKey)],
 )
+
+export const follows = pgTable(
+  'follows',
+  {
+    id: serial('id').primaryKey(),
+    followerId: integer('follower_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    followingId: integer('following_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex('follows_pair').on(table.followerId, table.followingId)],
+)
+
+export const postLikes = pgTable(
+  'post_likes',
+  {
+    id: serial('id').primaryKey(),
+    postId: integer('post_id')
+      .notNull()
+      .references(() => posts.id, { onDelete: 'cascade' }),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex('post_likes_pair').on(table.postId, table.userId)],
+)
+
+export const postComments = pgTable('post_comments', {
+  id: serial('id').primaryKey(),
+  postId: integer('post_id')
+    .notNull()
+    .references(() => posts.id, { onDelete: 'cascade' }),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  text: text('text').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const directMessages = pgTable('direct_messages', {
+  id: serial('id').primaryKey(),
+  senderId: integer('sender_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  recipientId: integer('recipient_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  body: text('body').notNull(),
+  readAt: timestamp('read_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})

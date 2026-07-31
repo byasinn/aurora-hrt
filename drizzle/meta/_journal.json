@@ -57,6 +57,13 @@
       "when": 1785537813977,
       "tag": "0007_login-multiusuario",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1785539161572,
+      "tag": "0008_rede-social",
+      "breakpoints": true
     }
   ]
 }

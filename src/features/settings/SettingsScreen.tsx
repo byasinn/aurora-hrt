@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { User, Shield, Bell, Download, Palette, Terminal, LogOut } from 'lucide-react'
+import { User, Shield, Bell, Download, Palette, Terminal, LogOut, Lock } from 'lucide-react'
 import { Button, Card, ScreenTitle } from '../../components/ui'
 import Switch from '../../components/Switch'
 import { useProfile, useUpdateProfile } from '../../api/profile'
@@ -162,17 +162,45 @@ export default function SettingsScreen() {
           />
         </div>
 
-        <div className="flex items-center justify-between py-1">
-          <span className="text-sm text-[var(--text)]">Mostrar humor/libido médios no Perfil</span>
-          <Switch
-            checked={profile?.showStatsOnProfile ?? false}
-            onChange={(v) => updateProfile.mutate({ showStatsOnProfile: v })}
-          />
-        </div>
 
         <Button className="w-full" onClick={savePreferences} disabled={updateProfile.isPending}>
           Salvar
         </Button>
+      </Card>
+
+      <Card className="space-y-2">
+        <SectionHeader icon={Lock} title="Privacidade do perfil" />
+        <p className="text-xs text-[var(--text-muted)]">
+          O que quiser compartilhar no seu perfil público, pra quem te segue.
+        </p>
+        <div className="flex items-center justify-between py-1">
+          <span className="text-sm text-[var(--text)]">Humor médio</span>
+          <Switch
+            checked={profile?.shareAvgMood ?? false}
+            onChange={(v) => updateProfile.mutate({ shareAvgMood: v })}
+          />
+        </div>
+        <div className="flex items-center justify-between py-1">
+          <span className="text-sm text-[var(--text)]">Libido média</span>
+          <Switch
+            checked={profile?.shareLibido ?? false}
+            onChange={(v) => updateProfile.mutate({ shareLibido: v })}
+          />
+        </div>
+        <div className="flex items-center justify-between py-1">
+          <span className="text-sm text-[var(--text)]">O que toma (medicamentos ativos)</span>
+          <Switch
+            checked={profile?.shareMedications ?? false}
+            onChange={(v) => updateProfile.mutate({ shareMedications: v })}
+          />
+        </div>
+        <div className="flex items-center justify-between py-1">
+          <span className="text-sm text-[var(--text)]">Tempo de hormonioterapia</span>
+          <Switch
+            checked={profile?.shareHrtDuration ?? false}
+            onChange={(v) => updateProfile.mutate({ shareHrtDuration: v })}
+          />
+        </div>
       </Card>
 
       <Card className="space-y-2">

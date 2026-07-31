@@ -4,6 +4,7 @@ import { Camera, Pencil, Check, Trophy, ArrowLeft } from 'lucide-react'
 import { useProfile, useUpdateProfile } from '../../api/profile'
 import { useUnlockedAchievements } from '../../api/achievements'
 import { useMoodEntries } from '../../api/moods'
+import { useMedications } from '../../api/medications'
 import { ACHIEVEMENTS } from '../../lib/achievementsEngine'
 import { fileToResizedDataUrl, fileToFittedDataUrl } from '../../lib/image'
 import PhotoWall from '../../components/PhotoWall'
@@ -14,6 +15,7 @@ export default function PublicProfileScreen() {
   const updateProfile = useUpdateProfile()
   const { data: unlocked = [] } = useUnlockedAchievements()
   const { data: moodEntries = [] } = useMoodEntries()
+  const { data: medications = [] } = useMedications()
 
   const avatarInputRef = useRef<HTMLInputElement>(null)
   const coverInputRef = useRef<HTMLInputElement>(null)
@@ -27,6 +29,10 @@ export default function PublicProfileScreen() {
   const libidos = moodEntries.map((m) => m.libidoLevel).filter((v): v is number => v != null)
   const avgEnergy = energies.length ? energies.reduce((a, b) => a + b, 0) / energies.length : null
   const avgLibido = libidos.length ? libidos.reduce((a, b) => a + b, 0) / libidos.length : null
+  const activeMedications = medications.filter((m) => m.active)
+  const hrtDurationDays = profile?.transitionStartDate
+    ? Math.floor((Date.now() - new Date(profile.transitionStartDate).getTime()) / 86_400_000)
+    : null
 
   async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -117,20 +123,42 @@ export default function PublicProfileScreen() {
           )}
         </div>
 
-        {profile?.showStatsOnProfile && (avgEnergy !== null || avgLibido !== null) && (
-          <div className="mt-3 flex gap-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3">
-            {avgEnergy !== null && (
+        {((profile?.shareAvgMood && avgEnergy !== null) ||
+          (profile?.shareLibido && avgLibido !== null) ||
+          (profile?.shareHrtDuration && hrtDurationDays !== null)) && (
+          <div className="mt-3 flex flex-wrap gap-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3">
+            {profile?.shareAvgMood && avgEnergy !== null && (
               <div>
                 <p className="text-lg font-semibold flag-gradient-text">{avgEnergy.toFixed(1)}</p>
                 <p className="text-[11px] text-[var(--text-muted)]">energia média</p>
               </div>
             )}
-            {avgLibido !== null && (
+            {profile?.shareLibido && avgLibido !== null && (
               <div>
                 <p className="text-lg font-semibold flag-gradient-text">{avgLibido.toFixed(1)}</p>
                 <p className="text-[11px] text-[var(--text-muted)]">libido média</p>
               </div>
             )}
+            {profile?.shareHrtDuration && hrtDurationDays !== null && (
+              <div>
+                <p className="text-lg font-semibold flag-gradient-text">{Math.floor(hrtDurationDays / 30)}m</p>
+                <p className="text-[11px] text-[var(--text-muted)]">em hormonioterapia</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {profile?.shareMedications && activeMedications.length > 0 && (
+          <div className="mt-3">
+            <h2 className="mb-2 text-xs font-medium text-[var(--text-muted)]">O que toma (visível no perfil)</h2>
+            <div className="space-y-1">
+              {activeMedications.map((m) => (
+                <p key={m.id} className="text-sm text-[var(--text)]">
+                  {m.name} — {m.doseAmount}
+                  {m.doseUnit} · {m.route}
+                </p>
+              ))}
+            </div>
           </div>
         )}
 

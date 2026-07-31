@@ -1,8 +1,10 @@
 import { usePosts } from '../api/posts'
+import type { Post } from '../../shared/types'
 
 /** Grade de fotos dos posts, estilo mural — se reajusta sozinha com o viewport. */
-export default function PhotoWall() {
-  const { data: posts } = usePosts()
+export default function PhotoWall({ posts: postsProp }: { posts?: Post[] } = {}) {
+  const { data: ownPosts } = usePosts(postsProp === undefined)
+  const posts = postsProp ?? ownPosts
   const images = (posts ?? []).flatMap((p) => (p.images as string[]) ?? [])
 
   if (images.length === 0) return null
