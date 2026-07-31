@@ -1,8 +1,8 @@
 import type { Context } from '@netlify/functions'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { getDb } from './_shared/db'
 import { pushSubscriptions } from '../../shared/schema'
-import { checkAuth, jsonResponse } from './_shared/auth'
+import { jsonResponse, requireUser } from './_shared/auth'
 
 interface WebPushSubscriptionBody {
   endpoint: string
@@ -10,10 +10,10 @@ interface WebPushSubscriptionBody {
 }
 
 export default async (req: Request, _context: Context) => {
-  const authError = checkAuth(req)
-  if (authError) return authError
-
   const db = getDb()
+  const auth = await requireUser(req, db)
+  if (auth instanceof Response) return auth
+  const { user } = auth
 
   try {
     if (req.method === 'POST') {
@@ -29,7 +29,7 @@ export default async (req: Request, _context: Context) => {
 
       const [row] = await db
         .insert(pushSubscriptions)
-        .values({ endpoint: body.endpoint, p256dh: body.keys.p256dh, auth: body.keys.auth })
+        .values({ userId: user.id, endpoint: body.endpoint, p256dh: body.keys.p256dh, auth: body.keys.auth })
         .returning()
       return jsonResponse(row, { status: 201 })
     }
@@ -38,7 +38,9 @@ export default async (req: Request, _context: Context) => {
       const url = new URL(req.url)
       const endpoint = url.searchParams.get('endpoint')
       if (!endpoint) return jsonResponse({ error: 'endpoint é obrigatório' }, { status: 400 })
-      await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, endpoint))
+      await db
+        .delete(pushSubscriptions)
+        .where(and(eq(pushSubscriptions.endpoint, endpoint), eq(pushSubscriptions.userId, user.id)))
       return jsonResponse({ ok: true })
     }
 

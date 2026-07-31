@@ -1,9 +1,11 @@
 import type { Context } from '@netlify/functions'
-import { checkAuth, jsonResponse } from './_shared/auth'
+import { getDb } from './_shared/db'
+import { jsonResponse, requireUser } from './_shared/auth'
 
 export default async (req: Request, _context: Context) => {
-  const authError = checkAuth(req)
-  if (authError) return authError
+  const db = getDb()
+  const auth = await requireUser(req, db)
+  if (auth instanceof Response) return auth
   if (req.method !== 'GET') return jsonResponse({ error: 'method not allowed' }, { status: 405 })
 
   const publicKey = process.env.VAPID_PUBLIC_KEY

@@ -1,39 +1,36 @@
-const PASSPHRASE_KEY = 'transapp.passphrase'
-
-export function getStoredPassphrase(): string {
-  return localStorage.getItem(PASSPHRASE_KEY) ?? ''
-}
-
-export function setStoredPassphrase(value: string) {
-  localStorage.setItem(PASSPHRASE_KEY, value)
-}
-
-export function clearStoredPassphrase() {
-  localStorage.removeItem(PASSPHRASE_KEY)
-}
-
 export class ApiError extends Error {
   status: number
+  code?: string
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, code?: string) {
     super(message)
     this.status = status
+    this.code = code
   }
 }
 
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch(`/api${path}`, {
     ...init,
+    credentials: 'same-origin',
     headers: {
       'content-type': 'application/json',
-      'x-app-passphrase': getStoredPassphrase(),
       ...(init.headers ?? {}),
     },
   })
 
   if (!res.ok) {
     const text = await res.text().catch(() => '')
-    throw new ApiError(res.status, text || res.statusText)
+    let message = text || res.statusText
+    let code: string | undefined
+    try {
+      const parsed = JSON.parse(text) as { error?: string; code?: string }
+      if (parsed.error) message = parsed.error
+      code = parsed.code
+    } catch {
+      // corpo não era JSON, mantém o texto cru
+    }
+    throw new ApiError(res.status, message, code)
   }
 
   if (res.status === 204) return undefined as T

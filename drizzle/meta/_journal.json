@@ -50,6 +50,13 @@
       "when": 1785451646303,
       "tag": "0006_slimy_lady_mastermind",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1785537813977,
+      "tag": "0007_login-multiusuario",
+      "breakpoints": true
     }
   ]
 }

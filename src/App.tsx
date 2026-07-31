@@ -3,7 +3,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { queryClient } from './lib/queryClient'
 import { useThemeStore, applyTheme } from './lib/themeStore'
-import PassphraseGate from './features/auth/PassphraseGate'
+import AuthGate from './features/auth/AuthGate'
 import Layout from './components/Layout'
 import TodayScreen from './features/medications/TodayScreen'
 import MoodCheckIn from './features/mood/MoodCheckIn'
@@ -66,9 +66,9 @@ export default function App() {
       <ThemeInitializer />
       <GradientBlobs />
       <BrowserRouter>
-        <PassphraseGate>
+        <AuthGate>
           <RootGate />
-        </PassphraseGate>
+        </AuthGate>
       </BrowserRouter>
     </QueryClientProvider>
   )

@@ -1,4 +1,5 @@
 import type { Context } from '@netlify/functions'
+import { eq, or, isNull } from 'drizzle-orm'
 import { getDb } from './_shared/db'
 import {
   profile,
@@ -10,15 +11,16 @@ import {
   tags,
   unlockedAchievements,
 } from '../../shared/schema'
-import { checkAuth, jsonResponse } from './_shared/auth'
+import { jsonResponse, requireUser } from './_shared/auth'
 
 export default async (req: Request, _context: Context) => {
-  const authError = checkAuth(req)
-  if (authError) return authError
+  const db = getDb()
+  const auth = await requireUser(req, db)
+  if (auth instanceof Response) return auth
+  const { user } = auth
   if (req.method !== 'GET') return jsonResponse({ error: 'method not allowed' }, { status: 405 })
 
   try {
-    const db = getDb()
     const [
       profileRows,
       medicationRows,
@@ -29,14 +31,14 @@ export default async (req: Request, _context: Context) => {
       tagRows,
       achievementRows,
     ] = await Promise.all([
-      db.select().from(profile),
-      db.select().from(medications),
-      db.select().from(doseLogs),
-      db.select().from(moodEntries),
-      db.select().from(measurements),
-      db.select().from(labResults),
-      db.select().from(tags),
-      db.select().from(unlockedAchievements),
+      db.select().from(profile).where(eq(profile.userId, user.id)),
+      db.select().from(medications).where(eq(medications.userId, user.id)),
+      db.select().from(doseLogs).where(eq(doseLogs.userId, user.id)),
+      db.select().from(moodEntries).where(eq(moodEntries.userId, user.id)),
+      db.select().from(measurements).where(eq(measurements.userId, user.id)),
+      db.select().from(labResults).where(eq(labResults.userId, user.id)),
+      db.select().from(tags).where(or(isNull(tags.userId), eq(tags.userId, user.id))),
+      db.select().from(unlockedAchievements).where(eq(unlockedAchievements.userId, user.id)),
     ])
 
     return jsonResponse(
@@ -54,7 +56,7 @@ export default async (req: Request, _context: Context) => {
       },
       {
         headers: {
-          'content-disposition': `attachment; filename="trans-track-backup-${new Date().toISOString().slice(0, 10)}.json"`,
+          'content-disposition': `attachment; filename="aurora-backup-${new Date().toISOString().slice(0, 10)}.json"`,
         },
       },
     )

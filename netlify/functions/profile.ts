@@ -1,37 +1,36 @@
 import type { Context } from '@netlify/functions'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { getDb } from './_shared/db'
 import { profile } from '../../shared/schema'
-import { checkAuth, jsonResponse } from './_shared/auth'
+import { jsonResponse, requireUser } from './_shared/auth'
 import type { ProfileInput } from '../../shared/types'
 
-// App de uso pessoal (single-user): sempre lemos/criamos a única linha de perfil.
-async function getOrCreateProfile(db: ReturnType<typeof getDb>) {
-  const [existing] = await db.select().from(profile).limit(1)
+async function getOrCreateProfile(db: ReturnType<typeof getDb>, userId: number) {
+  const [existing] = await db.select().from(profile).where(eq(profile.userId, userId)).limit(1)
   if (existing) return existing
-  const [created] = await db.insert(profile).values({}).returning()
+  const [created] = await db.insert(profile).values({ userId }).returning()
   return created
 }
 
 export default async (req: Request, _context: Context) => {
-  const authError = checkAuth(req)
-  if (authError) return authError
-
   const db = getDb()
+  const auth = await requireUser(req, db)
+  if (auth instanceof Response) return auth
+  const { user } = auth
 
   try {
     if (req.method === 'GET') {
-      const row = await getOrCreateProfile(db)
+      const row = await getOrCreateProfile(db, user.id)
       return jsonResponse(row)
     }
 
     if (req.method === 'PUT') {
-      const current = await getOrCreateProfile(db)
+      const current = await getOrCreateProfile(db, user.id)
       const body = (await req.json()) as ProfileInput
       const [row] = await db
         .update(profile)
         .set(body)
-        .where(eq(profile.id, current.id))
+        .where(and(eq(profile.id, current.id), eq(profile.userId, user.id)))
         .returning()
       return jsonResponse(row)
     }

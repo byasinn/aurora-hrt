@@ -1,9 +1,5 @@
-import { getStoredPassphrase } from './apiClient'
-
 export async function downloadBackup() {
-  const res = await fetch('/api/export-data', {
-    headers: { 'x-app-passphrase': getStoredPassphrase() },
-  })
+  const res = await fetch('/api/export-data', { credentials: 'same-origin' })
   if (!res.ok) throw new Error('Falha ao exportar dados')
 
   const blob = await res.blob()

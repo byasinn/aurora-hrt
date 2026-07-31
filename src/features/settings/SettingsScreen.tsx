@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { User, Shield, Bell, Download, Palette, Terminal } from 'lucide-react'
+import { User, Shield, Bell, Download, Palette, Terminal, LogOut } from 'lucide-react'
 import { Button, Card, ScreenTitle } from '../../components/ui'
 import Switch from '../../components/Switch'
 import { useProfile, useUpdateProfile } from '../../api/profile'
+import { useMe, useLogout } from '../../api/auth'
 import { useThemeStore, applyTheme, COLOR_SHORTCUTS } from '../../lib/themeStore'
 import { todayStr } from '../../lib/dateUtils'
 import { enablePushNotifications, getNotificationPermissionState } from '../../lib/notifications'
@@ -27,6 +28,8 @@ function SectionHeader({ icon: Icon, title }: { icon: typeof User; title: string
 export default function SettingsScreen() {
   const { data: profile } = useProfile()
   const updateProfile = useUpdateProfile()
+  const { data: me } = useMe(true)
+  const logout = useLogout()
   const theme = useThemeStore()
 
   const [displayName, setDisplayName] = useState('')
@@ -90,6 +93,20 @@ export default function SettingsScreen() {
   return (
     <div className="space-y-5">
       <ScreenTitle>Configurações</ScreenTitle>
+
+      <Card className="space-y-3">
+        <SectionHeader icon={User} title="Conta" />
+        <p className="text-sm text-[var(--text)]">{me?.email}</p>
+        <Button
+          variant="secondary"
+          className="flex w-full items-center justify-center gap-2"
+          onClick={() => logout.mutate()}
+          disabled={logout.isPending}
+        >
+          <LogOut size={16} />
+          {logout.isPending ? 'Saindo…' : 'Sair'}
+        </Button>
+      </Card>
 
       <Card className="space-y-3">
         <SectionHeader icon={User} title="Preferências" />

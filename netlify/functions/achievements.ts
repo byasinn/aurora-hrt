@@ -1,18 +1,18 @@
 import type { Context } from '@netlify/functions'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { getDb } from './_shared/db'
 import { unlockedAchievements } from '../../shared/schema'
-import { checkAuth, jsonResponse } from './_shared/auth'
+import { jsonResponse, requireUser } from './_shared/auth'
 
 export default async (req: Request, _context: Context) => {
-  const authError = checkAuth(req)
-  if (authError) return authError
-
   const db = getDb()
+  const auth = await requireUser(req, db)
+  if (auth instanceof Response) return auth
+  const { user } = auth
 
   try {
     if (req.method === 'GET') {
-      const rows = await db.select().from(unlockedAchievements)
+      const rows = await db.select().from(unlockedAchievements).where(eq(unlockedAchievements.userId, user.id))
       return jsonResponse(rows)
     }
 
@@ -23,12 +23,12 @@ export default async (req: Request, _context: Context) => {
       const [existing] = await db
         .select()
         .from(unlockedAchievements)
-        .where(eq(unlockedAchievements.achievementKey, key))
+        .where(and(eq(unlockedAchievements.achievementKey, key), eq(unlockedAchievements.userId, user.id)))
       if (existing) return jsonResponse(existing)
 
       const [row] = await db
         .insert(unlockedAchievements)
-        .values({ achievementKey: key })
+        .values({ achievementKey: key, userId: user.id })
         .returning()
       return jsonResponse(row, { status: 201 })
     }

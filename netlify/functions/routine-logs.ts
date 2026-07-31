@@ -2,14 +2,15 @@ import type { Context } from '@netlify/functions'
 import { and, eq, gte, lte } from 'drizzle-orm'
 import { getDb } from './_shared/db'
 import { routineLogs } from '../../shared/schema'
-import { checkAuth, jsonResponse } from './_shared/auth'
+import { jsonResponse, requireUser } from './_shared/auth'
 import type { RoutineLogInput } from '../../shared/types'
 
 export default async (req: Request, _context: Context) => {
-  const authError = checkAuth(req)
-  if (authError) return authError
-
   const db = getDb()
+  const auth = await requireUser(req, db)
+  if (auth instanceof Response) return auth
+  const { user } = auth
+
   const url = new URL(req.url)
   const id = url.searchParams.get('id')
   const from = url.searchParams.get('from')
@@ -17,19 +18,20 @@ export default async (req: Request, _context: Context) => {
 
   try {
     if (req.method === 'GET') {
-      const conditions = []
+      const conditions = [eq(routineLogs.userId, user.id)]
       if (from) conditions.push(gte(routineLogs.date, from))
       if (to) conditions.push(lte(routineLogs.date, to))
 
-      const rows = conditions.length
-        ? await db.select().from(routineLogs).where(and(...conditions))
-        : await db.select().from(routineLogs)
+      const rows = await db.select().from(routineLogs).where(and(...conditions))
       return jsonResponse(rows)
     }
 
     if (req.method === 'POST') {
       const body = (await req.json()) as RoutineLogInput
-      const [row] = await db.insert(routineLogs).values(body).returning()
+      const [row] = await db
+        .insert(routineLogs)
+        .values({ ...body, userId: user.id })
+        .returning()
       return jsonResponse(row, { status: 201 })
     }
 
@@ -39,14 +41,14 @@ export default async (req: Request, _context: Context) => {
       const [row] = await db
         .update(routineLogs)
         .set(body)
-        .where(eq(routineLogs.id, Number(id)))
+        .where(and(eq(routineLogs.id, Number(id)), eq(routineLogs.userId, user.id)))
         .returning()
       return jsonResponse(row)
     }
 
     if (req.method === 'DELETE') {
       if (!id) return jsonResponse({ error: 'id é obrigatório' }, { status: 400 })
-      await db.delete(routineLogs).where(eq(routineLogs.id, Number(id)))
+      await db.delete(routineLogs).where(and(eq(routineLogs.id, Number(id)), eq(routineLogs.userId, user.id)))
       return jsonResponse({ ok: true })
     }
 

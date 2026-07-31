@@ -8,10 +8,41 @@ import {
   jsonb,
   date,
   doublePrecision,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core'
+
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
+  email: text('email').notNull().unique(),
+  passwordHash: text('password_hash'), // null se o login é só via Google
+  googleId: text('google_id').unique(),
+  emailVerified: boolean('email_verified').notNull().default(false),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const sessions = pgTable('sessions', {
+  id: text('id').primaryKey(), // sha256(token) — nunca guarda o token puro
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const emailTokens = pgTable('email_tokens', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  token: text('token').notNull().unique(),
+  type: text('type').notNull(), // 'verify_email' | 'reset_password'
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
 
 export const profile = pgTable('profile', {
   id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }), // nullable até o backfill; depois vira NOT NULL
   displayName: text('display_name').notNull().default(''),
   pronouns: text('pronouns').notNull().default(''),
   avatarUrl: text('avatar_url'),
@@ -39,6 +70,7 @@ export const profile = pgTable('profile', {
 
 export const medications = pgTable('medications', {
   id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   doseAmount: text('dose_amount').notNull(),
   doseUnit: text('dose_unit').notNull(),
@@ -55,6 +87,7 @@ export const medications = pgTable('medications', {
 
 export const doseLogs = pgTable('dose_logs', {
   id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
   medicationId: integer('medication_id')
     .notNull()
     .references(() => medications.id, { onDelete: 'cascade' }),
@@ -67,6 +100,7 @@ export const doseLogs = pgTable('dose_logs', {
 
 export const tags = pgTable('tags', {
   id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }), // null = tag padrão/global
   type: text('type').notNull(), // 'mood' | 'symptom'
   label: text('label').notNull(),
   emoji: text('emoji'),
@@ -76,6 +110,7 @@ export const tags = pgTable('tags', {
 
 export const moodEntries = pgTable('mood_entries', {
   id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
   date: date('date').notNull(),
   moodTagIds: jsonb('mood_tag_ids').notNull().default([]), // number[]
   symptomTagIds: jsonb('symptom_tag_ids').notNull().default([]), // number[]
@@ -87,6 +122,7 @@ export const moodEntries = pgTable('mood_entries', {
 
 export const measurements = pgTable('measurements', {
   id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
   type: text('type').notNull(), // ex: 'bust', 'waist', 'hips', 'chest', 'shoulders', 'weight'...
   value: doublePrecision('value').notNull(),
   unit: text('unit').notNull(), // 'cm' | 'kg' | '%'
@@ -97,6 +133,7 @@ export const measurements = pgTable('measurements', {
 
 export const labResults = pgTable('lab_results', {
   id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
   type: text('type').notNull(), // ex: 'estradiol', 'testosterone_total', 'prolactin', 'custom'...
   label: text('label'), // rótulo livre quando type = 'custom'
   value: doublePrecision('value').notNull(),
@@ -108,6 +145,7 @@ export const labResults = pgTable('lab_results', {
 
 export const posts = pgTable('posts', {
   id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
   text: text('text'),
   images: jsonb('images').notNull().default([]), // string[] data URLs
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -115,6 +153,7 @@ export const posts = pgTable('posts', {
 
 export const routines = pgTable('routines', {
   id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   icon: text('icon').notNull().default('✅'),
   type: text('type').notNull().default('checkbox'), // 'checkbox' | 'counter'
@@ -125,6 +164,7 @@ export const routines = pgTable('routines', {
 
 export const routineLogs = pgTable('routine_logs', {
   id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
   routineId: integer('routine_id')
     .notNull()
     .references(() => routines.id, { onDelete: 'cascade' }),
@@ -135,6 +175,7 @@ export const routineLogs = pgTable('routine_logs', {
 
 export const messages = pgTable('messages', {
   id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
   icon: text('icon').notNull().default('💜'),
   title: text('title').notNull(),
   body: text('body').notNull(),
@@ -144,14 +185,20 @@ export const messages = pgTable('messages', {
 
 export const pushSubscriptions = pgTable('push_subscriptions', {
   id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
   endpoint: text('endpoint').notNull().unique(),
   p256dh: text('p256dh').notNull(),
   auth: text('auth').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
-export const unlockedAchievements = pgTable('unlocked_achievements', {
-  id: serial('id').primaryKey(),
-  achievementKey: text('achievement_key').notNull().unique(),
-  unlockedAt: timestamp('unlocked_at', { withTimezone: true }).notNull().defaultNow(),
-})
+export const unlockedAchievements = pgTable(
+  'unlocked_achievements',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
+    achievementKey: text('achievement_key').notNull(),
+    unlockedAt: timestamp('unlocked_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex('unlocked_achievements_user_key').on(table.userId, table.achievementKey)],
+)

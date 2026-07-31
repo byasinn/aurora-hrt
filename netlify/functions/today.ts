@@ -2,31 +2,36 @@ import type { Context } from '@netlify/functions'
 import { eq } from 'drizzle-orm'
 import { getDb } from './_shared/db'
 import { medications, doseLogs, profile } from '../../shared/schema'
-import { checkAuth, jsonResponse } from './_shared/auth'
+import { jsonResponse, requireUser } from './_shared/auth'
 import { dueMedicationsForDate, dateStrInTimezone } from './_shared/scheduling'
 
 const GRACE_HOURS = 3
 
 export default async (req: Request, _context: Context) => {
-  const authError = checkAuth(req)
-  if (authError) return authError
+  const db = getDb()
+  const auth = await requireUser(req, db)
+  if (auth instanceof Response) return auth
+  const { user } = auth
   if (req.method !== 'GET') return jsonResponse({ error: 'method not allowed' }, { status: 405 })
 
   try {
-    const db = getDb()
     const url = new URL(req.url)
     const dateParam = url.searchParams.get('date')
 
-    const [profileRow] = await db.select().from(profile).limit(1)
+    const [profileRow] = await db.select().from(profile).where(eq(profile.userId, user.id)).limit(1)
     const timeZone = profileRow?.timezone ?? 'America/Sao_Paulo'
     const dateStr = dateParam ?? dateStrInTimezone(new Date(), timeZone)
 
-    const allMeds = await db.select().from(medications).where(eq(medications.active, true))
-    const due = dueMedicationsForDate(allMeds, dateStr, timeZone)
+    const allMeds = await db
+      .select()
+      .from(medications)
+      .where(eq(medications.userId, user.id))
+    const activeMeds = allMeds.filter((m) => m.active)
+    const due = dueMedicationsForDate(activeMeds, dateStr, timeZone)
 
     const startOfDay = new Date(`${dateStr}T00:00:00.000Z`)
     const endOfDay = new Date(`${dateStr}T23:59:59.999Z`)
-    const dayLogs = await db.select().from(doseLogs)
+    const dayLogs = await db.select().from(doseLogs).where(eq(doseLogs.userId, user.id))
     const relevantLogs = dayLogs.filter((l) => {
       const t = new Date(l.scheduledFor).getTime()
       return t >= startOfDay.getTime() - 86_400_000 && t <= endOfDay.getTime() + 86_400_000

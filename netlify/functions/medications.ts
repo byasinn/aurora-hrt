@@ -1,13 +1,14 @@
 import type { Context } from '@netlify/functions'
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { getDb } from './_shared/db'
 import { medications, doseLogs, profile } from '../../shared/schema'
-import { checkAuth, jsonResponse } from './_shared/auth'
+import { jsonResponse, requireUser } from './_shared/auth'
 import type { MedicationInput } from '../../shared/types'
 import { isDueOnDate, scheduledInstantFor, dateStrInTimezone } from './_shared/scheduling'
 
 async function backfillDoseLogs(
   db: ReturnType<typeof getDb>,
+  userId: number,
   medicationId: number,
   medication: MedicationInput,
   fromDateStr: string,
@@ -22,6 +23,7 @@ async function backfillDoseLogs(
     if (isDueOnDate(medication, dateStr, timeZone)) {
       const scheduledFor = scheduledInstantFor(medication, dateStr, timeZone)
       rows.push({
+        userId,
         medicationId,
         scheduledFor,
         takenAt: scheduledFor,
@@ -38,16 +40,21 @@ async function backfillDoseLogs(
 }
 
 export default async (req: Request, _context: Context) => {
-  const authError = checkAuth(req)
-  if (authError) return authError
-
   const db = getDb()
+  const auth = await requireUser(req, db)
+  if (auth instanceof Response) return auth
+  const { user } = auth
+
   const url = new URL(req.url)
   const id = url.searchParams.get('id')
 
   try {
     if (req.method === 'GET') {
-      const rows = await db.select().from(medications).orderBy(medications.createdAt)
+      const rows = await db
+        .select()
+        .from(medications)
+        .where(eq(medications.userId, user.id))
+        .orderBy(medications.createdAt)
       return jsonResponse(rows)
     }
 
@@ -55,13 +62,16 @@ export default async (req: Request, _context: Context) => {
       const { backfillFrom, ...body } = (await req.json()) as MedicationInput & {
         backfillFrom?: string
       }
-      const [row] = await db.insert(medications).values(body).returning()
+      const [row] = await db
+        .insert(medications)
+        .values({ ...body, userId: user.id })
+        .returning()
 
       let backfilled = 0
       if (backfillFrom) {
-        const [profileRow] = await db.select().from(profile).limit(1)
+        const [profileRow] = await db.select().from(profile).where(eq(profile.userId, user.id)).limit(1)
         const timeZone = profileRow?.timezone ?? 'America/Sao_Paulo'
-        backfilled = await backfillDoseLogs(db, row.id, body, backfillFrom, timeZone)
+        backfilled = await backfillDoseLogs(db, user.id, row.id, body, backfillFrom, timeZone)
       }
 
       return jsonResponse({ ...row, backfilled }, { status: 201 })
@@ -73,14 +83,14 @@ export default async (req: Request, _context: Context) => {
       const [row] = await db
         .update(medications)
         .set(body)
-        .where(eq(medications.id, Number(id)))
+        .where(and(eq(medications.id, Number(id)), eq(medications.userId, user.id)))
         .returning()
       return jsonResponse(row)
     }
 
     if (req.method === 'DELETE') {
       if (!id) return jsonResponse({ error: 'id é obrigatório' }, { status: 400 })
-      await db.delete(medications).where(eq(medications.id, Number(id)))
+      await db.delete(medications).where(and(eq(medications.id, Number(id)), eq(medications.userId, user.id)))
       return jsonResponse({ ok: true })
     }
 

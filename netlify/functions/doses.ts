@@ -2,7 +2,7 @@ import type { Context } from '@netlify/functions'
 import { and, eq, gte, lte } from 'drizzle-orm'
 import { getDb } from './_shared/db'
 import { doseLogs } from '../../shared/schema'
-import { checkAuth, jsonResponse } from './_shared/auth'
+import { jsonResponse, requireUser } from './_shared/auth'
 import type { DoseLogInput } from '../../shared/types'
 
 function coerceDates<T extends Record<string, unknown>>(body: T): T {
@@ -15,10 +15,11 @@ function coerceDates<T extends Record<string, unknown>>(body: T): T {
 }
 
 export default async (req: Request, _context: Context) => {
-  const authError = checkAuth(req)
-  if (authError) return authError
-
   const db = getDb()
+  const auth = await requireUser(req, db)
+  if (auth instanceof Response) return auth
+  const { user } = auth
+
   const url = new URL(req.url)
   const id = url.searchParams.get('id')
   const from = url.searchParams.get('from')
@@ -27,20 +28,21 @@ export default async (req: Request, _context: Context) => {
 
   try {
     if (req.method === 'GET') {
-      const conditions = []
+      const conditions = [eq(doseLogs.userId, user.id)]
       if (from) conditions.push(gte(doseLogs.scheduledFor, new Date(from)))
       if (to) conditions.push(lte(doseLogs.scheduledFor, new Date(to)))
       if (medicationId) conditions.push(eq(doseLogs.medicationId, Number(medicationId)))
 
-      const rows = conditions.length
-        ? await db.select().from(doseLogs).where(and(...conditions))
-        : await db.select().from(doseLogs)
+      const rows = await db.select().from(doseLogs).where(and(...conditions))
       return jsonResponse(rows)
     }
 
     if (req.method === 'POST') {
       const body = coerceDates((await req.json()) as DoseLogInput)
-      const [row] = await db.insert(doseLogs).values(body).returning()
+      const [row] = await db
+        .insert(doseLogs)
+        .values({ ...body, userId: user.id })
+        .returning()
       return jsonResponse(row, { status: 201 })
     }
 
@@ -50,14 +52,14 @@ export default async (req: Request, _context: Context) => {
       const [row] = await db
         .update(doseLogs)
         .set(body)
-        .where(eq(doseLogs.id, Number(id)))
+        .where(and(eq(doseLogs.id, Number(id)), eq(doseLogs.userId, user.id)))
         .returning()
       return jsonResponse(row)
     }
 
     if (req.method === 'DELETE') {
       if (!id) return jsonResponse({ error: 'id é obrigatório' }, { status: 400 })
-      await db.delete(doseLogs).where(eq(doseLogs.id, Number(id)))
+      await db.delete(doseLogs).where(and(eq(doseLogs.id, Number(id)), eq(doseLogs.userId, user.id)))
       return jsonResponse({ ok: true })
     }
 

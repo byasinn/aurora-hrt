@@ -1,4 +1,7 @@
 import type {
+  users,
+  sessions,
+  emailTokens,
   profile,
   medications,
   doseLogs,
@@ -14,8 +17,14 @@ import type {
   unlockedAchievements,
 } from './schema'
 
+export type User = typeof users.$inferSelect
+export type PublicUser = Pick<User, 'id' | 'email' | 'emailVerified' | 'createdAt'>
+export type Session = typeof sessions.$inferSelect
+export type EmailTokenType = 'verify_email' | 'reset_password'
+export type EmailToken = typeof emailTokens.$inferSelect
+
 export type Profile = typeof profile.$inferSelect
-export type ProfileInput = Partial<Omit<typeof profile.$inferInsert, 'id' | 'createdAt'>>
+export type ProfileInput = Partial<Omit<typeof profile.$inferInsert, 'id' | 'userId' | 'createdAt'>>
 
 export type TextStyle = 'feminine' | 'masculine'
 export type ContentPreference = 'feminine' | 'masculine' | 'combined'
@@ -31,18 +40,18 @@ export type FrequencyValue =
   | { days: number[] }
 
 export type Medication = typeof medications.$inferSelect
-export type MedicationInput = Omit<typeof medications.$inferInsert, 'id' | 'createdAt'>
+export type MedicationInput = Omit<typeof medications.$inferInsert, 'id' | 'userId' | 'createdAt'>
 
 export type DoseStatus = 'pending' | 'taken' | 'skipped' | 'missed'
 export type DoseLog = typeof doseLogs.$inferSelect
-export type DoseLogInput = Omit<typeof doseLogs.$inferInsert, 'id' | 'createdAt'>
+export type DoseLogInput = Omit<typeof doseLogs.$inferInsert, 'id' | 'userId' | 'createdAt'>
 
 export type TagType = 'mood' | 'symptom'
 export type Tag = typeof tags.$inferSelect
-export type TagInput = Omit<typeof tags.$inferInsert, 'id'>
+export type TagInput = Omit<typeof tags.$inferInsert, 'id' | 'userId'>
 
 export type MoodEntry = typeof moodEntries.$inferSelect
-export type MoodEntryInput = Omit<typeof moodEntries.$inferInsert, 'id' | 'createdAt'>
+export type MoodEntryInput = Omit<typeof moodEntries.$inferInsert, 'id' | 'userId' | 'createdAt'>
 
 export type MeasurementType =
   | 'weight'
@@ -56,7 +65,7 @@ export type MeasurementType =
   | 'body_fat'
   | 'height'
 export type Measurement = typeof measurements.$inferSelect
-export type MeasurementInput = Omit<typeof measurements.$inferInsert, 'id' | 'createdAt'>
+export type MeasurementInput = Omit<typeof measurements.$inferInsert, 'id' | 'userId' | 'createdAt'>
 
 export type LabType =
   | 'estradiol'
@@ -69,22 +78,22 @@ export type LabType =
   | 'potassium'
   | 'custom'
 export type LabResult = typeof labResults.$inferSelect
-export type LabResultInput = Omit<typeof labResults.$inferInsert, 'id' | 'createdAt'>
+export type LabResultInput = Omit<typeof labResults.$inferInsert, 'id' | 'userId' | 'createdAt'>
 
 export type Post = typeof posts.$inferSelect
-export type PostInput = Omit<typeof posts.$inferInsert, 'id' | 'createdAt'>
+export type PostInput = Omit<typeof posts.$inferInsert, 'id' | 'userId' | 'createdAt'>
 
 export type RoutineType = 'checkbox' | 'counter'
 export type Routine = typeof routines.$inferSelect
-export type RoutineInput = Omit<typeof routines.$inferInsert, 'id' | 'createdAt'>
+export type RoutineInput = Omit<typeof routines.$inferInsert, 'id' | 'userId' | 'createdAt'>
 export type RoutineLog = typeof routineLogs.$inferSelect
-export type RoutineLogInput = Omit<typeof routineLogs.$inferInsert, 'id' | 'createdAt'>
+export type RoutineLogInput = Omit<typeof routineLogs.$inferInsert, 'id' | 'userId' | 'createdAt'>
 
 export type Message = typeof messages.$inferSelect
-export type MessageInput = Omit<typeof messages.$inferInsert, 'id' | 'createdAt'>
+export type MessageInput = Omit<typeof messages.$inferInsert, 'id' | 'userId' | 'createdAt'>
 
 export type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect
-export type PushSubscriptionInput = Omit<typeof pushSubscriptions.$inferInsert, 'id' | 'createdAt'>
+export type PushSubscriptionInput = Omit<typeof pushSubscriptions.$inferInsert, 'id' | 'userId' | 'createdAt'>
 
 export type UnlockedAchievement = typeof unlockedAchievements.$inferSelect
 
