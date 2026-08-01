@@ -2,7 +2,7 @@ import type { Context } from '@netlify/functions'
 import { eq } from 'drizzle-orm'
 import { getDb } from './_shared/db'
 import { users } from '../../shared/schema'
-import { createSession, isEmailAllowed, sessionCookie } from './_shared/auth'
+import { createSession, sessionCookie } from './_shared/auth'
 import { siteUrlFromRequest } from './_shared/email'
 
 function redirectHome(siteUrl: string, error?: string): Response {
@@ -53,7 +53,6 @@ export default async (req: Request, _context: Context) => {
 
     const email = profile.email?.trim().toLowerCase()
     if (!email || !profile.email_verified) return redirectHome(siteUrl, 'google_email_not_verified')
-    if (!isEmailAllowed(email)) return redirectHome(siteUrl, 'not_allowed')
 
     const db = getDb()
     let [user] = await db.select().from(users).where(eq(users.googleId, profile.sub)).limit(1)
@@ -73,6 +72,8 @@ export default async (req: Request, _context: Context) => {
           .returning()
       }
     }
+
+    if (user.banned) return redirectHome(siteUrl, 'banned')
 
     const { token, expiresAt } = await createSession(db, user.id)
     return new Response(null, {

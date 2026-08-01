@@ -17,6 +17,8 @@ export const users = pgTable('users', {
   passwordHash: text('password_hash'), // null se o login é só via Google
   googleId: text('google_id').unique(),
   emailVerified: boolean('email_verified').notNull().default(false),
+  isAdmin: boolean('is_admin').notNull().default(false),
+  banned: boolean('banned').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 

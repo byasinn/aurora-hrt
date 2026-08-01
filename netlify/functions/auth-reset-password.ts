@@ -36,7 +36,7 @@ export default async (req: Request, _context: Context) => {
 
     const { token: sessionToken, expiresAt } = await createSession(db, user.id)
     return jsonResponse(
-      { id: user.id, email: user.email, emailVerified: user.emailVerified, createdAt: user.createdAt },
+      { id: user.id, email: user.email, emailVerified: user.emailVerified, isAdmin: user.isAdmin, createdAt: user.createdAt },
       { headers: { 'set-cookie': sessionCookie(sessionToken, expiresAt) } },
     )
   } catch (err) {

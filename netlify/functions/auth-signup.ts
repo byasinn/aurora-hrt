@@ -2,7 +2,7 @@ import type { Context } from '@netlify/functions'
 import { eq } from 'drizzle-orm'
 import { getDb } from './_shared/db'
 import { users, emailTokens } from '../../shared/schema'
-import { hashPassword, isEmailAllowed, jsonResponse, randomToken } from './_shared/auth'
+import { hashPassword, jsonResponse, randomToken } from './_shared/auth'
 import { sendEmail, siteUrlFromRequest } from './_shared/email'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -22,10 +22,6 @@ export default async (req: Request, _context: Context) => {
     if (password.length < 8) {
       return jsonResponse({ error: 'Senha precisa ter pelo menos 8 caracteres.' }, { status: 400 })
     }
-    if (!isEmailAllowed(email)) {
-      return jsonResponse({ error: 'Esse email não tem acesso liberado ao app.' }, { status: 403 })
-    }
-
     const db = getDb()
     const [existing] = await db.select().from(users).where(eq(users.email, email)).limit(1)
     if (existing) {

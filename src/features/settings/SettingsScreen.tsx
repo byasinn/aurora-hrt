@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { User, Shield, Bell, Download, Palette, Terminal, LogOut, Lock } from 'lucide-react'
+import { User, Shield, Bell, Download, Palette, Terminal, LogOut, Lock, Users, Ban } from 'lucide-react'
 import { Button, Card, ScreenTitle } from '../../components/ui'
 import Switch from '../../components/Switch'
 import { useProfile, useUpdateProfile } from '../../api/profile'
 import { useMe, useLogout } from '../../api/auth'
+import { useAdminUsers, useSetUserBanned } from '../../api/admin'
 import { useThemeStore, applyTheme, COLOR_SHORTCUTS } from '../../lib/themeStore'
 import { todayStr } from '../../lib/dateUtils'
 import { enablePushNotifications, getNotificationPermissionState } from '../../lib/notifications'
@@ -22,6 +23,50 @@ function SectionHeader({ icon: Icon, title }: { icon: typeof User; title: string
       <Icon size={16} className="text-[var(--accent)]" />
       <h2 className="text-sm font-medium text-[var(--text-muted)]">{title}</h2>
     </div>
+  )
+}
+
+function AdminUsersCard({ myId }: { myId?: number }) {
+  const { data: allUsers, isLoading } = useAdminUsers(true)
+  const setBanned = useSetUserBanned()
+
+  return (
+    <Card className="space-y-2">
+      <SectionHeader icon={Users} title="Usuários (admin)" />
+      <p className="text-xs text-[var(--text-muted)]">
+        Cadastro é aberto pra qualquer email — banir aqui é como você controla quem continua com acesso.
+      </p>
+      {isLoading && <p className="text-xs text-[var(--text-muted)]">Carregando…</p>}
+      <div className="space-y-1">
+        {allUsers?.map((u) => (
+          <div key={u.id} className="flex items-center justify-between py-1">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm text-[var(--text)]">
+                {u.email} {u.isAdmin && <span className="text-[10px] text-[var(--accent)]">admin</span>}
+              </p>
+              <p className="text-[11px] text-[var(--text-muted)]">
+                {u.emailVerified ? 'confirmado' : 'não confirmado'} {u.banned && '· banido'}
+              </p>
+            </div>
+            {u.id !== myId && (
+              <button
+                onClick={() => setBanned.mutate({ id: u.id, banned: !u.banned })}
+                disabled={setBanned.isPending}
+                className={
+                  'flex shrink-0 items-center gap-1 rounded-lg border px-2 py-1 text-xs disabled:opacity-50 ' +
+                  (u.banned
+                    ? 'border-[var(--border)] text-[var(--text)]'
+                    : 'border-red-500/40 text-red-500')
+                }
+              >
+                <Ban size={12} />
+                {u.banned ? 'Desbanir' : 'Banir'}
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+    </Card>
   )
 }
 
@@ -107,6 +152,8 @@ export default function SettingsScreen() {
           {logout.isPending ? 'Saindo…' : 'Sair'}
         </Button>
       </Card>
+
+      {me?.isAdmin && <AdminUsersCard myId={me.id} />}
 
       <Card className="space-y-3">
         <SectionHeader icon={User} title="Preferências" />

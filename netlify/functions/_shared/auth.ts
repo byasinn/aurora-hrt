@@ -116,6 +116,8 @@ export async function getSessionUser(
       id: users.id,
       email: users.email,
       emailVerified: users.emailVerified,
+      isAdmin: users.isAdmin,
+      banned: users.banned,
       createdAt: users.createdAt,
     })
     .from(sessions)
@@ -123,7 +125,9 @@ export async function getSessionUser(
     .where(and(eq(sessions.id, hashToken(token)), gt(sessions.expiresAt, new Date())))
     .limit(1)
 
-  return row ?? null
+  if (!row || row.banned) return null
+  const { banned: _banned, ...user } = row
+  return user
 }
 
 /**
@@ -141,17 +145,18 @@ export async function requireUser(
   return { user }
 }
 
-export function allowedEmails(): string[] {
-  return (process.env.ALLOWED_EMAILS ?? '')
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean)
-}
-
-export function isEmailAllowed(email: string): boolean {
-  const list = allowedEmails()
-  if (list.length === 0) return false
-  return list.includes(email.trim().toLowerCase())
+/**
+ * Mesma ideia de requireUser, mas exige `user.isAdmin` — usa nas functions de administração
+ * (banir/desbanir usuário, listar contas).
+ */
+export async function requireAdmin(
+  req: Request,
+  db: ReturnType<typeof getDb>,
+): Promise<{ user: PublicUser } | Response> {
+  const auth = await requireUser(req, db)
+  if (auth instanceof Response) return auth
+  if (!auth.user.isAdmin) return jsonResponse({ error: 'forbidden' }, { status: 403 })
+  return auth
 }
 
 export function jsonResponse(data: unknown, init?: ResponseInit): Response {

@@ -22,7 +22,8 @@ import type {
 } from './schema'
 
 export type User = typeof users.$inferSelect
-export type PublicUser = Pick<User, 'id' | 'email' | 'emailVerified' | 'createdAt'>
+export type PublicUser = Pick<User, 'id' | 'email' | 'emailVerified' | 'isAdmin' | 'createdAt'>
+export type AdminUserSummary = Pick<User, 'id' | 'email' | 'emailVerified' | 'isAdmin' | 'banned' | 'createdAt'>
 export type Session = typeof sessions.$inferSelect
 export type EmailTokenType = 'verify_email' | 'reset_password'
 export type EmailToken = typeof emailTokens.$inferSelect

@@ -76,7 +76,7 @@ export default function LoginScreen({ authError }: { authError?: string | null }
   }
 
   const AUTH_ERROR_MESSAGES: Record<string, string> = {
-    not_allowed: 'Esse email não tem acesso liberado ao app.',
+    banned: 'Essa conta foi banida.',
     invalid_state: 'Sessão de login expirou, tenta de novo.',
     google_not_configured: 'Login com Google ainda não está configurado.',
     google_token_exchange_failed: 'Não foi possível confirmar o login com Google.',
