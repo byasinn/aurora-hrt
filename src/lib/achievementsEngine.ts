@@ -9,6 +9,9 @@ export interface AchievementStats {
   nsfwMode: boolean
   totalRoutineCompletions: number
   currentRoutineStreakDays: number
+  followerCount: number
+  postsCount: number
+  commentsCount: number
 }
 
 export const ACHIEVEMENTS: (AchievementDef & { isMet: (s: AchievementStats) => boolean })[] = [
@@ -102,6 +105,34 @@ export const ACHIEVEMENTS: (AchievementDef & { isMet: (s: AchievementStats) => b
     description: '50 rotinas concluídas no modo NSFW.',
     icon: '💦',
     isMet: (s) => s.nsfwMode && s.totalRoutineCompletions >= 50,
+  },
+  {
+    key: 'social_first_follower',
+    title: 'Primeira fã',
+    description: 'Alguém começou a te seguir.',
+    icon: '👥',
+    isMet: (s) => s.followerCount >= 1,
+  },
+  {
+    key: 'social_10_followers',
+    title: 'Comunidade',
+    description: '10 pessoas te seguindo.',
+    icon: '🌟',
+    isMet: (s) => s.followerCount >= 10,
+  },
+  {
+    key: 'social_first_post',
+    title: 'Primeiro post',
+    description: 'Você compartilhou seu primeiro momento no Explorar.',
+    icon: '📸',
+    isMet: (s) => s.postsCount >= 1,
+  },
+  {
+    key: 'social_10_comments',
+    title: 'Presente',
+    description: '10 comentários feitos em posts de quem você segue.',
+    icon: '💬',
+    isMet: (s) => s.commentsCount >= 10,
   },
 ]
 

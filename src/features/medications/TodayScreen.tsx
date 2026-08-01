@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Heart, Calendar, Pill, Syringe, Bandage, Droplet, Sparkles, Undo2, ListChecks } from 'lucide-react'
+import { Plus, Heart, Calendar, Pill, Syringe, Bandage, Droplet, Sparkles, Undo2, ListChecks, TriangleAlert, Check } from 'lucide-react'
 import { EmptyState } from '../../components/ui'
 import SwipeableRow from '../../components/SwipeableRow'
 import { useToday, useLogDose, useUpdateDoseLog, type TodayItem } from '../../api/doses'
 import { useProfile } from '../../api/profile'
 import { useDeleteMedication, useMedications } from '../../api/medications'
 import { useRoutines } from '../../api/routines'
+import { useTasks, useUpdateTask } from '../../api/tasks'
 import { formatTime } from '../../lib/dateUtils'
 import WelcomeBanner from '../../components/WelcomeBanner'
 import TipOfDayCard from '../../components/TipOfDayCard'
@@ -197,6 +198,9 @@ export default function TodayScreen() {
   const { data: medications } = useMedications()
   const { data: routines } = useRoutines()
   const activeRoutines = (routines ?? []).filter((r) => r.active)
+  const { data: tasks } = useTasks()
+  const updateTask = useUpdateTask()
+  const pendingTasks = (tasks ?? []).filter((t) => !t.done)
   const [formState, setFormState] = useState<'closed' | 'create' | Medication>('closed')
   const [completingKeys, setCompletingKeys] = useState<Set<string>>(new Set())
 
@@ -285,6 +289,28 @@ export default function TodayScreen() {
               <DoneRow key={`${item.medication.id}-${item.scheduledFor}`} item={item} />
             ))}
           </AnimatePresence>
+        </div>
+      )}
+
+      {pendingTasks.length > 0 && (
+        <div className="mt-5 space-y-2">
+          <h2 className="flex items-center gap-1.5 text-sm font-medium text-[var(--text-muted)]">
+            <TriangleAlert size={14} /> Tarefas pendentes
+          </h2>
+          <div className="space-y-2">
+            {pendingTasks.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => updateTask.mutate({ id: t.id, done: true })}
+                className="flex w-full items-center gap-3 rounded-2xl border border-amber-500/30 bg-[var(--surface)] p-3 text-left [box-shadow:var(--shadow)]"
+              >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-muted)]">
+                  <Check size={13} />
+                </span>
+                <span className="flex-1 text-sm text-[var(--text)]">{t.title}</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

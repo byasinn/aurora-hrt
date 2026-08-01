@@ -21,6 +21,10 @@ export default async (req: Request, _context: Context) => {
     if (!targetProfile) return jsonResponse({ error: 'not found' }, { status: 404 })
 
     const isSelf = user.id === targetId
+    const [viewerProfile] = isSelf
+      ? [targetProfile]
+      : await db.select().from(profile).where(eq(profile.userId, user.id)).limit(1)
+    const viewerNsfwMode = viewerProfile?.nsfwMode ?? false
     const following = isSelf ? false : await isFollowing(db, user.id, targetId)
 
     const [[{ value: followerCount }], [{ value: followingCount }]] = await Promise.all([
@@ -81,6 +85,8 @@ export default async (req: Request, _context: Context) => {
       medications: medicationsOut,
       hrtDurationDays,
       posts: postsOut,
+      targetNsfwMode: targetProfile.nsfwMode,
+      kinks: viewerNsfwMode ? (targetProfile.kinks as string[]) : null,
     }
     return jsonResponse(result)
   } catch (err) {

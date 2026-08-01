@@ -166,8 +166,8 @@ export const routines = pgTable('routines', {
   userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   icon: text('icon').notNull().default('✅'),
-  type: text('type').notNull().default('checkbox'), // 'checkbox' | 'counter'
-  targetCount: integer('target_count'), // usado quando type = 'counter'
+  type: text('type').notNull().default('checkbox'), // 'checkbox' | 'counter' | 'timer'
+  targetCount: integer('target_count'), // counter: unidades; timer: segundos
   active: boolean('active').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
@@ -265,5 +265,16 @@ export const directMessages = pgTable('direct_messages', {
     .references(() => users.id, { onDelete: 'cascade' }),
   body: text('body').notNull(),
   readAt: timestamp('read_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+// Tarefas avulsas (não recorrentes) — usadas hoje pras "punições" do modo NSFW,
+// aparecem na Home até serem concluídas.
+export const tasks = pgTable('tasks', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  icon: text('icon').notNull().default('✅'),
+  done: boolean('done').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })

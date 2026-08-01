@@ -212,9 +212,9 @@ export default function MedicationForm({
           />
         </div>
 
-        <div className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5">
-          <span className="flex items-center gap-2 text-sm text-[var(--text)]">
-            <Bell size={16} className="text-[var(--text-muted)]" />
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5">
+          <span className="flex min-w-0 flex-1 items-center gap-2 text-sm text-[var(--text)]">
+            <Bell size={16} className="shrink-0 text-[var(--text-muted)]" />
             Lembretes por notificação
           </span>
           <Switch checked={remindersEnabled} onChange={setRemindersEnabled} />
@@ -222,8 +222,8 @@ export default function MedicationForm({
 
         {!isEdit && (
           <>
-            <label className="flex cursor-pointer items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5">
-              <span className="text-sm text-[var(--text)]">Já uso esse medicamento há um tempo</span>
+            <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5">
+              <span className="min-w-0 flex-1 text-sm text-[var(--text)]">Já uso esse medicamento há um tempo</span>
               <Switch checked={hasHistory} onChange={setHasHistory} />
             </label>
 

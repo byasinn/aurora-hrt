@@ -19,6 +19,7 @@ import type {
   postLikes,
   postComments,
   directMessages,
+  tasks,
 } from './schema'
 
 export type User = typeof users.$inferSelect
@@ -90,11 +91,14 @@ export type LabResultInput = Omit<typeof labResults.$inferInsert, 'id' | 'userId
 export type Post = typeof posts.$inferSelect
 export type PostInput = Omit<typeof posts.$inferInsert, 'id' | 'userId' | 'createdAt'>
 
-export type RoutineType = 'checkbox' | 'counter'
+export type RoutineType = 'checkbox' | 'counter' | 'timer'
 export type Routine = typeof routines.$inferSelect
 export type RoutineInput = Omit<typeof routines.$inferInsert, 'id' | 'userId' | 'createdAt'>
 export type RoutineLog = typeof routineLogs.$inferSelect
 export type RoutineLogInput = Omit<typeof routineLogs.$inferInsert, 'id' | 'userId' | 'createdAt'>
+
+export type Task = typeof tasks.$inferSelect
+export type TaskInput = Omit<typeof tasks.$inferInsert, 'id' | 'userId' | 'createdAt'>
 
 export type Message = typeof messages.$inferSelect
 export type MessageInput = Omit<typeof messages.$inferInsert, 'id' | 'userId' | 'createdAt'>
@@ -149,6 +153,8 @@ export interface UserProfileDetail extends PublicUserSummary {
   medications: SharedMedicationSummary[] | null
   hrtDurationDays: number | null
   posts: FeedPost[]
+  targetNsfwMode: boolean
+  kinks: string[] | null
 }
 
 export interface FeedPost extends Post {
@@ -156,6 +162,12 @@ export interface FeedPost extends Post {
   likeCount: number
   commentCount: number
   likedByMe: boolean
+}
+
+export interface MySocialStats {
+  followerCount: number
+  postsCount: number
+  commentsCount: number
 }
 
 export interface DmThread {

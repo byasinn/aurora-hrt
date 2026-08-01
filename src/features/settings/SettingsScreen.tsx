@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { User, Shield, Bell, Download, Palette, Terminal, LogOut, Lock, Users, Ban, Flame } from 'lucide-react'
+import { User, Shield, Bell, Download, Palette, Terminal, LogOut, Lock, Users, Ban, Flame, Trash2, TriangleAlert } from 'lucide-react'
 import { Button, Card, ScreenTitle } from '../../components/ui'
 import Switch from '../../components/Switch'
 import { useProfile, useUpdateProfile } from '../../api/profile'
-import { useMe, useLogout } from '../../api/auth'
+import { useMe, useLogout, useDeleteAccount } from '../../api/auth'
 import { useAdminUsers, useSetUserBanned } from '../../api/admin'
 import { useThemeStore, applyTheme, COLOR_SHORTCUTS } from '../../lib/themeStore'
 import { todayStr } from '../../lib/dateUtils'
@@ -83,8 +83,8 @@ function NsfwSettingsCard() {
   return (
     <Card className="space-y-3">
       <SectionHeader icon={Flame} title="Modo NSFW" />
-      <div className="flex items-center justify-between py-1">
-        <div>
+      <div className="flex items-center justify-between gap-3 py-1">
+        <div className="min-w-0 flex-1">
           <p className="text-sm text-[var(--text)]">Ativar modo NSFW</p>
           <p className="text-xs text-[var(--text-muted)]">Libera troféus mais safados e sugestões de rotinas íntimas.</p>
         </div>
@@ -93,8 +93,8 @@ function NsfwSettingsCard() {
 
       {profile?.nsfwMode && (
         <>
-          <div className="flex items-center justify-between py-1">
-            <p className="text-sm text-[var(--text)]">Medir genitália em Medidas</p>
+          <div className="flex items-center justify-between gap-3 py-1">
+            <p className="min-w-0 flex-1 text-sm text-[var(--text)]">Medir genitália em Medidas</p>
             <Switch
               checked={profile?.showGenitalMeasurements ?? false}
               onChange={(v) => updateProfile.mutate({ showGenitalMeasurements: v })}
@@ -153,6 +153,57 @@ function NsfwSettingsCard() {
             )}
           </div>
         </>
+      )}
+    </Card>
+  )
+}
+
+function DeleteAccountCard() {
+  const [confirming, setConfirming] = useState(false)
+  const [confirmText, setConfirmText] = useState('')
+  const deleteAccount = useDeleteAccount()
+
+  return (
+    <Card className="space-y-3 border-red-500/30">
+      <div className="flex items-center gap-2">
+        <TriangleAlert size={16} className="text-red-500" />
+        <h2 className="text-sm font-medium text-red-500">Zona de perigo</h2>
+      </div>
+
+      {!confirming ? (
+        <Button
+          variant="secondary"
+          className="flex w-full items-center justify-center gap-2 !text-red-500"
+          onClick={() => setConfirming(true)}
+        >
+          <Trash2 size={16} />
+          Excluir minha conta
+        </Button>
+      ) : (
+        <div className="space-y-2">
+          <p className="text-xs text-[var(--text-muted)]">
+            Isso apaga sua conta e todos os dados (doses, humor, medidas, exames, posts, mensagens) pra sempre —
+            não tem como desfazer. Digite <strong className="text-[var(--text)]">EXCLUIR</strong> pra confirmar.
+          </p>
+          <input
+            value={confirmText}
+            onChange={(e) => setConfirmText(e.target.value)}
+            placeholder="EXCLUIR"
+            className="w-full rounded-lg border border-red-500/40 bg-[var(--surface-2)] px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-red-500"
+          />
+          <div className="flex gap-2">
+            <Button variant="secondary" className="flex-1" onClick={() => setConfirming(false)}>
+              Cancelar
+            </Button>
+            <Button
+              className="flex-1 !bg-red-500 !text-white"
+              disabled={confirmText !== 'EXCLUIR' || deleteAccount.isPending}
+              onClick={() => deleteAccount.mutate()}
+            >
+              {deleteAccount.isPending ? 'Excluindo…' : 'Excluir de vez'}
+            </Button>
+          </div>
+        </div>
       )}
     </Card>
   )
@@ -241,6 +292,8 @@ export default function SettingsScreen() {
         </Button>
       </Card>
 
+      <DeleteAccountCard />
+
       {me?.isAdmin && <AdminUsersCard myId={me.id} />}
 
       <Card className="space-y-3">
@@ -289,8 +342,8 @@ export default function SettingsScreen() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between py-1">
-          <span className="text-sm text-[var(--text)]">Mostrar dica do dia na Home</span>
+        <div className="flex items-center justify-between gap-3 py-1">
+          <span className="min-w-0 flex-1 text-sm text-[var(--text)]">Mostrar dica do dia na Home</span>
           <Switch
             checked={profile?.showTipsOnHome ?? true}
             onChange={(v) => updateProfile.mutate({ showTipsOnHome: v })}
@@ -308,29 +361,29 @@ export default function SettingsScreen() {
         <p className="text-xs text-[var(--text-muted)]">
           O que quiser compartilhar no seu perfil público, pra quem te segue.
         </p>
-        <div className="flex items-center justify-between py-1">
-          <span className="text-sm text-[var(--text)]">Humor médio</span>
+        <div className="flex items-center justify-between gap-3 py-1">
+          <span className="min-w-0 flex-1 text-sm text-[var(--text)]">Humor médio</span>
           <Switch
             checked={profile?.shareAvgMood ?? false}
             onChange={(v) => updateProfile.mutate({ shareAvgMood: v })}
           />
         </div>
-        <div className="flex items-center justify-between py-1">
-          <span className="text-sm text-[var(--text)]">Libido média</span>
+        <div className="flex items-center justify-between gap-3 py-1">
+          <span className="min-w-0 flex-1 text-sm text-[var(--text)]">Libido média</span>
           <Switch
             checked={profile?.shareLibido ?? false}
             onChange={(v) => updateProfile.mutate({ shareLibido: v })}
           />
         </div>
-        <div className="flex items-center justify-between py-1">
-          <span className="text-sm text-[var(--text)]">O que toma (medicamentos ativos)</span>
+        <div className="flex items-center justify-between gap-3 py-1">
+          <span className="min-w-0 flex-1 text-sm text-[var(--text)]">O que toma (medicamentos ativos)</span>
           <Switch
             checked={profile?.shareMedications ?? false}
             onChange={(v) => updateProfile.mutate({ shareMedications: v })}
           />
         </div>
-        <div className="flex items-center justify-between py-1">
-          <span className="text-sm text-[var(--text)]">Tempo de hormonioterapia</span>
+        <div className="flex items-center justify-between gap-3 py-1">
+          <span className="min-w-0 flex-1 text-sm text-[var(--text)]">Tempo de hormonioterapia</span>
           <Switch
             checked={profile?.shareHrtDuration ?? false}
             onChange={(v) => updateProfile.mutate({ shareHrtDuration: v })}
@@ -343,8 +396,8 @@ export default function SettingsScreen() {
       <Card className="space-y-2">
         <SectionHeader icon={Shield} title="Segurança" />
         {faceIdSupported ? (
-          <div className="flex items-center justify-between py-1">
-            <div>
+          <div className="flex items-center justify-between gap-3 py-1">
+            <div className="min-w-0 flex-1">
               <p className="text-sm text-[var(--text)]">Face ID / Touch ID</p>
               <p className="text-xs text-[var(--text-muted)]">Pede biometria neste aparelho antes de abrir o app.</p>
             </div>

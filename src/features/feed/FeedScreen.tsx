@@ -210,7 +210,19 @@ function FeedPostCard({ post, myUserId }: { post: FeedPost; myUserId?: number })
   const likePost = useLikePost()
   const unlikePost = useUnlikePost()
   const [commentsOpen, setCommentsOpen] = useState(false)
+  const [burst, setBurst] = useState(false)
   const isOwn = post.userId === myUserId
+  const lastTapRef = useRef(0)
+
+  function handleMediaTap() {
+    const now = Date.now()
+    if (now - lastTapRef.current < 300) {
+      if (!post.likedByMe) likePost.mutate(post.id)
+      setBurst(true)
+      setTimeout(() => setBurst(false), 700)
+    }
+    lastTapRef.current = now
+  }
 
   return (
     <Card className="space-y-2">
@@ -231,7 +243,23 @@ function FeedPostCard({ post, myUserId }: { post: FeedPost; myUserId?: number })
         )}
       </div>
       {post.text && <p className="whitespace-pre-wrap text-sm text-[var(--text)]">{post.text}</p>}
-      <MediaCollage images={(post.images as string[]) ?? []} />
+
+      <div className="relative" onClick={handleMediaTap}>
+        <MediaCollage images={(post.images as string[]) ?? []} />
+        <AnimatePresence>
+          {burst && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1.15 }}
+              exit={{ opacity: 0, scale: 1.3 }}
+              transition={{ duration: 0.35 }}
+              className="pointer-events-none absolute inset-0 flex items-center justify-center"
+            >
+              <Heart size={72} className="text-white drop-shadow-lg" fill="currentColor" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       <div className="flex items-center gap-4 pt-1 text-xs text-[var(--text-muted)]">
         <button

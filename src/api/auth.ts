@@ -66,3 +66,14 @@ export function useResendVerification() {
       api.post<{ ok: true; message: string }>('/auth-resend-verification', input),
   })
 }
+
+export function useDeleteAccount() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => api.delete<{ ok: true }>('/auth-delete-account'),
+    onSuccess: () => {
+      qc.setQueryData(['auth-me'], undefined)
+      qc.clear()
+    },
+  })
+}

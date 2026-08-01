@@ -2,6 +2,7 @@ import { useDoseLogs } from '../../api/doses'
 import { useMoodEntries } from '../../api/moods'
 import { useProfile } from '../../api/profile'
 import { useRoutines, useRoutineLogs } from '../../api/routines'
+import { useMySocialStats } from '../../api/social'
 import { currentStreak, type AchievementStats } from '../../lib/achievementsEngine'
 import { todayStr, daysBetween } from '../../lib/dateUtils'
 
@@ -11,6 +12,7 @@ export function useAchievementStats(): AchievementStats {
   const { data: profile } = useProfile()
   const { data: routines = [] } = useRoutines()
   const { data: routineLogs = [] } = useRoutineLogs()
+  const { data: socialStats } = useMySocialStats()
 
   const takenDates = new Set(
     doseLogs.filter((l) => l.status === 'taken').map((l) => new Date(l.scheduledFor).toISOString().slice(0, 10)),
@@ -37,5 +39,8 @@ export function useAchievementStats(): AchievementStats {
     nsfwMode: profile?.nsfwMode ?? false,
     totalRoutineCompletions: completedRoutineLogs.length,
     currentRoutineStreakDays: currentStreak(routineCompletionDates, today),
+    followerCount: socialStats?.followerCount ?? 0,
+    postsCount: socialStats?.postsCount ?? 0,
+    commentsCount: socialStats?.commentsCount ?? 0,
   }
 }

@@ -1,4 +1,5 @@
-import { Pencil, Trash2, Check, Minus, Plus } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Pencil, Trash2, Check, Minus, Plus, Play, Pause } from 'lucide-react'
 import { Card } from '../../components/ui'
 import {
   useRoutineLogs,
@@ -7,7 +8,14 @@ import {
   useDeleteRoutine,
 } from '../../api/routines'
 import { todayStr } from '../../lib/dateUtils'
+import { getRoutineIcon } from '../../lib/routineIcons'
 import type { Routine } from '../../../shared/types'
+
+function formatDuration(totalSeconds: number): string {
+  const m = Math.floor(totalSeconds / 60)
+  const s = totalSeconds % 60
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
 
 export default function RoutineRow({
   routine,
@@ -27,7 +35,22 @@ export default function RoutineRow({
   const todayLog = logs?.find((l) => l.routineId === routine.id)
   const count = todayLog?.count ?? 0
   const isCheckbox = routine.type === 'checkbox'
+  const isTimer = routine.type === 'timer'
   const done = isCheckbox ? count > 0 : routine.targetCount != null && count >= routine.targetCount
+
+  const [running, setRunning] = useState(false)
+  const [, forceTick] = useState(0)
+  const sessionStartRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (!running) return
+    const id = setInterval(() => forceTick((t) => t + 1), 1000)
+    return () => clearInterval(id)
+  }, [running])
+
+  const sessionSeconds =
+    running && sessionStartRef.current ? Math.floor((Date.now() - sessionStartRef.current) / 1000) : 0
+  const displaySeconds = count + sessionSeconds
 
   function setCount(next: number) {
     const clamped = Math.max(0, next)
@@ -38,20 +61,39 @@ export default function RoutineRow({
     }
   }
 
+  function toggleTimer() {
+    if (running) {
+      const elapsed = sessionStartRef.current ? Math.floor((Date.now() - sessionStartRef.current) / 1000) : 0
+      sessionStartRef.current = null
+      setRunning(false)
+      if (elapsed > 0) setCount(count + elapsed)
+    } else {
+      sessionStartRef.current = Date.now()
+      setRunning(true)
+    }
+  }
+
   function handleDelete() {
     if (confirm(`Excluir a rotina "${routine.name}"?`)) {
       deleteRoutine.mutate(routine.id)
     }
   }
 
+  const RoutineIcon = getRoutineIcon(routine.icon)
+
   return (
     <Card className={'flex items-center gap-3 ' + (done ? 'border-[var(--accent)]' : '')}>
-      <span className="text-xl">{routine.icon}</span>
+      {RoutineIcon ? (
+        <RoutineIcon size={20} className="shrink-0 text-[var(--accent)]" />
+      ) : (
+        <span className="text-xl">{routine.icon}</span>
+      )}
       <div className="flex-1">
         <p className="font-medium text-[var(--text)]">{routine.name}</p>
         {!isCheckbox && (
           <p className="text-xs text-[var(--text-muted)]">
-            {count}/{routine.targetCount}
+            {isTimer ? formatDuration(displaySeconds) : count}/
+            {isTimer ? formatDuration(routine.targetCount ?? 0) : routine.targetCount}
           </p>
         )}
       </div>
@@ -67,6 +109,18 @@ export default function RoutineRow({
           }
         >
           <Check size={16} />
+        </button>
+      ) : isTimer ? (
+        <button
+          onClick={toggleTimer}
+          className={
+            'flex h-9 w-9 items-center justify-center rounded-full border transition ' +
+            (running
+              ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
+              : 'border-[var(--border)] text-[var(--text-muted)]')
+          }
+        >
+          {running ? <Pause size={16} /> : <Play size={16} />}
         </button>
       ) : (
         <div className="flex items-center gap-2">

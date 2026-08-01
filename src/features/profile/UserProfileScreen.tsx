@@ -1,16 +1,19 @@
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, TriangleAlert } from 'lucide-react'
 import Avatar from '../../components/Avatar'
 import PhotoWall from '../../components/PhotoWall'
 import { Button } from '../../components/ui'
 import { useUserProfile, useFollow, useUnfollow } from '../../api/social'
+import { useProfile } from '../../api/profile'
 
 export default function UserProfileScreen() {
   const { userId } = useParams<{ userId: string }>()
   const id = Number(userId)
   const { data: profile, isLoading } = useUserProfile(id)
+  const { data: myProfile } = useProfile()
   const follow = useFollow()
   const unfollow = useUnfollow()
+  const nsfwWarning = profile?.targetNsfwMode && !myProfile?.nsfwMode
 
   if (isLoading || !profile) {
     return <p className="text-sm text-[var(--text-muted)]">Carregando…</p>
@@ -69,6 +72,32 @@ export default function UserProfileScreen() {
           </Link>
         </div>
 
+        {nsfwWarning && (
+          <div className="mt-3 flex items-start gap-2 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3">
+            <TriangleAlert size={16} className="mt-0.5 shrink-0 text-amber-500" />
+            <p className="text-xs text-amber-500">
+              Esse perfil pode ter conteúdo NSFW. Fotos e alguns detalhes ficam escondidos até você ativar o modo
+              NSFW nas <Link to="/settings" className="underline">Configurações</Link>.
+            </p>
+          </div>
+        )}
+
+        {profile.kinks && profile.kinks.length > 0 && (
+          <div className="mt-3">
+            <h2 className="mb-2 text-xs font-medium text-[var(--text-muted)]">Kinks</h2>
+            <div className="flex flex-wrap gap-2">
+              {profile.kinks.map((kink) => (
+                <span
+                  key={kink}
+                  className="rounded-full border border-[var(--border)] bg-[var(--surface-2)] px-3 py-1.5 text-sm text-[var(--text)]"
+                >
+                  {kink}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         {(profile.avgMood != null || profile.avgLibido != null || profile.hrtDurationDays != null) && (
           <div className="mt-3 flex flex-wrap gap-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3">
             {profile.avgMood != null && (
@@ -110,7 +139,9 @@ export default function UserProfileScreen() {
 
         <div className="mt-4">
           <h2 className="mb-2 text-xs font-medium text-[var(--text-muted)]">Posts</h2>
-          {profile.isFollowedByMe ? (
+          {nsfwWarning ? (
+            <p className="text-xs text-[var(--text-muted)]">Ative o modo NSFW pra ver os posts desse perfil.</p>
+          ) : profile.isFollowedByMe ? (
             <PhotoWall posts={profile.posts} />
           ) : (
             <p className="text-xs text-[var(--text-muted)]">Siga {profile.displayName || 'essa pessoa'} pra ver os posts.</p>

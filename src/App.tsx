@@ -24,6 +24,7 @@ import FeedScreen from './features/feed/FeedScreen'
 import SettingsScreen from './features/settings/SettingsScreen'
 import OnboardingScreen from './features/onboarding/OnboardingScreen'
 import GradientBlobs from './components/GradientBlobs'
+import LoadingScreen from './components/LoadingScreen'
 import { useProfile } from './api/profile'
 
 function ThemeInitializer() {
@@ -37,7 +38,7 @@ function ThemeInitializer() {
 function RootGate() {
   const { data: profile, isLoading, refetch } = useProfile()
 
-  if (isLoading || !profile) return null
+  if (isLoading || !profile) return <LoadingScreen />
 
   if (!profile.onboardingCompleted) {
     return <OnboardingScreen onComplete={() => refetch()} />

@@ -3,11 +3,19 @@ import { api } from '../lib/apiClient'
 import type {
   Follow,
   FeedPost,
+  MySocialStats,
   PostCommentInput,
   PostCommentWithAuthor,
   PublicUserSummary,
   UserProfileDetail,
 } from '../../shared/types'
+
+export function useMySocialStats() {
+  return useQuery({
+    queryKey: ['my-social-stats'],
+    queryFn: () => api.get<MySocialStats>('/my-social-stats'),
+  })
+}
 
 export function useUserSearch(query: string) {
   return useQuery({

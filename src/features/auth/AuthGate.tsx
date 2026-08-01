@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useMe } from '../../api/auth'
 import { isFaceIdEnabled, authenticateFaceId } from '../../lib/faceId'
+import LoadingScreen from '../../components/LoadingScreen'
 import LoginScreen from './LoginScreen'
 import VerifyEmailScreen from './VerifyEmailScreen'
 import ResetPasswordScreen from './ResetPasswordScreen'
@@ -18,7 +19,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
   if (location.pathname === '/verify-email') return <VerifyEmailScreen />
   if (location.pathname === '/reset-password') return <ResetPasswordScreen />
 
-  if (me.isLoading) return null
+  if (me.isLoading) return <LoadingScreen />
 
   if (!me.isSuccess) {
     const authError = new URLSearchParams(window.location.search).get('authError')

@@ -37,6 +37,12 @@ export default function AchievementsScreen() {
     stats.totalMoodEntries,
     stats.currentMoodStreakDays,
     stats.daysSinceTransitionStart,
+    stats.nsfwMode,
+    stats.totalRoutineCompletions,
+    stats.currentRoutineStreakDays,
+    stats.followerCount,
+    stats.postsCount,
+    stats.commentsCount,
   ])
 
   return (
