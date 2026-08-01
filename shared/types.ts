@@ -22,7 +22,8 @@ import type {
   tasks,
   communities,
   communityMembers,
-  communityMessages,
+  communityPosts,
+  communityPostComments,
 } from './schema'
 
 export type User = typeof users.$inferSelect
@@ -101,7 +102,7 @@ export type RoutineLog = typeof routineLogs.$inferSelect
 export type RoutineLogInput = Omit<typeof routineLogs.$inferInsert, 'id' | 'userId' | 'createdAt'>
 
 export type Task = typeof tasks.$inferSelect
-export type TaskInput = Omit<typeof tasks.$inferInsert, 'id' | 'userId' | 'createdAt'>
+export type TaskInput = Omit<typeof tasks.$inferInsert, 'id' | 'userId' | 'createdAt' | 'dueAt'>
 
 export type Message = typeof messages.$inferSelect
 export type MessageInput = Omit<typeof messages.$inferInsert, 'id' | 'userId' | 'createdAt'>
@@ -192,7 +193,16 @@ export interface CommunityDetail extends Community {
 
 export type CommunityMember = typeof communityMembers.$inferSelect
 
-export type CommunityMessage = typeof communityMessages.$inferSelect
-export interface CommunityMessageWithAuthor extends CommunityMessage {
+export type CommunityPost = typeof communityPosts.$inferSelect
+export type CommunityPostInput = Omit<typeof communityPosts.$inferInsert, 'id' | 'userId' | 'communityId' | 'createdAt'>
+export interface CommunityFeedPost extends CommunityPost {
+  author: PublicUserSummary
+  likeCount: number
+  commentCount: number
+  likedByMe: boolean
+}
+
+export type CommunityPostComment = typeof communityPostComments.$inferSelect
+export interface CommunityPostCommentWithAuthor extends CommunityPostComment {
   author: { userId: number; displayName: string; avatarUrl: string | null; avatarIcon: string | null }
 }

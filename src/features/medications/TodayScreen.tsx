@@ -197,7 +197,12 @@ export default function TodayScreen() {
   const { data: profile } = useProfile()
   const { data: medications } = useMedications()
   const { data: routines } = useRoutines()
-  const activeRoutines = (routines ?? []).filter((r) => r.active)
+  const todayWeekday = new Date().getDay()
+  const activeRoutines = (routines ?? []).filter((r) => {
+    if (!r.active) return false
+    const daysOfWeek = r.daysOfWeek as number[] | null
+    return daysOfWeek == null || daysOfWeek.includes(todayWeekday)
+  })
   const { data: tasks } = useTasks()
   const updateTask = useUpdateTask()
   const pendingTasks = (tasks ?? []).filter((t) => !t.done)

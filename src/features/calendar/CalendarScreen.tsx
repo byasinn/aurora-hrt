@@ -13,6 +13,8 @@ import {
 } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import clsx from 'clsx'
+import { Link } from 'react-router-dom'
+import { Trophy } from 'lucide-react'
 import { Card, EmptyState, ScreenTitle } from '../../components/ui'
 import { useDoseLogs } from '../../api/doses'
 import { useMoodEntries } from '../../api/moods'
@@ -83,7 +85,15 @@ export default function CalendarScreen() {
 
   return (
     <div className="space-y-4">
-      <ScreenTitle>Histórico</ScreenTitle>
+      <div className="flex items-center justify-between">
+        <ScreenTitle>Histórico</ScreenTitle>
+        <Link
+          to="/achievements"
+          className="flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs font-medium text-[var(--accent)]"
+        >
+          <Trophy size={14} /> Troféus
+        </Link>
+      </div>
 
       <Card className="space-y-4">
         <div className="flex items-center justify-between">

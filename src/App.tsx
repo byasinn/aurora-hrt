@@ -10,13 +10,15 @@ import MedicationsScreen from './features/medications/MedicationsScreen'
 import SaudeScreen from './features/health/SaudeScreen'
 import CommunityScreen from './features/community/CommunityScreen'
 import KinkScreen from './features/kink/KinkScreen'
+import MeusKinksScreen from './features/kink/MeusKinksScreen'
+import PunicoesScreen from './features/kink/PunicoesScreen'
+import MasturbacaoScreen from './features/kink/MasturbacaoScreen'
 import MoodCheckIn from './features/mood/MoodCheckIn'
 import CalendarScreen from './features/calendar/CalendarScreen'
 import ProfileScreen from './features/profile/ProfileScreen'
 import PublicProfileScreen from './features/profile/PublicProfileScreen'
 import UserProfileScreen from './features/profile/UserProfileScreen'
-import MessagesScreen from './features/messages/MessagesScreen'
-import ConversationsScreen from './features/dm/ConversationsScreen'
+import InboxScreen from './features/inbox/InboxScreen'
 import ConversationScreen from './features/dm/ConversationScreen'
 import RoutinesScreen from './features/routines/RoutinesScreen'
 import AchievementsScreen from './features/achievements/AchievementsScreen'
@@ -55,6 +57,9 @@ function RootGate() {
         <Route path="saude" element={<SaudeScreen />} />
         <Route path="comunidade" element={<CommunityScreen />} />
         <Route path="kink" element={<KinkScreen />} />
+        <Route path="kink/meus-kinks" element={<MeusKinksScreen />} />
+        <Route path="kink/punicoes" element={<PunicoesScreen />} />
+        <Route path="kink/masturbacao" element={<MasturbacaoScreen />} />
         <Route path="mood" element={<MoodCheckIn />} />
         <Route path="calendar" element={<CalendarScreen />} />
         <Route path="achievements" element={<AchievementsScreen />} />
@@ -66,8 +71,7 @@ function RootGate() {
         <Route path="profile" element={<ProfileScreen />} />
         <Route path="perfil" element={<PublicProfileScreen />} />
         <Route path="u/:userId" element={<UserProfileScreen />} />
-        <Route path="messages" element={<MessagesScreen />} />
-        <Route path="conversas" element={<ConversationsScreen />} />
+        <Route path="inbox" element={<InboxScreen />} />
         <Route path="conversas/:userId" element={<ConversationScreen />} />
         <Route path="routines" element={<RoutinesScreen />} />
       </Route>

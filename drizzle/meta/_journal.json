@@ -92,6 +92,13 @@
       "when": 1785622954178,
       "tag": "0012_comunidade",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1785664620000,
+      "tag": "0013_comunidade-posts-e-agendamento",
+      "breakpoints": true
     }
   ]
 }

@@ -31,7 +31,7 @@ export default function ConversationScreen() {
   return (
     <div className="-mx-4 -mt-2 flex h-[calc(100svh-8.5rem)] flex-col">
       <div className="flex items-center gap-2 border-b border-[var(--border)] px-4 pb-3">
-        <Link to="/conversas" className="text-[var(--text-muted)]">
+        <Link to="/inbox" className="text-[var(--text-muted)]">
           <ArrowLeft size={18} />
         </Link>
         <Avatar

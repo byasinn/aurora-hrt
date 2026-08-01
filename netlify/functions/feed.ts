@@ -1,10 +1,9 @@
 import type { Context } from '@netlify/functions'
 import { desc, eq, inArray } from 'drizzle-orm'
 import { getDb } from './_shared/db'
-import { follows, posts, communityMembers } from '../../shared/schema'
+import { follows, posts } from '../../shared/schema'
 import { jsonResponse, requireUser } from './_shared/auth'
 import { enrichPosts } from './_shared/social'
-import { getOrCreateDefaultCommunity, isCommunityMember } from './_shared/community'
 
 export default async (req: Request, _context: Context) => {
   const db = getDb()
@@ -19,20 +18,7 @@ export default async (req: Request, _context: Context) => {
       .from(follows)
       .where(eq(follows.followerId, user.id))
 
-    const community = await getOrCreateDefaultCommunity(db)
-    const isMember = await isCommunityMember(db, community.id, user.id)
-    const communityMemberIds = isMember
-      ? (
-          await db
-            .select({ userId: communityMembers.userId })
-            .from(communityMembers)
-            .where(eq(communityMembers.communityId, community.id))
-        ).map((r) => r.userId)
-      : []
-
-    const authorIds = [
-      ...new Set([user.id, ...myFollowing.map((f) => f.followingId), ...communityMemberIds]),
-    ]
+    const authorIds = [...new Set([user.id, ...myFollowing.map((f) => f.followingId)])]
 
     const rawPosts = await db
       .select()

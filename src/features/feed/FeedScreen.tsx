@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Plus, X, Trash2, Mail, MessageCircle, Heart, MessageSquare } from 'lucide-react'
+import { Search, Plus, X, Trash2, Mail, Heart, MessageSquare } from 'lucide-react'
 import clsx from 'clsx'
 import { Button, Card, EmptyState } from '../../components/ui'
 import Avatar from '../../components/Avatar'
@@ -95,29 +95,14 @@ function PeopleSearchBox({ value, onChange }: { value: string; onChange: (v: str
   )
 }
 
-function MessagesIcon() {
+function InboxIcon() {
   const { data: messages } = useMessages()
-  const unread = messages?.filter((m) => !m.read).length ?? 0
-
-  return (
-    <Link to="/messages" className="relative flex h-9 w-9 items-center justify-center text-[var(--text-muted)]">
-      <Mail size={20} />
-      {unread > 0 && (
-        <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white">
-          {unread}
-        </span>
-      )}
-    </Link>
-  )
-}
-
-function ConversationsIcon() {
   const { data: threads } = useConversations()
-  const unread = threads?.reduce((sum, t) => sum + t.unreadCount, 0) ?? 0
+  const unread = (messages?.filter((m) => !m.read).length ?? 0) + (threads?.reduce((sum, t) => sum + t.unreadCount, 0) ?? 0)
 
   return (
-    <Link to="/conversas" className="relative flex h-9 w-9 items-center justify-center text-[var(--text-muted)]">
-      <MessageCircle size={20} />
+    <Link to="/inbox" className="relative flex h-9 w-9 items-center justify-center text-[var(--text-muted)]">
+      <Mail size={20} />
       {unread > 0 && (
         <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white">
           {unread}
@@ -301,8 +286,7 @@ export default function FeedScreen() {
       <div className="flex items-center gap-2">
         <PeopleSearchBox value={query} onChange={setQuery} />
         <div className="flex-1" />
-        <ConversationsIcon />
-        <MessagesIcon />
+        <InboxIcon />
         <button
           onClick={() => setComposerOpen((o) => !o)}
           className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-contrast)]"

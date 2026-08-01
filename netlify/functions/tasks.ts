@@ -23,9 +23,16 @@ export default async (req: Request, _context: Context) => {
     if (req.method === 'POST') {
       const body = (await req.json()) as TaskInput
       if (!body.title?.trim()) return jsonResponse({ error: 'title é obrigatório' }, { status: 400 })
+      const dueAt = body.durationHours ? new Date(Date.now() + body.durationHours * 3_600_000) : null
       const [row] = await db
         .insert(tasks)
-        .values({ title: body.title.trim(), icon: body.icon || '✅', userId: user.id })
+        .values({
+          title: body.title.trim(),
+          icon: body.icon || '✅',
+          durationHours: body.durationHours ?? null,
+          dueAt,
+          userId: user.id,
+        })
         .returning()
       return jsonResponse(row, { status: 201 })
     }

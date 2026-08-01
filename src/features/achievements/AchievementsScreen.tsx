@@ -5,6 +5,7 @@ import { useDoseLogs } from '../../api/doses'
 import { useMoodEntries } from '../../api/moods'
 import { useCreateMessage } from '../../api/messages'
 import { ACHIEVEMENTS } from '../../lib/achievementsEngine'
+import { getAchievementIcon } from '../../lib/achievementIcons'
 import { computeWeeklySummary } from '../../lib/insights'
 import { useAchievementStats } from './useAchievementStats'
 
@@ -94,6 +95,7 @@ export default function AchievementsScreen() {
       <div className="grid grid-cols-3 gap-3">
         {ACHIEVEMENTS.map((ach) => {
           const isUnlocked = unlockedKeys.has(ach.key)
+          const Icon = getAchievementIcon(ach.icon)
           return (
             <Card
               key={ach.key}
@@ -102,7 +104,7 @@ export default function AchievementsScreen() {
                 (isUnlocked ? '' : 'opacity-35 grayscale')
               }
             >
-              <span className="text-3xl">{ach.icon}</span>
+              {Icon ? <Icon size={28} className="text-[var(--accent)]" /> : <span className="text-3xl">{ach.icon}</span>}
               <span className="text-xs font-medium text-[var(--text)]">{ach.title}</span>
               <span className="text-[10px] text-[var(--text-muted)]">{ach.description}</span>
             </Card>

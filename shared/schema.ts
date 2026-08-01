@@ -168,6 +168,7 @@ export const routines = pgTable('routines', {
   icon: text('icon').notNull().default('✅'),
   type: text('type').notNull().default('checkbox'), // 'checkbox' | 'counter' | 'timer'
   targetCount: integer('target_count'), // counter: unidades; timer: segundos
+  daysOfWeek: jsonb('days_of_week'), // number[] (0=dom..6=sáb) | null = todo dia
   active: boolean('active').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
@@ -276,6 +277,8 @@ export const tasks = pgTable('tasks', {
   title: text('title').notNull(),
   icon: text('icon').notNull().default('✅'),
   done: boolean('done').notNull().default(false),
+  durationHours: integer('duration_hours'), // punições com prazo (castidade etc.)
+  dueAt: timestamp('due_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
@@ -304,7 +307,9 @@ export const communityMembers = pgTable(
   (table) => [uniqueIndex('community_members_pair').on(table.communityId, table.userId)],
 )
 
-export const communityMessages = pgTable('community_messages', {
+// Posts DENTRO da comunidade (tipo Reddit) — diferente dos posts pessoais do perfil.
+// Só quem é membro da comunidade vê esses posts (no Explorar e na própria comunidade).
+export const communityPosts = pgTable('community_posts', {
   id: serial('id').primaryKey(),
   communityId: integer('community_id')
     .notNull()
@@ -312,6 +317,34 @@ export const communityMessages = pgTable('community_messages', {
   userId: integer('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
-  body: text('body').notNull(),
+  text: text('text'),
+  images: jsonb('images').notNull().default([]), // string[] data URLs
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const communityPostLikes = pgTable(
+  'community_post_likes',
+  {
+    id: serial('id').primaryKey(),
+    postId: integer('post_id')
+      .notNull()
+      .references(() => communityPosts.id, { onDelete: 'cascade' }),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex('community_post_likes_pair').on(table.postId, table.userId)],
+)
+
+export const communityPostComments = pgTable('community_post_comments', {
+  id: serial('id').primaryKey(),
+  postId: integer('post_id')
+    .notNull()
+    .references(() => communityPosts.id, { onDelete: 'cascade' }),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  text: text('text').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })

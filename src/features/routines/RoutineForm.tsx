@@ -3,6 +3,7 @@ import { Button, Card } from '../../components/ui'
 import { useCreateRoutine, useUpdateRoutine } from '../../api/routines'
 import { useProfile } from '../../api/profile'
 import { ROUTINE_ICON_OPTIONS, DEFAULT_ROUTINE_ICON_KEY } from '../../lib/routineIcons'
+import { weekdayLabel } from '../../lib/dateUtils'
 import type { Routine, RoutineType } from '../../../shared/types'
 
 const NSFW_SUGGESTIONS: { name: string; icon: string; type: RoutineType }[] = [
@@ -29,12 +30,19 @@ export default function RoutineForm({ routine, onDone }: { routine?: Routine; on
   const [type, setType] = useState<RoutineType>((routine?.type as RoutineType) ?? 'checkbox')
   const [targetCount, setTargetCount] = useState(routine?.targetCount ?? 8)
   const [targetMinutes, setTargetMinutes] = useState(routine?.targetCount ? Math.round(routine.targetCount / 60) : 5)
+  const [everyDay, setEveryDay] = useState((routine?.daysOfWeek as number[] | null | undefined) == null)
+  const [days, setDays] = useState<number[]>((routine?.daysOfWeek as number[] | null | undefined) ?? [1, 2, 3, 4, 5])
+
+  function toggleDay(d: number) {
+    setDays((cur) => (cur.includes(d) ? cur.filter((x) => x !== d) : [...cur, d].sort()))
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!name.trim()) return
 
     const finalTarget = type === 'counter' ? targetCount : type === 'timer' ? targetMinutes * 60 : null
+    const daysOfWeek = everyDay ? null : days
 
     if (isEdit) {
       await updateRoutine.mutateAsync({
@@ -43,6 +51,7 @@ export default function RoutineForm({ routine, onDone }: { routine?: Routine; on
         icon,
         type,
         targetCount: finalTarget,
+        daysOfWeek,
       })
     } else {
       await createRoutine.mutateAsync({
@@ -50,6 +59,7 @@ export default function RoutineForm({ routine, onDone }: { routine?: Routine; on
         icon,
         type,
         targetCount: finalTarget,
+        daysOfWeek,
         active: true,
       })
     }
@@ -156,6 +166,55 @@ export default function RoutineForm({ routine, onDone }: { routine?: Routine; on
             />
           </div>
         )}
+
+        <div>
+          <label className="mb-1.5 block text-xs font-medium text-[var(--text-muted)]">Quando aparece na Home</label>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setEveryDay(true)}
+              className={
+                'flex-1 rounded-xl border px-2 py-2 text-xs transition ' +
+                (everyDay
+                  ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
+                  : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]')
+              }
+            >
+              Todo dia
+            </button>
+            <button
+              type="button"
+              onClick={() => setEveryDay(false)}
+              className={
+                'flex-1 rounded-xl border px-2 py-2 text-xs transition ' +
+                (!everyDay
+                  ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
+                  : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]')
+              }
+            >
+              Dias específicos
+            </button>
+          </div>
+          {!everyDay && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {[0, 1, 2, 3, 4, 5, 6].map((d) => (
+                <button
+                  type="button"
+                  key={d}
+                  onClick={() => toggleDay(d)}
+                  className={
+                    'rounded-lg border px-2.5 py-1.5 text-xs transition ' +
+                    (days.includes(d)
+                      ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
+                      : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]')
+                  }
+                >
+                  {weekdayLabel(d)}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="flex gap-2 pt-1">
           <Button type="button" variant="secondary" className="flex-1" onClick={onDone}>

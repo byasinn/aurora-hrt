@@ -6,6 +6,7 @@ import { useUnlockedAchievements } from '../../api/achievements'
 import { useMoodEntries } from '../../api/moods'
 import { useMedications } from '../../api/medications'
 import { ACHIEVEMENTS } from '../../lib/achievementsEngine'
+import { getAchievementIcon } from '../../lib/achievementIcons'
 import { fileToResizedDataUrl, fileToFittedDataUrl } from '../../lib/image'
 import PhotoWall from '../../components/PhotoWall'
 import Avatar from '../../components/Avatar'
@@ -183,15 +184,18 @@ export default function PublicProfileScreen() {
               <h2 className="text-xs font-medium text-[var(--text-muted)]">Troféus</h2>
             </div>
             <div className="flex gap-2 overflow-x-auto pb-1">
-              {unlockedAchievements.map((a) => (
-                <div
-                  key={a.key}
-                  title={a.title}
-                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-xl"
-                >
-                  {a.icon}
-                </div>
-              ))}
+              {unlockedAchievements.map((a) => {
+                const Icon = getAchievementIcon(a.icon)
+                return (
+                  <div
+                    key={a.key}
+                    title={a.title}
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-xl"
+                  >
+                    {Icon ? <Icon size={20} className="text-[var(--accent)]" /> : a.icon}
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}

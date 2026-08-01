@@ -2,7 +2,6 @@ import { and, desc, eq, inArray } from 'drizzle-orm'
 import { follows, postLikes, postComments, posts, profile } from '../../../shared/schema'
 import type { FeedPost } from '../../../shared/types'
 import type { getDb } from './db'
-import { getOrCreateDefaultCommunity, isCommunityMember } from './community'
 
 export async function isFollowing(
   db: ReturnType<typeof getDb>,
@@ -23,14 +22,7 @@ export async function canViewPost(
   authorId: number,
 ): Promise<boolean> {
   if (viewerId === authorId) return true
-  if (await isFollowing(db, viewerId, authorId)) return true
-  // Também vale se os dois são membros da mesma comunidade (posts da comunidade aparecem no feed).
-  const community = await getOrCreateDefaultCommunity(db)
-  const [viewerIsMember, authorIsMember] = await Promise.all([
-    isCommunityMember(db, community.id, viewerId),
-    isCommunityMember(db, community.id, authorId),
-  ])
-  return viewerIsMember && authorIsMember
+  return isFollowing(db, viewerId, authorId)
 }
 
 export async function enrichPosts(
