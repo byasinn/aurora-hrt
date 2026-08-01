@@ -20,6 +20,9 @@ import type {
   postComments,
   directMessages,
   tasks,
+  communities,
+  communityMembers,
+  communityMessages,
 } from './schema'
 
 export type User = typeof users.$inferSelect
@@ -178,4 +181,18 @@ export interface DmThread {
   lastMessage: string
   lastMessageAt: string
   unreadCount: number
+}
+
+export type Community = typeof communities.$inferSelect
+export interface CommunityDetail extends Community {
+  memberCount: number
+  isMember: boolean
+  isAdmin: boolean
+}
+
+export type CommunityMember = typeof communityMembers.$inferSelect
+
+export type CommunityMessage = typeof communityMessages.$inferSelect
+export interface CommunityMessageWithAuthor extends CommunityMessage {
+  author: { userId: number; displayName: string; avatarUrl: string | null; avatarIcon: string | null }
 }

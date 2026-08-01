@@ -3,7 +3,7 @@ import { and, count, eq } from 'drizzle-orm'
 import { getDb } from './_shared/db'
 import { profile, follows, moodEntries, medications } from '../../shared/schema'
 import { jsonResponse, requireUser } from './_shared/auth'
-import { enrichPosts, isFollowing, postsByUser } from './_shared/social'
+import { canViewPost, enrichPosts, isFollowing, postsByUser } from './_shared/social'
 import type { SharedMedicationSummary, UserProfileDetail } from '../../shared/types'
 
 export default async (req: Request, _context: Context) => {
@@ -67,7 +67,8 @@ export default async (req: Request, _context: Context) => {
       )
     }
 
-    const postsOut = isSelf || following ? await enrichPosts(db, await postsByUser(db, targetId), user.id) : []
+    const canViewTheirPosts = isSelf || (await canViewPost(db, user.id, targetId))
+    const postsOut = canViewTheirPosts ? await enrichPosts(db, await postsByUser(db, targetId), user.id) : []
 
     const result: UserProfileDetail = {
       userId: targetId,

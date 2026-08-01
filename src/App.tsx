@@ -7,6 +7,9 @@ import AuthGate from './features/auth/AuthGate'
 import Layout from './components/Layout'
 import TodayScreen from './features/medications/TodayScreen'
 import MedicationsScreen from './features/medications/MedicationsScreen'
+import SaudeScreen from './features/health/SaudeScreen'
+import CommunityScreen from './features/community/CommunityScreen'
+import KinkScreen from './features/kink/KinkScreen'
 import MoodCheckIn from './features/mood/MoodCheckIn'
 import CalendarScreen from './features/calendar/CalendarScreen'
 import ProfileScreen from './features/profile/ProfileScreen'
@@ -49,6 +52,9 @@ function RootGate() {
       <Route element={<Layout />}>
         <Route index element={<TodayScreen />} />
         <Route path="medications" element={<MedicationsScreen />} />
+        <Route path="saude" element={<SaudeScreen />} />
+        <Route path="comunidade" element={<CommunityScreen />} />
+        <Route path="kink" element={<KinkScreen />} />
         <Route path="mood" element={<MoodCheckIn />} />
         <Route path="calendar" element={<CalendarScreen />} />
         <Route path="achievements" element={<AchievementsScreen />} />

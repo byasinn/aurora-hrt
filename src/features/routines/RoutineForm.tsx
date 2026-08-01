@@ -9,6 +9,7 @@ const NSFW_SUGGESTIONS: { name: string; icon: string; type: RoutineType }[] = [
   { name: 'Momento a sós', icon: 'heart', type: 'checkbox' },
   { name: 'Treino de resistência', icon: 'flame', type: 'timer' },
   { name: 'Explorar o corpo', icon: 'flame', type: 'counter' },
+  { name: 'CEI', icon: 'flame', type: 'checkbox' },
 ]
 
 const TYPE_OPTIONS: { value: RoutineType; label: string }[] = [

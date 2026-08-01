@@ -141,7 +141,7 @@ export default function UserProfileScreen() {
           <h2 className="mb-2 text-xs font-medium text-[var(--text-muted)]">Posts</h2>
           {nsfwWarning ? (
             <p className="text-xs text-[var(--text-muted)]">Ative o modo NSFW pra ver os posts desse perfil.</p>
-          ) : profile.isFollowedByMe ? (
+          ) : profile.isFollowedByMe || profile.posts.length > 0 ? (
             <PhotoWall posts={profile.posts} />
           ) : (
             <p className="text-xs text-[var(--text-muted)]">Siga {profile.displayName || 'essa pessoa'} pra ver os posts.</p>

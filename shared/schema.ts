@@ -278,3 +278,40 @@ export const tasks = pgTable('tasks', {
   done: boolean('done').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
+
+// V1: só existe uma comunidade (semeada sob demanda por getOrCreateDefaultCommunity).
+// Quem administra é quem tem users.isAdmin — sem papel de admin por comunidade ainda.
+export const communities = pgTable('communities', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  icon: text('icon').notNull().default('heart'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const communityMembers = pgTable(
+  'community_members',
+  {
+    id: serial('id').primaryKey(),
+    communityId: integer('community_id')
+      .notNull()
+      .references(() => communities.id, { onDelete: 'cascade' }),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex('community_members_pair').on(table.communityId, table.userId)],
+)
+
+export const communityMessages = pgTable('community_messages', {
+  id: serial('id').primaryKey(),
+  communityId: integer('community_id')
+    .notNull()
+    .references(() => communities.id, { onDelete: 'cascade' }),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  body: text('body').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})

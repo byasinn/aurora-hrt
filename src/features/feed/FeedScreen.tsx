@@ -288,6 +288,16 @@ export default function FeedScreen() {
 
   return (
     <div className="space-y-4">
+      <Link
+        to="/comunidade"
+        className="flex items-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5 [box-shadow:var(--shadow)]"
+      >
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-contrast)]">
+          <Heart size={16} />
+        </span>
+        <span className="text-sm font-medium text-[var(--text)]">Comunidade AuroraApp Irmãs</span>
+      </Link>
+
       <div className="flex items-center gap-2">
         <PeopleSearchBox value={query} onChange={setQuery} />
         <div className="flex-1" />

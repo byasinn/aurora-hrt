@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Settings, ChevronRight, Trophy, Pill, Calendar, Ruler, FlaskConical, Lightbulb, ListChecks } from 'lucide-react'
+import { Settings, ChevronRight, Trophy, HeartPulse, Calendar, ListChecks, Users, Flame } from 'lucide-react'
 import { Card } from '../../components/ui'
 import Avatar from '../../components/Avatar'
 import { useProfile } from '../../api/profile'
@@ -10,17 +10,18 @@ import { useRoutines, useRoutineLogs } from '../../api/routines'
 import { computeWeeklySummary } from '../../lib/insights'
 import { todayStr } from '../../lib/dateUtils'
 
-const QUICK_LINKS = [
-  { to: '/medications', label: 'Doses', icon: Pill },
+const BASE_QUICK_LINKS = [
+  { to: '/saude', label: 'Saúde', icon: HeartPulse },
   { to: '/routines', label: 'Rotinas', icon: ListChecks },
   { to: '/calendar', label: 'Histórico', icon: Calendar },
-  { to: '/measurements', label: 'Medidas', icon: Ruler },
-  { to: '/labs', label: 'Exames', icon: FlaskConical },
-  { to: '/tips', label: 'Dicas', icon: Lightbulb },
+  { to: '/comunidade', label: 'Comunidade', icon: Users },
 ]
 
 export default function ProfileScreen() {
   const { data: profile } = useProfile()
+  const quickLinks = profile?.nsfwMode
+    ? [...BASE_QUICK_LINKS, { to: '/kink', label: 'Kink', icon: Flame }]
+    : BASE_QUICK_LINKS
   const { data: unlocked = [] } = useUnlockedAchievements()
   const { data: doseLogs = [] } = useDoseLogs()
   const { data: moodEntries = [] } = useMoodEntries()
@@ -83,7 +84,7 @@ export default function ProfileScreen() {
       </div>
 
       <div className="grid grid-cols-3 gap-2">
-        {QUICK_LINKS.map(({ to, label, icon: Icon }) => (
+        {quickLinks.map(({ to, label, icon: Icon }) => (
           <Link key={to} to={to}>
             <Card className="flex flex-col items-center gap-1 py-3 text-center">
               <Icon size={20} className="text-[var(--accent)]" />
