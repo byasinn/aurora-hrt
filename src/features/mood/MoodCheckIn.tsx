@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import clsx from 'clsx'
-import { Pencil } from 'lucide-react'
+import { Pencil, ChevronDown } from 'lucide-react'
 import { Button, Card, ScreenTitle } from '../../components/ui'
 import { useTags, useCreateTag } from '../../api/tags'
 import { useCreateMoodEntry, useUpdateMoodEntry, useMoodEntries } from '../../api/moods'
@@ -48,51 +48,37 @@ const SYMPTOM_SUGGESTIONS = [
   'Dor de barriga',
 ]
 
-const ENERGY_OPTIONS = [
-  { lvl: 1, emoji: '🪫' },
-  { lvl: 2, emoji: '😴' },
-  { lvl: 3, emoji: '🙂' },
-  { lvl: 4, emoji: '⚡' },
-  { lvl: 5, emoji: '🚀' },
-]
-const LIBIDO_OPTIONS = [
-  { lvl: 1, emoji: '❄️' },
-  { lvl: 2, emoji: '🙅' },
-  { lvl: 3, emoji: '🤷' },
-  { lvl: 4, emoji: '💗' },
-  { lvl: 5, emoji: '🔥' },
-]
-
-function ScaleRow({
+function ScaleSlider({
   label,
   value,
   onChange,
-  options,
+  lowEmoji,
+  highEmoji,
 }: {
   label: string
   value: number
   onChange: (v: number) => void
-  options: { lvl: number; emoji: string }[]
+  lowEmoji: string
+  highEmoji: string
 }) {
   return (
     <div>
-      <h2 className="mb-2 text-sm font-medium text-[var(--text-muted)]">{label}</h2>
-      <div className="flex gap-2">
-        {options.map(({ lvl, emoji }) => (
-          <button
-            key={lvl}
-            type="button"
-            onClick={() => onChange(lvl)}
-            className={clsx(
-              'h-12 flex-1 rounded-xl border text-lg transition',
-              value === lvl
-                ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
-                : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]',
-            )}
-          >
-            {emoji}
-          </button>
-        ))}
+      <div className="mb-2 flex items-center justify-between">
+        <h2 className="text-sm font-medium text-[var(--text-muted)]">{label}</h2>
+        <span className="text-sm font-semibold text-[var(--text)]">{value}/10</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-lg">{lowEmoji}</span>
+        <input
+          type="range"
+          min={0}
+          max={10}
+          step={1}
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="h-2 flex-1 accent-[var(--accent)]"
+        />
+        <span className="text-lg">{highEmoji}</span>
       </div>
     </div>
   )
@@ -161,9 +147,6 @@ function TagNames({ ids }: { ids: number[] }) {
 }
 
 function EntrySummary({ entry, onEdit }: { entry: MoodEntry; onEdit: () => void }) {
-  const energy = ENERGY_OPTIONS.find((o) => o.lvl === entry.energyLevel)
-  const libido = LIBIDO_OPTIONS.find((o) => o.lvl === entry.libidoLevel)
-
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
@@ -189,11 +172,11 @@ function EntrySummary({ entry, onEdit }: { entry: MoodEntry; onEdit: () => void 
         <div className="flex gap-6">
           <div>
             <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Energia</p>
-            <p className="text-lg">{energy?.emoji ?? '—'}</p>
+            <p className="text-lg text-[var(--text)]">{entry.energyLevel ?? '—'}/10</p>
           </div>
           <div>
             <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Libido</p>
-            <p className="text-lg">{libido?.emoji ?? '—'}</p>
+            <p className="text-lg text-[var(--text)]">{entry.libidoLevel ?? '—'}/10</p>
           </div>
         </div>
         {entry.notes && (
@@ -215,20 +198,22 @@ export default function MoodCheckIn() {
 
   const existing = entries?.[0]
   const [editing, setEditing] = useState(false)
+  const [symptomsOpen, setSymptomsOpen] = useState(false)
 
   const [moodTagIds, setMoodTagIds] = useState<number[]>([])
   const [symptomTagIds, setSymptomTagIds] = useState<number[]>([])
-  const [energyLevel, setEnergyLevel] = useState(3)
-  const [libidoLevel, setLibidoLevel] = useState(3)
+  const [energyLevel, setEnergyLevel] = useState(5)
+  const [libidoLevel, setLibidoLevel] = useState(5)
   const [notes, setNotes] = useState('')
 
   useEffect(() => {
     if (!existing) return
     setMoodTagIds((existing.moodTagIds as number[]) ?? [])
     setSymptomTagIds((existing.symptomTagIds as number[]) ?? [])
-    setEnergyLevel(existing.energyLevel ?? 3)
-    setLibidoLevel(existing.libidoLevel ?? 3)
+    setEnergyLevel(existing.energyLevel ?? 5)
+    setLibidoLevel(existing.libidoLevel ?? 5)
     setNotes(existing.notes ?? '')
+    if (((existing.symptomTagIds as number[]) ?? []).length > 0) setSymptomsOpen(true)
   }, [existing])
 
   function toggle(setFn: React.Dispatch<React.SetStateAction<number[]>>) {
@@ -271,18 +256,25 @@ export default function MoodCheckIn() {
         <TagPicker type="mood" suggestions={MOOD_SUGGESTIONS} selected={moodTagIds} onToggle={toggle(setMoodTagIds)} />
       </div>
 
-      <div>
-        <h2 className="mb-2 text-sm font-medium text-[var(--text-muted)]">Sintomas</h2>
+      <button
+        type="button"
+        onClick={() => setSymptomsOpen((o) => !o)}
+        className="flex w-full items-center justify-between text-left"
+      >
+        <h2 className="text-sm font-medium text-[var(--text-muted)]">Como me sinto? (sintomas)</h2>
+        <ChevronDown size={16} className={clsx('text-[var(--text-muted)] transition', symptomsOpen && 'rotate-180')} />
+      </button>
+      {symptomsOpen && (
         <TagPicker
           type="symptom"
           suggestions={SYMPTOM_SUGGESTIONS}
           selected={symptomTagIds}
           onToggle={toggle(setSymptomTagIds)}
         />
-      </div>
+      )}
 
-      <ScaleRow label="Energia" value={energyLevel} onChange={setEnergyLevel} options={ENERGY_OPTIONS} />
-      <ScaleRow label="Libido" value={libidoLevel} onChange={setLibidoLevel} options={LIBIDO_OPTIONS} />
+      <ScaleSlider label="Energia" value={energyLevel} onChange={setEnergyLevel} lowEmoji="🪫" highEmoji="⚡" />
+      <ScaleSlider label="Libido" value={libidoLevel} onChange={setLibidoLevel} lowEmoji="❄️" highEmoji="🔥" />
 
       <div>
         <h2 className="mb-2 text-sm font-medium text-[var(--text-muted)]">Notas (opcional)</h2>

@@ -71,6 +71,13 @@
       "when": 1785607299926,
       "tag": "0009_usuarios-admin-ban",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1785616985269,
+      "tag": "0010_nsfw-e-remedios",
+      "breakpoints": true
     }
   ]
 }

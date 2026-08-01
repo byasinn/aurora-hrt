@@ -71,6 +71,10 @@ export const profile = pgTable('profile', {
   shareLibido: boolean('share_libido').notNull().default(false),
   shareMedications: boolean('share_medications').notNull().default(false),
   shareHrtDuration: boolean('share_hrt_duration').notNull().default(false),
+  nsfwMode: boolean('nsfw_mode').notNull().default(false),
+  genitalTerm: text('genital_term'), // null = usa o padrão da tela ("Clitóris"/"Pênis" conforme o caso)
+  showGenitalMeasurements: boolean('show_genital_measurements').notNull().default(false),
+  kinks: jsonb('kinks').notNull().default([]), // string[]
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 

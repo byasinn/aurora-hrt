@@ -37,16 +37,28 @@ body,
   height: 100%;
 }
 
+html {
+  overscroll-behavior-y: contain;
+}
+
 body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
   font: 15px/1.5 system-ui, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: contain;
 }
 
 button {
   font: inherit;
+}
+
+/* iOS Safari dá zoom automático em qualquer input com font-size < 16px ao focar */
+input,
+textarea,
+select {
+  font-size: 16px;
 }
 
 ::selection {

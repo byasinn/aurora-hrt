@@ -181,7 +181,7 @@ export default function CalendarScreen() {
           ))}
           {selectedMood && (
             <p className="text-sm text-[var(--text-muted)]">
-              Humor registrado · energia {selectedMood.energyLevel ?? '-'}/5
+              Humor registrado · energia {selectedMood.energyLevel ?? '-'}/10
             </p>
           )}
           {selectedRoutineLogs.map((log) => (

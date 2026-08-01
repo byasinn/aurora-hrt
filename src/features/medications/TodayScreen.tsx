@@ -237,8 +237,11 @@ export default function TodayScreen() {
       )}
 
       {data && data.items.length > 0 && formState === 'closed' && (
-        <div className="mb-4">
+        <div className="mb-4 space-y-1.5">
           <AddDoseButton prominent={false} onClick={() => setFormState('create')} />
+          <Link to="/medications" className="block text-center text-xs text-[var(--accent)]">
+            Gerenciar remédios e histórico →
+          </Link>
         </div>
       )}
 

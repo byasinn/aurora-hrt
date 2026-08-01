@@ -6,6 +6,9 @@ export interface AchievementStats {
   totalMoodEntries: number
   currentMoodStreakDays: number
   daysSinceTransitionStart: number | null
+  nsfwMode: boolean
+  totalRoutineCompletions: number
+  currentRoutineStreakDays: number
 }
 
 export const ACHIEVEMENTS: (AchievementDef & { isMet: (s: AchievementStats) => boolean })[] = [
@@ -78,6 +81,27 @@ export const ACHIEVEMENTS: (AchievementDef & { isMet: (s: AchievementStats) => b
     description: '1 ano desde o início da transição.',
     icon: '🎉',
     isMet: (s) => (s.daysSinceTransitionStart ?? -1) >= 365,
+  },
+  {
+    key: 'nsfw_first_routine',
+    title: 'Se conhecendo melhor',
+    description: 'Primeira rotininha concluída — modo NSFW ligado.',
+    icon: '😏',
+    isMet: (s) => s.nsfwMode && s.totalRoutineCompletions >= 1,
+  },
+  {
+    key: 'nsfw_streak_7',
+    title: 'Semana quente',
+    description: '7 dias seguidos de rotina, sem vergonha nenhuma.',
+    icon: '🔥',
+    isMet: (s) => s.nsfwMode && s.currentRoutineStreakDays >= 7,
+  },
+  {
+    key: 'nsfw_50',
+    title: 'Experiente',
+    description: '50 rotinas concluídas no modo NSFW.',
+    icon: '💦',
+    isMet: (s) => s.nsfwMode && s.totalRoutineCompletions >= 50,
   },
 ]
 

@@ -69,6 +69,8 @@ export type MeasurementType =
   | 'biceps'
   | 'body_fat'
   | 'height'
+  | 'flaccid_length'
+  | 'erect_length'
 export type Measurement = typeof measurements.$inferSelect
 export type MeasurementInput = Omit<typeof measurements.$inferInsert, 'id' | 'userId' | 'createdAt'>
 

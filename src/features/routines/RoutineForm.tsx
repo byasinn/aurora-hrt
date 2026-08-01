@@ -2,14 +2,22 @@ import { useState, type FormEvent } from 'react'
 import { Button, Card } from '../../components/ui'
 import Switch from '../../components/Switch'
 import { useCreateRoutine, useUpdateRoutine } from '../../api/routines'
+import { useProfile } from '../../api/profile'
 import type { Routine, RoutineType } from '../../../shared/types'
 
-const ICONS = ['💧', '🍎', '🏃', '😴', '🧘', '🚭', '📚', '☀️', '✅']
+const ICONS = ['💧', '🍎', '🏃', '😴', '🧘', '🚭', '📚', '☀️', '✅', '😏', '🔥']
+
+const NSFW_SUGGESTIONS: { name: string; icon: string }[] = [
+  { name: 'Momento a sós', icon: '😏' },
+  { name: 'Autocuidado íntimo', icon: '🔥' },
+  { name: 'Explorar o corpo', icon: '💦' },
+]
 
 export default function RoutineForm({ routine, onDone }: { routine?: Routine; onDone: () => void }) {
   const isEdit = !!routine
   const createRoutine = useCreateRoutine()
   const updateRoutine = useUpdateRoutine()
+  const { data: profile } = useProfile()
 
   const [name, setName] = useState(routine?.name ?? '')
   const [icon, setIcon] = useState(routine?.icon ?? '✅')
@@ -53,6 +61,24 @@ export default function RoutineForm({ routine, onDone }: { routine?: Routine; on
             className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5 text-[var(--text)] outline-none focus:border-[var(--accent)]"
           />
         </div>
+
+        {!isEdit && profile?.nsfwMode && (
+          <div className="flex flex-wrap gap-2">
+            {NSFW_SUGGESTIONS.map((s) => (
+              <button
+                type="button"
+                key={s.name}
+                onClick={() => {
+                  setName(s.name)
+                  setIcon(s.icon)
+                }}
+                className="rounded-full border border-dashed border-[var(--border)] px-3 py-1.5 text-sm text-[var(--text-muted)]"
+              >
+                {s.icon} {s.name}
+              </button>
+            ))}
+          </div>
+        )}
 
         <div>
           <label className="mb-1.5 block text-xs font-medium text-[var(--text-muted)]">Ícone</label>

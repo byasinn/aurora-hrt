@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Camera, Pencil, Check, Trophy, ArrowLeft } from 'lucide-react'
+import { Camera, Pencil, Check, Trophy, ArrowLeft, X, Plus } from 'lucide-react'
 import { useProfile, useUpdateProfile } from '../../api/profile'
 import { useUnlockedAchievements } from '../../api/achievements'
 import { useMoodEntries } from '../../api/moods'
@@ -21,6 +21,26 @@ export default function PublicProfileScreen() {
   const coverInputRef = useRef<HTMLInputElement>(null)
   const [editingBio, setEditingBio] = useState(false)
   const [bioDraft, setBioDraft] = useState(profile?.bio ?? '')
+  const [kinkDraft, setKinkDraft] = useState('')
+
+  const kinks = (profile?.kinks as string[]) ?? []
+
+  function addKink() {
+    const value = kinkDraft.trim()
+    if (!value || kinks.includes(value)) return
+    updateProfile.mutate({ kinks: [...kinks, value] })
+    setKinkDraft('')
+  }
+
+  function removeKink(kink: string) {
+    updateProfile.mutate({ kinks: kinks.filter((k) => k !== kink) })
+  }
+
+  function handleKinkKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key !== 'Enter') return
+    e.preventDefault()
+    addKink()
+  }
 
   const unlockedKeys = new Set(unlocked.map((u) => u.achievementKey))
   const unlockedAchievements = ACHIEVEMENTS.filter((a) => unlockedKeys.has(a.key))
@@ -122,6 +142,40 @@ export default function PublicProfileScreen() {
             </button>
           )}
         </div>
+
+        {profile?.nsfwMode && (
+          <div className="mt-3">
+            <h2 className="mb-2 text-xs font-medium text-[var(--text-muted)]">Kinks</h2>
+            <div className="flex flex-wrap gap-2">
+              {kinks.map((kink) => (
+                <span
+                  key={kink}
+                  className="flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--surface-2)] px-3 py-1.5 text-sm text-[var(--text)]"
+                >
+                  {kink}
+                  <button onClick={() => removeKink(kink)} className="text-[var(--text-muted)]">
+                    <X size={12} />
+                  </button>
+                </span>
+              ))}
+              <div className="flex items-center gap-1">
+                <input
+                  value={kinkDraft}
+                  onChange={(e) => setKinkDraft(e.target.value)}
+                  onKeyDown={handleKinkKeyDown}
+                  placeholder="Adicionar…"
+                  className="w-28 rounded-full border border-dashed border-[var(--border)] bg-transparent px-3 py-1.5 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
+                />
+                <button
+                  onClick={addKink}
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-contrast)]"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {((profile?.shareAvgMood && avgEnergy !== null) ||
           (profile?.shareLibido && avgLibido !== null) ||

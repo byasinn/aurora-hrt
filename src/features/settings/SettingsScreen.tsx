@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { User, Shield, Bell, Download, Palette, Terminal, LogOut, Lock, Users, Ban } from 'lucide-react'
+import { User, Shield, Bell, Download, Palette, Terminal, LogOut, Lock, Users, Ban, Flame } from 'lucide-react'
 import { Button, Card, ScreenTitle } from '../../components/ui'
 import Switch from '../../components/Switch'
 import { useProfile, useUpdateProfile } from '../../api/profile'
@@ -66,6 +66,94 @@ function AdminUsersCard({ myId }: { myId?: number }) {
           </div>
         ))}
       </div>
+    </Card>
+  )
+}
+
+const GENITAL_TERM_PRESETS = ['Clitty', 'Pipi', 'Girl dick', 'Clitóris']
+
+function NsfwSettingsCard() {
+  const { data: profile } = useProfile()
+  const updateProfile = useUpdateProfile()
+  const [customTerm, setCustomTerm] = useState('')
+  const [customOpen, setCustomOpen] = useState(
+    !!profile?.genitalTerm && !GENITAL_TERM_PRESETS.includes(profile.genitalTerm),
+  )
+
+  return (
+    <Card className="space-y-3">
+      <SectionHeader icon={Flame} title="Modo NSFW" />
+      <div className="flex items-center justify-between py-1">
+        <div>
+          <p className="text-sm text-[var(--text)]">Ativar modo NSFW</p>
+          <p className="text-xs text-[var(--text-muted)]">Libera troféus mais safados e sugestões de rotinas íntimas.</p>
+        </div>
+        <Switch checked={profile?.nsfwMode ?? false} onChange={(v) => updateProfile.mutate({ nsfwMode: v })} />
+      </div>
+
+      {profile?.nsfwMode && (
+        <>
+          <div className="flex items-center justify-between py-1">
+            <p className="text-sm text-[var(--text)]">Medir genitália em Medidas</p>
+            <Switch
+              checked={profile?.showGenitalMeasurements ?? false}
+              onChange={(v) => updateProfile.mutate({ showGenitalMeasurements: v })}
+            />
+          </div>
+
+          <div>
+            <p className="mb-2 text-xs font-medium text-[var(--text-muted)]">Como prefere chamar</p>
+            <div className="flex flex-wrap gap-2">
+              {GENITAL_TERM_PRESETS.map((term) => (
+                <button
+                  key={term}
+                  type="button"
+                  onClick={() => {
+                    setCustomOpen(false)
+                    updateProfile.mutate({ genitalTerm: term })
+                  }}
+                  className={
+                    'rounded-full border px-3 py-1.5 text-sm transition ' +
+                    (profile?.genitalTerm === term && !customOpen
+                      ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
+                      : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]')
+                  }
+                >
+                  {term}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setCustomOpen(true)}
+                className={
+                  'rounded-full border px-3 py-1.5 text-sm transition ' +
+                  (customOpen
+                    ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
+                    : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]')
+                }
+              >
+                Outro
+              </button>
+            </div>
+            {customOpen && (
+              <div className="mt-2 flex gap-2">
+                <input
+                  value={customTerm}
+                  onChange={(e) => setCustomTerm(e.target.value)}
+                  placeholder="Digite como prefere chamar"
+                  className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
+                />
+                <Button
+                  onClick={() => customTerm.trim() && updateProfile.mutate({ genitalTerm: customTerm.trim() })}
+                  disabled={!customTerm.trim() || updateProfile.isPending}
+                >
+                  Salvar
+                </Button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </Card>
   )
 }
@@ -249,6 +337,8 @@ export default function SettingsScreen() {
           />
         </div>
       </Card>
+
+      <NsfwSettingsCard />
 
       <Card className="space-y-2">
         <SectionHeader icon={Shield} title="Segurança" />

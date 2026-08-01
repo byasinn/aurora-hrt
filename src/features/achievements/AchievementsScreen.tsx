@@ -54,9 +54,9 @@ export default function AchievementsScreen() {
         </p>
         {(weekly.avgEnergy !== null || weekly.avgLibido !== null) && (
           <p className="text-xs text-[var(--text-muted)]">
-            {weekly.avgEnergy !== null && `Energia média: ${weekly.avgEnergy.toFixed(1)}/5`}
+            {weekly.avgEnergy !== null && `Energia média: ${weekly.avgEnergy.toFixed(1)}/10`}
             {weekly.avgEnergy !== null && weekly.avgLibido !== null && ' · '}
-            {weekly.avgLibido !== null && `Libido média: ${weekly.avgLibido.toFixed(1)}/5`}
+            {weekly.avgLibido !== null && `Libido média: ${weekly.avgLibido.toFixed(1)}/10`}
           </p>
         )}
       </Card>

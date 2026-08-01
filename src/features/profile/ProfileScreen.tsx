@@ -11,7 +11,7 @@ import { computeWeeklySummary } from '../../lib/insights'
 import { todayStr } from '../../lib/dateUtils'
 
 const QUICK_LINKS = [
-  { to: '/', label: 'Doses', icon: Pill },
+  { to: '/medications', label: 'Doses', icon: Pill },
   { to: '/routines', label: 'Rotinas', icon: ListChecks },
   { to: '/calendar', label: 'Histórico', icon: Calendar },
   { to: '/measurements', label: 'Medidas', icon: Ruler },
@@ -110,9 +110,9 @@ export default function ProfileScreen() {
         </p>
         {(weekly.avgEnergy !== null || weekly.avgLibido !== null) && (
           <p className="text-xs text-[var(--text-muted)]">
-            {weekly.avgEnergy !== null && `Energia média: ${weekly.avgEnergy.toFixed(1)}/5`}
+            {weekly.avgEnergy !== null && `Energia média: ${weekly.avgEnergy.toFixed(1)}/10`}
             {weekly.avgEnergy !== null && weekly.avgLibido !== null && ' · '}
-            {weekly.avgLibido !== null && `Libido média: ${weekly.avgLibido.toFixed(1)}/5`}
+            {weekly.avgLibido !== null && `Libido média: ${weekly.avgLibido.toFixed(1)}/10`}
           </p>
         )}
         <Link to="/achievements" className="inline-block text-xs text-[var(--accent)]">

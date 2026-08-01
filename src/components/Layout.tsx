@@ -21,7 +21,7 @@ export default function Layout() {
       <header className="flex justify-center pb-2 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <span className="font-logo flag-gradient-text text-lg uppercase tracking-wide">Aurora</span>
       </header>
-      <main className="flex-1 overflow-y-auto px-4 pb-24">
+      <main className="flex-1 overflow-y-auto overscroll-y-contain px-4 pb-24">
         <Outlet />
       </main>
       <nav className="fixed bottom-0 left-1/2 z-10 w-full max-w-md -translate-x-1/2 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur">
