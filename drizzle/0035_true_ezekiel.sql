@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "posts_repost_pair" ON "posts" USING btree ("user_id","repost_of_kind","repost_of_id");

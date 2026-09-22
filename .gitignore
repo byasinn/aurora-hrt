@@ -12,7 +12,9 @@ dist
 dist-ssr
 *.local
 .env
+.dev.vars
 .netlify
+.wrangler
 dev-dist
 .claude/settings.local.json
 deno.lock

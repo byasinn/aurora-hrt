@@ -13,7 +13,7 @@ export function useMe(enabled: boolean) {
 
 export function useSignup() {
   return useMutation({
-    mutationFn: (input: { email: string; password: string }) =>
+    mutationFn: (input: { email: string; password: string; termsAccepted: boolean; ageConfirmed: boolean }) =>
       api.post<{ ok: true; message: string }>('/auth-signup', input),
   })
 }

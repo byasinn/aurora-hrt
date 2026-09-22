@@ -14,11 +14,25 @@ export function useMoodEntries(params: { from?: string; to?: string } = {}) {
   })
 }
 
+/** Substitui/insere `entry` em qualquer query de mood-entries já em cache, por data — usado depois
+ * de criar/editar pra a tela atualizar na hora, sem esperar o refetch de invalidateQueries (esse
+ * atraso era o que fazia o check-in "demorar pra aparecer" e abrir uma janela pra clique duplo criar
+ * um registro repetido do mesmo dia). */
+function upsertInCache(qc: ReturnType<typeof useQueryClient>, entry: MoodEntry) {
+  qc.setQueriesData<MoodEntry[]>({ queryKey: ['mood-entries'] }, (old) => {
+    if (!old) return old
+    return [...old.filter((e) => e.date !== entry.date), entry]
+  })
+}
+
 export function useCreateMoodEntry() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: MoodEntryInput) => api.post<MoodEntry>('/moods', input),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['mood-entries'] }),
+    onSuccess: (entry) => {
+      upsertInCache(qc, entry)
+      qc.invalidateQueries({ queryKey: ['mood-entries'] })
+    },
   })
 }
 
@@ -27,6 +41,9 @@ export function useUpdateMoodEntry() {
   return useMutation({
     mutationFn: ({ id, ...input }: Partial<MoodEntryInput> & { id: number }) =>
       api.put<MoodEntry>(`/moods?id=${id}`, input),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['mood-entries'] }),
+    onSuccess: (entry) => {
+      upsertInCache(qc, entry)
+      qc.invalidateQueries({ queryKey: ['mood-entries'] })
+    },
   })
 }

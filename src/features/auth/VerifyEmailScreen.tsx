@@ -27,7 +27,7 @@ export default function VerifyEmailScreen() {
   }, [])
 
   return (
-    <div className="flex min-h-svh items-center justify-center px-6">
+    <div className="flex min-h-app items-center justify-center px-6">
       <div className="w-full max-w-xs rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 text-center shadow-xl">
         <h1 className="font-logo mb-3 text-2xl uppercase tracking-wide text-[var(--text)]">Aurora</h1>
         {verify.isPending && <p className="text-sm text-[var(--text-muted)]">Confirmando seu email…</p>}

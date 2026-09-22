@@ -1,5 +1,7 @@
 import clsx from 'clsx'
-import type { ButtonHTMLAttributes, HTMLAttributes } from 'react'
+import { motion } from 'framer-motion'
+import type { HTMLAttributes } from 'react'
+import type { HTMLMotionProps } from 'framer-motion'
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
@@ -17,9 +19,11 @@ export function Button({
   className,
   variant = 'primary',
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'ghost' }) {
+}: HTMLMotionProps<'button'> & { variant?: 'primary' | 'secondary' | 'ghost' }) {
   return (
-    <button
+    <motion.button
+      whileTap={{ scale: 0.96 }}
+      transition={{ duration: 0.12 }}
       className={clsx(
         'rounded-xl px-4 py-2 text-sm font-medium transition disabled:opacity-50',
         variant === 'primary' && 'bg-[var(--accent)] text-[var(--accent-contrast)]',

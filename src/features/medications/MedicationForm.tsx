@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Bell } from 'lucide-react'
+import { Bell, Plus, X } from 'lucide-react'
 import { Button, Card } from '../../components/ui'
 import Switch from '../../components/Switch'
 import { useCreateMedication, useUpdateMedication } from '../../api/medications'
@@ -42,14 +42,30 @@ export default function MedicationForm({
   )
   const [intervalDays, setIntervalDays] = useState(initialFreq.intervalDays ?? 2)
   const [days, setDays] = useState<number[]>(initialFreq.days ?? [1, 3, 5])
-  const [preferredTime, setPreferredTime] = useState(medication?.preferredTime ?? '08:00')
+  const [preferredTimes, setPreferredTimes] = useState<string[]>(
+    (medication?.preferredTimes as string[] | undefined)?.length ? (medication!.preferredTimes as string[]) : ['08:00'],
+  )
   const [notes, setNotes] = useState(medication?.notes ?? '')
   const [hasHistory, setHasHistory] = useState(false)
   const [sinceDate, setSinceDate] = useState(todayStr())
   const [remindersEnabled, setRemindersEnabled] = useState(medication?.remindersEnabled ?? true)
 
+  const MAX_TIMES_PER_DAY = 6
+
   function toggleDay(d: number) {
     setDays((cur) => (cur.includes(d) ? cur.filter((x) => x !== d) : [...cur, d].sort()))
+  }
+
+  function updateTimeAt(index: number, value: string) {
+    setPreferredTimes((cur) => cur.map((t, i) => (i === index ? value : t)))
+  }
+
+  function addTime() {
+    setPreferredTimes((cur) => (cur.length >= MAX_TIMES_PER_DAY ? cur : [...cur, '08:00']))
+  }
+
+  function removeTime(index: number) {
+    setPreferredTimes((cur) => (cur.length <= 1 ? cur : cur.filter((_, i) => i !== index)))
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -63,6 +79,8 @@ export default function MedicationForm({
         : frequencyType === 'specific_days'
           ? { days }
           : {}
+    // ordena e remove duplicata — pode acontecer de deixar dois horários iguais sem querer
+    const cleanTimes = [...new Set(preferredTimes)].sort()
 
     if (isEdit) {
       await updateMed.mutateAsync({
@@ -73,7 +91,7 @@ export default function MedicationForm({
         route,
         frequencyType,
         frequencyValue,
-        preferredTime,
+        preferredTimes: cleanTimes,
         notes: notes || null,
         remindersEnabled,
       })
@@ -85,7 +103,7 @@ export default function MedicationForm({
         route,
         frequencyType,
         frequencyValue,
-        preferredTime,
+        preferredTimes: cleanTimes,
         notes: notes || null,
         active: true,
         remindersEnabled,
@@ -106,7 +124,7 @@ export default function MedicationForm({
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Ex: Estradiol, Perlutan…"
+            placeholder="Nome do medicamento"
             className={inputClass}
           />
         </div>
@@ -203,13 +221,42 @@ export default function MedicationForm({
         )}
 
         <div>
-          <label className={labelClass}>Horário preferido</label>
-          <input
-            type="time"
-            value={preferredTime}
-            onChange={(e) => setPreferredTime(e.target.value)}
-            className={inputClass}
-          />
+          <label className={labelClass}>
+            Horário{preferredTimes.length > 1 ? 's' : ''} preferido{preferredTimes.length > 1 ? 's' : ''}
+          </label>
+          <div className="space-y-2">
+            {preferredTimes.map((time, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input
+                  type="time"
+                  value={time}
+                  onChange={(e) => updateTimeAt(i, e.target.value)}
+                  className={inputClass}
+                />
+                {preferredTimes.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeTime(i)}
+                    className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-[var(--border)] text-[var(--text-muted)] transition hover:border-red-400 hover:text-red-400"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          {preferredTimes.length < MAX_TIMES_PER_DAY && (
+            <button
+              type="button"
+              onClick={addTime}
+              className="mt-2 flex cursor-pointer items-center gap-1.5 text-sm text-[var(--accent)]"
+            >
+              <Plus size={15} /> Adicionar outro horário
+            </button>
+          )}
+          <p className="mt-1 text-xs text-[var(--text-muted)]">
+            Toma mais de uma vez por dia? Adicione um horário pra cada dose.
+          </p>
         </div>
 
         <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5">

@@ -34,7 +34,9 @@ function LabCard({ def, entries }: { def: LabDef; entries: LabResult[] }) {
   return (
     <Card className="space-y-3">
       <div className="flex items-center gap-2">
-        <span className="text-xl">{def.icon}</span>
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--accent)]/15 text-lg">
+          {def.icon}
+        </span>
         <h3 className="font-medium text-[var(--text)]">{def.label}</h3>
         {latest && (
           <span className="ml-auto text-sm font-semibold flag-gradient-text">

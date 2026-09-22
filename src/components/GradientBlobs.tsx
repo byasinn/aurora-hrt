@@ -2,7 +2,7 @@
 export default function GradientBlobs() {
   return (
     <div
-      className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
+      className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-app overflow-hidden"
       style={{ background: 'var(--bg)' }}
     >
       <div

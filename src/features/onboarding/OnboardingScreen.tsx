@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { Button, Card } from '../../components/ui'
 import Avatar from '../../components/Avatar'
+import ImageCropper from '../../components/ImageCropper'
 import { useUpdateProfile } from '../../api/profile'
 import MedicationForm from '../medications/MedicationForm'
 import { useMedications } from '../../api/medications'
-import { fileToResizedDataUrl } from '../../lib/image'
+import { PRONOUN_PRESETS } from '../../lib/pronouns'
+import { SUPPORTED_LANGUAGES } from '../../i18n'
 import type { TextStyle, ContentPreference, AppModule } from '../../../shared/types'
 
-const TOTAL_STEPS = 9
+const TOTAL_STEPS = 11
 
 const stepVariants = {
   enter: { opacity: 0, y: 28 },
@@ -61,10 +64,10 @@ function OptionList<T extends string>({
             type="button"
             onClick={() => onSelect(opt.value)}
             className={
-              'w-full rounded-xl border px-4 py-3 text-left transition ' +
+              'w-full cursor-pointer rounded-xl border px-4 py-3 text-left transition active:scale-[0.98] ' +
               (isSelected
                 ? 'border-[var(--accent)] bg-[var(--surface-2)]'
-                : 'border-[var(--border)] bg-[var(--surface)]')
+                : 'border-[var(--border)] bg-[var(--surface)] hover:border-[var(--accent)]/50 hover:bg-[var(--surface-2)]/60')
             }
           >
             <span className="flex items-center justify-between text-sm font-medium text-[var(--text)]">
@@ -82,21 +85,26 @@ function OptionList<T extends string>({
 const AVATAR_ICONS = ['🦋', '🌸', '✨', '🌈', '💫', '🐱', '🦄', '💖', '🍑', '🧁', '🌙', '🌻']
 
 export default function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
+  const { t, i18n } = useTranslation()
   const updateProfile = useUpdateProfile()
   const { data: medications } = useMedications()
   const [step, setStep] = useState(0)
 
   const [pronouns, setPronouns] = useState('')
+  const [customPronouns, setCustomPronouns] = useState(false)
   const [textStyle, setTextStyle] = useState<TextStyle>('feminine')
   const [contentPreference, setContentPreference] = useState<ContentPreference>('feminine')
   const [isOnHrt, setIsOnHrt] = useState<boolean | null>(null)
   const [showMedForm, setShowMedForm] = useState(false)
   const [notOnMedsYet, setNotOnMedsYet] = useState(false)
   const [goals, setGoals] = useState<AppModule[]>(['medications', 'mood', 'calendar', 'measurements'])
+  const [workoutsEnabled, setWorkoutsEnabled] = useState(false)
+  const [cycleTrackingEnabled, setCycleTrackingEnabled] = useState(false)
+  const [intimateTrackingEnabled, setIntimateTrackingEnabled] = useState(false)
   const [displayName, setDisplayName] = useState('')
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [avatarIcon, setAvatarIcon] = useState<string | null>(null)
-  const [uploading, setUploading] = useState(false)
+  const [croppingAvatar, setCroppingAvatar] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
 
   function next() {
@@ -110,17 +118,10 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
     setGoals((cur) => (cur.includes(g) ? cur.filter((x) => x !== g) : [...cur, g]))
   }
 
-  async function handleAvatarFile(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleAvatarFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
-    if (!file) return
-    setUploading(true)
-    try {
-      const dataUrl = await fileToResizedDataUrl(file)
-      setAvatarUrl(dataUrl)
-      setAvatarIcon(null)
-    } finally {
-      setUploading(false)
-    }
+    if (file) setCroppingAvatar(file)
+    e.target.value = ''
   }
 
   async function finish() {
@@ -134,6 +135,9 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
         notOnMedsYet,
         appGoals: goals,
         enabledModules: goals,
+        workoutsEnabled,
+        cycleTrackingEnabled,
+        intimateTrackingEnabled,
         displayName,
         avatarUrl,
         avatarIcon,
@@ -145,10 +149,8 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
     }
   }
 
-  const treat = (fem: string, masc: string) => (textStyle === 'masculine' ? masc : fem)
-
   return (
-    <div className="mx-auto flex min-h-svh w-full max-w-md flex-col justify-between px-6 py-8 text-[var(--text)]">
+    <div className="mx-auto flex min-h-app w-full max-w-md flex-col justify-between px-6 py-8 text-[var(--text)]">
       {step > 0 && (
         <div className="mb-4 flex gap-1">
           {Array.from({ length: TOTAL_STEPS - 1 }).map((_, i) => (
@@ -170,20 +172,20 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
                 🦋
               </motion.p>
               <motion.p variants={lineVariants} className="font-logo flag-gradient-text text-2xl uppercase tracking-wide">
-                Aurora
+                {t('common.appName')}
               </motion.p>
               <motion.h1 variants={lineVariants} className="text-2xl font-semibold">
-                Que bom ter você aqui.
+                {t('onboarding.welcome.title')}
               </motion.h1>
               <motion.p variants={lineVariants} className="text-[var(--text-muted)]">
-                Esse é um espaço só seu para acompanhar sua transição — no seu tempo, do seu jeito.
+                {t('onboarding.welcome.p1')}
               </motion.p>
               <motion.p variants={lineVariants} className="text-[var(--text-muted)]">
-                Vamos fazer algumas perguntas rápidas para deixar tudo do jeitinho que funciona pra você.
+                {t('onboarding.welcome.p2')}
               </motion.p>
               <motion.div variants={lineVariants}>
                 <Button className="mt-4 w-full" onClick={next}>
-                  Vamos começar
+                  {t('onboarding.welcome.cta')}
                 </Button>
               </motion.div>
             </motion.div>
@@ -191,84 +193,134 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
         )}
 
         {step === 1 && (
+          <StepShell key="language">
+            <h2 className="mb-1 text-xl font-semibold">{t('onboarding.language.title')}</h2>
+            <p className="mb-4 text-sm text-[var(--text-muted)]">{t('onboarding.language.subtitle')}</p>
+            <OptionList
+              options={SUPPORTED_LANGUAGES.map((l) => ({ value: l.code, label: l.label }))}
+              selected={[i18n.resolvedLanguage as (typeof SUPPORTED_LANGUAGES)[number]['code']]}
+              onSelect={(code) => i18n.changeLanguage(code)}
+            />
+            <Button className="mt-5 w-full" onClick={next}>
+              {t('common.continue')}
+            </Button>
+          </StepShell>
+        )}
+
+        {step === 2 && (
           <StepShell key="pronouns">
-            <h2 className="mb-1 text-xl font-semibold">Quais são seus pronomes?</h2>
-            <p className="mb-4 text-sm text-[var(--text-muted)]">
-              Vamos usar isso para escrever as próximas mensagens do jeito certo.
-            </p>
+            <h2 className="mb-1 text-xl font-semibold">{t('onboarding.pronouns.title')}</h2>
+            <p className="mb-4 text-sm text-[var(--text-muted)]">{t('onboarding.pronouns.subtitle')}</p>
             <OptionList
               options={[
                 { value: 'ela/dela', label: 'Ela/dela' },
                 { value: 'ele/dele', label: 'Ele/dele' },
                 { value: 'elu/delu', label: 'Elu/delu' },
               ]}
-              selected={pronouns ? [pronouns] : []}
+              selected={!customPronouns && pronouns ? [pronouns] : []}
               onSelect={(v) => {
+                setCustomPronouns(false)
                 setPronouns(v)
-                setTextStyle(v === 'ele/dele' ? 'masculine' : 'feminine')
+                // só um ponto de partida — o próximo passo deixa a pessoa confirmar ou trocar
+                setTextStyle(v === 'ele/dele' ? 'masculine' : v === 'elu/delu' ? 'neutral' : 'feminine')
               }}
             />
-            <Button className="mt-5 w-full" onClick={next} disabled={!pronouns}>
-              Continuar
-            </Button>
-          </StepShell>
-        )}
-
-        {step === 2 && (
-          <StepShell key="identity">
-            <h2 className="mb-1 text-xl font-semibold">
-              Como você se identifica?
-            </h2>
-            <p className="mb-4 text-sm text-[var(--text-muted)]">
-              Isso ajusta quais medidas e sugestões de medicamento aparecem pra você — pode mudar quando
-              quiser no Perfil.
-            </p>
-            <OptionList
-              options={[
-                { value: 'feminine', label: 'Mulher trans' },
-                { value: 'masculine', label: 'Homem trans' },
-                { value: 'combined', label: 'Não-binário / prefiro não dizer' },
-              ]}
-              selected={[contentPreference]}
-              onSelect={(v) => setContentPreference(v as ContentPreference)}
-            />
-            <Button className="mt-5 w-full" onClick={next}>
-              Continuar
+            <button
+              type="button"
+              onClick={() => {
+                setCustomPronouns(true)
+                if (PRONOUN_PRESETS.includes(pronouns)) setPronouns('')
+              }}
+              className={
+                'mt-2 w-full cursor-pointer rounded-xl border px-4 py-3 text-left text-sm font-medium transition active:scale-[0.98] ' +
+                (customPronouns
+                  ? 'border-[var(--accent)] bg-[var(--surface-2)] text-[var(--text)]'
+                  : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)] hover:border-[var(--accent)]/50 hover:bg-[var(--surface-2)]/60')
+              }
+            >
+              {t('onboarding.pronouns.other')}
+            </button>
+            {customPronouns && (
+              <input
+                autoFocus
+                value={pronouns}
+                onChange={(e) => setPronouns(e.target.value)}
+                placeholder={t('onboarding.pronouns.placeholder')}
+                className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-[var(--text)] outline-none focus:border-[var(--accent)]"
+              />
+            )}
+            <Button className="mt-5 w-full" onClick={next} disabled={!pronouns.trim()}>
+              {t('common.continue')}
             </Button>
           </StepShell>
         )}
 
         {step === 3 && (
-          <StepShell key="hrt">
-            <h2 className="mb-1 text-xl font-semibold">Você está fazendo transição hormonal?</h2>
-            <p className="mb-4 text-sm text-[var(--text-muted)]">
-              Seja qual for a resposta, esse app fica com você.
-            </p>
+          <StepShell key="textStyle">
+            <h2 className="mb-1 text-xl font-semibold">{t('onboarding.textStyle.title')}</h2>
+            <p className="mb-4 text-sm text-[var(--text-muted)]">{t('onboarding.textStyle.subtitle')}</p>
             <OptionList
               options={[
-                { value: 'yes', label: 'Sim, já estou' },
-                { value: 'planning', label: 'Ainda não, mas pretendo' },
-                { value: 'unsure', label: 'Ainda não decidi' },
+                { value: 'feminine', label: t('onboarding.textStyle.feminine'), hint: t('onboarding.textStyle.feminineHint') },
+                { value: 'masculine', label: t('onboarding.textStyle.masculine'), hint: t('onboarding.textStyle.masculineHint') },
+                { value: 'neutral', label: t('onboarding.textStyle.neutral'), hint: t('onboarding.textStyle.neutralHint') },
               ]}
-              selected={isOnHrt === true ? ['yes'] : isOnHrt === false ? ['planning'] : []}
-              onSelect={(v) => setIsOnHrt(v === 'yes')}
+              selected={[textStyle]}
+              onSelect={(v) => setTextStyle(v as TextStyle)}
             />
-            <Card className="mt-4 border-[var(--accent)] text-xs text-[var(--text-muted)]">
-              💡 Esse app é feito para dar dicas e ajudar a acompanhar suas doses e sua saúde mental — ele
-              não substitui acompanhamento médico.
-            </Card>
             <Button className="mt-5 w-full" onClick={next}>
-              Continuar
+              {t('common.continue')}
             </Button>
           </StepShell>
         )}
 
         {step === 4 && (
+          <StepShell key="identity">
+            <h2 className="mb-1 text-xl font-semibold">{t('onboarding.identity.title')}</h2>
+            <p className="mb-4 text-sm text-[var(--text-muted)]">{t('onboarding.identity.subtitle')}</p>
+            <OptionList
+              options={[
+                { value: 'feminine', label: t('onboarding.identity.feminine') },
+                { value: 'masculine', label: t('onboarding.identity.masculine') },
+                { value: 'combined', label: t('onboarding.identity.combined') },
+              ]}
+              selected={[contentPreference]}
+              onSelect={(v) => setContentPreference(v as ContentPreference)}
+            />
+            <Button className="mt-5 w-full" onClick={next}>
+              {t('common.continue')}
+            </Button>
+          </StepShell>
+        )}
+
+        {step === 5 && (
+          <StepShell key="hrt">
+            <h2 className="mb-1 text-xl font-semibold">{t('onboarding.hrt.title')}</h2>
+            <p className="mb-4 text-sm text-[var(--text-muted)]">{t('onboarding.hrt.subtitle')}</p>
+            <OptionList
+              options={[
+                { value: 'yes', label: t('onboarding.hrt.yes') },
+                { value: 'planning', label: t('onboarding.hrt.planning') },
+                { value: 'unsure', label: t('onboarding.hrt.unsure') },
+              ]}
+              selected={isOnHrt === true ? ['yes'] : isOnHrt === false ? ['planning'] : []}
+              onSelect={(v) => setIsOnHrt(v === 'yes')}
+            />
+            <Card className="mt-4 border-[var(--accent)] text-xs text-[var(--text-muted)]">
+              {t('onboarding.hrt.disclaimer')}
+            </Card>
+            <Button className="mt-5 w-full" onClick={next}>
+              {t('common.continue')}
+            </Button>
+          </StepShell>
+        )}
+
+        {step === 6 && (
           <StepShell key="medication">
-            <h2 className="mb-1 text-xl font-semibold">O que você está tomando?</h2>
-            <p className="mb-4 text-sm text-[var(--text-muted)]">
-              Pode adicionar agora (e quantos quiser) ou deixar para depois.
-            </p>
+            <h2 className="mb-1 text-xl font-semibold">
+              {isOnHrt ? t('onboarding.medication.titleOnHrt') : t('onboarding.medication.titlePlanning')}
+            </h2>
+            <p className="mb-4 text-sm text-[var(--text-muted)]">{t('onboarding.medication.subtitle')}</p>
 
             {medications && medications.length > 0 && (
               <div className="mb-3 space-y-1">
@@ -285,19 +337,19 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
             ) : (medications?.length ?? 0) > 0 ? (
               <div className="space-y-2">
                 <Button variant="secondary" className="w-full" onClick={() => setShowMedForm(true)}>
-                  + Adicionar outro
+                  {t('onboarding.medication.addAnother')}
                 </Button>
                 <Button className="w-full" onClick={next}>
-                  Continuar
+                  {t('common.continue')}
                 </Button>
               </div>
             ) : (
               <div className="space-y-2">
                 <Button variant="secondary" className="w-full" onClick={() => setShowMedForm(true)}>
-                  + Adicionar medicamento
+                  {t('onboarding.medication.add')}
                 </Button>
                 <Button variant="ghost" className="w-full" onClick={next}>
-                  Adicionar depois
+                  {t('onboarding.medication.addLater')}
                 </Button>
                 <Button
                   variant="ghost"
@@ -307,59 +359,112 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
                     next()
                   }}
                 >
-                  Ainda não tomo medicamento
+                  {t('onboarding.medication.notYet')}
                 </Button>
               </div>
             )}
           </StepShell>
         )}
 
-        {step === 5 && (
+        {step === 7 && (
           <StepShell key="goals">
-            <h2 className="mb-1 text-xl font-semibold">O que você procura no app?</h2>
-            <p className="mb-4 text-sm text-[var(--text-muted)]">
-              Escolha quantos quiser — isso define o que aparece no menu.
-            </p>
+            <h2 className="mb-1 text-xl font-semibold">{t('onboarding.goals.title')}</h2>
+            <p className="mb-4 text-sm text-[var(--text-muted)]">{t('onboarding.goals.subtitle')}</p>
             <OptionList
               multi
               options={[
-                { value: 'mood', label: '💜 Bem-estar emocional', hint: 'check-in de humor e libido' },
-                { value: 'medications', label: '💊 Doses e medicamentos', hint: 'lembretes e histórico' },
-                { value: 'calendar', label: '🗓️ Histórico e progresso', hint: 'calendário completo' },
-                { value: 'measurements', label: '📏 Medidas corporais', hint: 'com tutoriais de como medir' },
+                { value: 'mood', label: t('onboarding.goals.mood'), hint: t('onboarding.goals.moodHint') },
+                ...(isOnHrt !== false
+                  ? [{ value: 'medications' as AppModule, label: t('onboarding.goals.medications'), hint: t('onboarding.goals.medicationsHint') }]
+                  : []),
+                { value: 'calendar', label: t('onboarding.goals.calendar'), hint: t('onboarding.goals.calendarHint') },
+                { value: 'measurements', label: t('onboarding.goals.measurements'), hint: t('onboarding.goals.measurementsHint') },
               ]}
               selected={goals}
               onSelect={toggleGoal}
             />
+
+            <p className="mb-2 mt-4 text-xs font-medium text-[var(--text-muted)]">{t('onboarding.goals.optional')}</p>
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => setWorkoutsEnabled((v) => !v)}
+                className={
+                  'w-full cursor-pointer rounded-xl border px-4 py-3 text-left transition active:scale-[0.98] ' +
+                  (workoutsEnabled
+                    ? 'border-[var(--accent)] bg-[var(--surface-2)]'
+                    : 'border-[var(--border)] bg-[var(--surface)] hover:border-[var(--accent)]/50 hover:bg-[var(--surface-2)]/60')
+                }
+              >
+                <span className="flex items-center justify-between text-sm font-medium text-[var(--text)]">
+                  {t('onboarding.goals.workouts')}
+                  {workoutsEnabled && <span className="text-[var(--accent)]">✓</span>}
+                </span>
+                <span className="mt-0.5 block text-xs text-[var(--text-muted)]">{t('onboarding.goals.workoutsHint')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setCycleTrackingEnabled((v) => !v)}
+                className={
+                  'w-full cursor-pointer rounded-xl border px-4 py-3 text-left transition active:scale-[0.98] ' +
+                  (cycleTrackingEnabled
+                    ? 'border-[var(--accent)] bg-[var(--surface-2)]'
+                    : 'border-[var(--border)] bg-[var(--surface)] hover:border-[var(--accent)]/50 hover:bg-[var(--surface-2)]/60')
+                }
+              >
+                <span className="flex items-center justify-between text-sm font-medium text-[var(--text)]">
+                  {t('onboarding.goals.cycle')}
+                  {cycleTrackingEnabled && <span className="text-[var(--accent)]">✓</span>}
+                </span>
+                <span className="mt-0.5 block text-xs text-[var(--text-muted)]">{t('onboarding.goals.cycleHint')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIntimateTrackingEnabled((v) => !v)}
+                className={
+                  'w-full cursor-pointer rounded-xl border px-4 py-3 text-left transition active:scale-[0.98] ' +
+                  (intimateTrackingEnabled
+                    ? 'border-[var(--accent)] bg-[var(--surface-2)]'
+                    : 'border-[var(--border)] bg-[var(--surface)] hover:border-[var(--accent)]/50 hover:bg-[var(--surface-2)]/60')
+                }
+              >
+                <span className="flex items-center justify-between text-sm font-medium text-[var(--text)]">
+                  {t('onboarding.goals.intimate')}
+                  {intimateTrackingEnabled && <span className="text-[var(--accent)]">✓</span>}
+                </span>
+                <span className="mt-0.5 block text-xs text-[var(--text-muted)]">{t('onboarding.goals.intimateHint')}</span>
+              </button>
+            </div>
+
+            <Card className="mt-4 border-[var(--accent)] text-xs text-[var(--text-muted)]">{t('onboarding.goals.tip')}</Card>
+
             <Button className="mt-5 w-full" onClick={next}>
-              Continuar
+              {t('common.continue')}
             </Button>
           </StepShell>
         )}
 
-        {step === 6 && (
+        {step === 8 && (
           <StepShell key="name">
-            <h2 className="mb-1 text-xl font-semibold">Como devemos te chamar?</h2>
-            <p className="mb-4 text-sm text-[var(--text-muted)]">Pode ser seu nome, apelido, o que preferir.</p>
+            <h2 className="mb-1 text-xl font-semibold">{t('onboarding.name.title')}</h2>
+            <p className="mb-4 text-sm text-[var(--text-muted)]">{t('onboarding.name.subtitle')}</p>
             <input
               autoFocus
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Seu nome"
+              placeholder={t('onboarding.name.placeholder')}
               className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-[var(--text)] outline-none focus:border-[var(--accent)]"
             />
             <Button className="mt-5 w-full" onClick={next} disabled={!displayName.trim()}>
-              Continuar
+              {t('common.continue')}
             </Button>
           </StepShell>
         )}
 
-        {step === 7 && (
+        {step === 9 && (
           <StepShell key="avatar">
-            <h2 className="mb-1 text-xl font-semibold">Quer adicionar uma foto?</h2>
-            <p className="mb-4 text-sm text-[var(--text-muted)]">
-              Ou escolha um dos nossos ícones fofinhos.
-            </p>
+            <h2 className="mb-1 text-xl font-semibold">{t('onboarding.avatar.title')}</h2>
+            <p className="mb-4 text-sm text-[var(--text-muted)]">{t('onboarding.avatar.subtitle')}</p>
 
             <div className="mb-4 flex justify-center">
               <Avatar src={avatarUrl} icon={avatarIcon} name={displayName} size={88} />
@@ -368,7 +473,7 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
             <label className="mb-3 block">
               <input type="file" accept="image/*" className="hidden" onChange={handleAvatarFile} />
               <span className="block w-full cursor-pointer rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-2.5 text-center text-sm text-[var(--text)]">
-                {uploading ? 'Carregando…' : '📷 Enviar uma foto'}
+                {t('onboarding.avatar.upload')}
               </span>
             </label>
 
@@ -382,10 +487,10 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
                     setAvatarUrl(null)
                   }}
                   className={
-                    'flex h-10 items-center justify-center rounded-lg border text-xl transition ' +
+                    'flex h-10 cursor-pointer items-center justify-center rounded-lg border text-xl transition active:scale-90 ' +
                     (avatarIcon === icon
                       ? 'border-[var(--accent)] bg-[var(--surface-2)]'
-                      : 'border-[var(--border)]')
+                      : 'border-[var(--border)] hover:border-[var(--accent)]/50 hover:bg-[var(--surface-2)]/60')
                   }
                 >
                   {icon}
@@ -394,27 +499,40 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
             </div>
 
             <Button className="mt-5 w-full" onClick={next}>
-              Continuar
+              {t('common.continue')}
             </Button>
           </StepShell>
         )}
 
-        {step === 8 && (
+        {step === 10 && (
           <StepShell key="done">
             <motion.div variants={containerVariants} initial="enter" animate="center" className="space-y-4 text-center">
               <motion.p variants={lineVariants} className="text-4xl">
                 🎉
               </motion.p>
               <motion.h1 variants={lineVariants} className="text-2xl font-semibold">
-                Tudo {treat('pronta', 'pronto')}
+                {/* "Tudo pronto" concorda com "tudo" (masculino fixo em português), não com a pessoa —
+                    não é o pronto/a/e de gênero do sujeito, então não flexiona por textStyle. */}
+                {t('onboarding.done.ready')}
                 {displayName ? `, ${displayName}` : ''}!
               </motion.h1>
               <motion.p variants={lineVariants} className="text-[var(--text-muted)]">
-                Você pode mudar qualquer uma dessas respostas depois, lá no Perfil.
+                {t('onboarding.done.subtitle', {
+                  items:
+                    [
+                      goals.includes('medications') && t('onboarding.done.trackingDoses'),
+                      goals.includes('mood') && t('onboarding.done.trackingMood'),
+                      workoutsEnabled && t('onboarding.done.trackingWorkouts'),
+                      cycleTrackingEnabled && t('onboarding.done.trackingCycle'),
+                      intimateTrackingEnabled && t('onboarding.done.trackingIntimate'),
+                    ]
+                      .filter(Boolean)
+                      .join(', ') || t('onboarding.done.trackingFallback'),
+                })}
               </motion.p>
               <motion.div variants={lineVariants}>
                 <Button className="mt-4 w-full" onClick={finish} disabled={saving}>
-                  {saving ? 'Preparando…' : 'Começar a usar'}
+                  {saving ? t('onboarding.done.preparing') : t('onboarding.done.cta')}
                 </Button>
               </motion.div>
             </motion.div>
@@ -424,8 +542,23 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
 
       {step > 0 && step < TOTAL_STEPS - 1 && (
         <button onClick={back} className="mt-4 text-center text-xs text-[var(--text-muted)]">
-          ← Voltar
+          {t('common.back')}
         </button>
+      )}
+
+      {croppingAvatar && (
+        <ImageCropper
+          file={croppingAvatar}
+          aspect={1}
+          shape="circle"
+          outputSize={320}
+          onCancel={() => setCroppingAvatar(null)}
+          onConfirm={(dataUrl) => {
+            setCroppingAvatar(null)
+            setAvatarUrl(dataUrl)
+            setAvatarIcon(null)
+          }}
+        />
       )}
     </div>
   )

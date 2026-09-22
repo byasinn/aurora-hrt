@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Button, Card, ScreenTitle } from '../../components/ui'
 import { useProfile } from '../../api/profile'
 import { useMeasurements, useCreateMeasurement, useDeleteMeasurement } from '../../api/measurements'
-import { catalogForPreference, nsfwCatalog, type MeasurementDef } from './catalog'
+import { catalogForPreference, type MeasurementDef } from './catalog'
 import { formatDateBR, todayStr } from '../../lib/dateUtils'
 
 function MeasurementCard({ def }: { def: MeasurementDef }) {
@@ -30,7 +30,9 @@ function MeasurementCard({ def }: { def: MeasurementDef }) {
   return (
     <Card className="space-y-3">
       <div className="flex items-center gap-2">
-        <span className="text-xl">{def.icon}</span>
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--accent)]/15 text-lg">
+          {def.icon}
+        </span>
         <h3 className="font-medium text-[var(--text)]">{def.label}</h3>
         {latest && (
           <span className="ml-auto text-sm font-semibold flag-gradient-text">
@@ -101,10 +103,7 @@ function MeasurementCard({ def }: { def: MeasurementDef }) {
 
 export default function MeasurementsScreen() {
   const { data: profile } = useProfile()
-  const catalog = catalogForPreference(profile?.contentPreference)
-  const fullCatalog = profile?.showGenitalMeasurements
-    ? [...catalog, ...nsfwCatalog(profile.genitalTerm || 'Genitália')]
-    : catalog
+  const fullCatalog = catalogForPreference(profile?.contentPreference)
 
   return (
     <div className="space-y-4">

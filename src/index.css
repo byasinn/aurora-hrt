@@ -3,6 +3,7 @@
 :root {
   --accent: #f5a9b8;
   --accent-2: #5bcefa;
+  --accent-3: #d4af37;
   --accent-soft: color-mix(in srgb, var(--accent) 22%, transparent);
   --accent-contrast: #1a1113;
   color-scheme: dark;
@@ -69,6 +70,29 @@ select {
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
 }
 
+/* Altura da área de mensagens do chat (DM). Declarada duas vezes de propósito: `svh` não é
+   suportada em WebViews de Android mais antigos/baratos — nesse caso o navegador ignora só essa
+   linha (CSS inválido é descartado por declaração, não pela regra toda) e fica com o valor em `vh`
+   de cima. Sem esse fallback, o calc() inteiro virava inválido e a tela de conversa perdia a altura
+   fixa, quebrando o scroll interno (a página toda rolava junto com header/input, em vez de só a
+   lista de mensagens). Se via mudar o Tailwind pra uma classe normal (ex: h-[calc(100svh-8.5rem)]),
+   essa proteção se perde — mantenha isso em CSS puro. */
+.chat-viewport {
+  height: calc(100vh - 8.5rem);
+  height: calc(100svh - 8.5rem);
+}
+
+/* Mesma proteção de fallback pra quem só precisa da altura cheia (sem subtração) — troca os usos
+   soltos de min-h-app/h-app do Tailwind por essas, que não perdem o valor inteiro em WebView antigo. */
+.min-h-app {
+  min-height: 100vh;
+  min-height: 100svh;
+}
+.h-app {
+  height: 100vh;
+  height: 100svh;
+}
+
 .flag-gradient-text {
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
   -webkit-background-clip: text;
@@ -80,4 +104,20 @@ select {
   font-family: 'Unbounded', system-ui, sans-serif;
   font-weight: 800;
   letter-spacing: -0.02em;
+}
+
+/* Estilos de fonte escolhíveis pra posts. */
+.post-font-serif {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.post-font-handwritten {
+  font-family: 'Caveat', cursive;
+  font-size: 1.2em;
+  line-height: 1.3;
+}
+
+.post-font-display {
+  font-family: 'Unbounded', system-ui, sans-serif;
+  font-weight: 700;
 }

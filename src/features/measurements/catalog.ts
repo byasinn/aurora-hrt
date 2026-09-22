@@ -6,7 +6,7 @@ export interface MeasurementDef {
   unit: string
   icon: string
   tutorial: string
-  category: 'common' | 'feminine' | 'masculine' | 'nsfw'
+  category: 'common' | 'feminine' | 'masculine'
 }
 
 export const MEASUREMENT_CATALOG: MeasurementDef[] = [
@@ -96,28 +96,6 @@ export const MEASUREMENT_CATALOG: MeasurementDef[] = [
     category: 'masculine',
   },
 ]
-
-/** Entradas de medidas íntimas — geradas à parte porque o rótulo usa o termo escolhido pela pessoa (Configurações). */
-export function nsfwCatalog(genitalTerm: string): MeasurementDef[] {
-  return [
-    {
-      key: 'flaccid_length',
-      label: `Comprimento — ${genitalTerm} flácido(a)`,
-      unit: 'cm',
-      icon: '📏',
-      tutorial: 'Meça em repouso, da base até a ponta.',
-      category: 'nsfw',
-    },
-    {
-      key: 'erect_length',
-      label: `Comprimento — ${genitalTerm} ereto(a)`,
-      unit: 'cm',
-      icon: '📏',
-      tutorial: 'Meça ereto, da base (pressionando de leve contra o osso púbico) até a ponta.',
-      category: 'nsfw',
-    },
-  ]
-}
 
 export function catalogForPreference(pref: string | undefined): MeasurementDef[] {
   if (pref === 'masculine') {

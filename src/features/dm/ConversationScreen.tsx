@@ -29,25 +29,28 @@ export default function ConversationScreen() {
   }
 
   return (
-    <div className="-mx-4 -mt-2 flex h-[calc(100svh-8.5rem)] flex-col">
-      <div className="flex items-center gap-2 border-b border-[var(--border)] px-4 pb-3">
+    <div className="chat-viewport flex flex-col">
+      <div className="flex items-center gap-2 border-b border-[var(--border)] pb-3">
         <Link to="/inbox" className="text-[var(--text-muted)]">
           <ArrowLeft size={18} />
         </Link>
-        <Avatar
-          src={otherProfile?.avatarUrl}
-          icon={otherProfile?.avatarIcon}
-          name={otherProfile?.displayName}
-          size={28}
-        />
-        <p className="text-sm font-medium text-[var(--text)]">{otherProfile?.displayName || 'Conversa'}</p>
+        <Link to={otherProfile ? `/u/${otherProfile.username}` : '#'} className="flex items-center gap-2">
+          <Avatar
+            src={otherProfile?.avatarUrl}
+            icon={otherProfile?.avatarIcon}
+            name={otherProfile?.displayName}
+            size={28}
+          />
+          <p className="text-sm font-medium text-[var(--text)]">{otherProfile?.displayName || 'Conversa'}</p>
+        </Link>
       </div>
 
       <div className="flex-1 space-y-2 overflow-y-auto px-4 py-3">
         {messages?.map((m) => {
           const isMine = m.senderId === me?.id
+          const isLast = messages[messages.length - 1]?.id === m.id
           return (
-            <div key={m.id} className={clsx('flex', isMine ? 'justify-end' : 'justify-start')}>
+            <div key={m.id} className={clsx('flex flex-col', isMine ? 'items-end' : 'items-start')}>
               <div
                 className={clsx(
                   'max-w-[75%] rounded-2xl px-3 py-2 text-sm',
@@ -58,6 +61,9 @@ export default function ConversationScreen() {
               >
                 {m.body}
               </div>
+              {isMine && isLast && m.readAt && (
+                <p className="mt-0.5 pr-1 text-[10px] text-[var(--text-muted)]">Visto</p>
+              )}
             </div>
           )
         })}

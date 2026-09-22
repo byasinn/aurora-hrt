@@ -1,12 +1,16 @@
 import { Link } from 'react-router-dom'
-import { Settings, ChevronRight, Trophy, HeartPulse, Calendar, ListChecks, Users, Flame } from 'lucide-react'
+import { Settings, ChevronRight, Sparkles, HeartPulse, Calendar, ListChecks, Users, Dumbbell } from 'lucide-react'
 import { Card } from '../../components/ui'
 import Avatar from '../../components/Avatar'
+import CardGrid from '../../components/CardGrid'
+import SupportAppCard from '../../components/SupportAppCard'
 import { useProfile } from '../../api/profile'
-import { useUnlockedAchievements } from '../../api/achievements'
 import { useDoseLogs } from '../../api/doses'
 import { useMoodEntries } from '../../api/moods'
 import { useRoutines, useRoutineLogs } from '../../api/routines'
+import { usePointsStats } from '../points/usePointsStats'
+import { currentTitle, titleName } from '../../lib/titles'
+import { getCollectibleIcon } from '../../lib/collectibleIcons'
 import { computeWeeklySummary } from '../../lib/insights'
 import { todayStr } from '../../lib/dateUtils'
 
@@ -14,15 +18,17 @@ const BASE_QUICK_LINKS = [
   { to: '/saude', label: 'Saúde', icon: HeartPulse },
   { to: '/routines', label: 'Rotinas', icon: ListChecks },
   { to: '/calendar', label: 'Histórico', icon: Calendar },
-  { to: '/comunidade', label: 'Comunidade', icon: Users },
+  { to: '/comunidades', label: 'Comunidades', icon: Users },
+  { to: '/pontos', label: 'Pontos', icon: Sparkles },
 ]
 
 export default function ProfileScreen() {
   const { data: profile } = useProfile()
-  const quickLinks = profile?.nsfwMode
-    ? [...BASE_QUICK_LINKS, { to: '/kink', label: 'Kink', icon: Flame }]
-    : BASE_QUICK_LINKS
-  const { data: unlocked = [] } = useUnlockedAchievements()
+  let quickLinks = BASE_QUICK_LINKS as { to: string; label: string; icon: typeof HeartPulse }[]
+  if (profile?.workoutsEnabled) quickLinks = [...quickLinks, { to: '/treinos', label: 'Treinos', icon: Dumbbell }]
+  const pointsStats = usePointsStats()
+  const sfwTitle = currentTitle(pointsStats.brilho)
+  const SfwTitleIcon = getCollectibleIcon(sfwTitle.icon)
   const { data: doseLogs = [] } = useDoseLogs()
   const { data: moodEntries = [] } = useMoodEntries()
   const weekly = computeWeeklySummary({ doseLogs, moodEntries })
@@ -64,8 +70,8 @@ export default function ProfileScreen() {
               </p>
               <div className="mt-2 flex items-center justify-between">
                 <span className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
-                  <Trophy size={12} />
-                  {unlocked.length} troféu{unlocked.length === 1 ? '' : 's'}
+                  {SfwTitleIcon ? <SfwTitleIcon size={12} /> : <Sparkles size={12} />}
+                  {pointsStats.brilho} · {titleName(sfwTitle, profile?.textStyle)}
                 </span>
                 <span className="flex items-center gap-1 text-xs font-medium text-[var(--accent)]">
                   Ver perfil completo
@@ -77,22 +83,27 @@ export default function ProfileScreen() {
         </Link>
         <Link
           to="/settings"
-          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/30 text-white"
+          className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] [box-shadow:var(--shadow)]"
         >
-          <Settings size={16} />
+          <Settings size={19} />
         </Link>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
-        {quickLinks.map(({ to, label, icon: Icon }) => (
-          <Link key={to} to={to}>
+      <CardGrid
+        items={quickLinks}
+        maxPerRow={3}
+        keyFor={(item) => item.to}
+        renderItem={({ to, label, icon: Icon }) => (
+          <Link to={to}>
             <Card className="flex flex-col items-center gap-1 py-3 text-center">
               <Icon size={20} className="text-[var(--accent)]" />
               <span className="text-[11px] font-medium text-[var(--text)]">{label}</span>
             </Card>
           </Link>
-        ))}
-      </div>
+        )}
+      />
+
+      <SupportAppCard />
 
       <Card className="space-y-2">
         <h2 className="text-sm font-medium text-[var(--text-muted)]">Resumo da semana</h2>
@@ -116,8 +127,8 @@ export default function ProfileScreen() {
             {weekly.avgLibido !== null && `Libido média: ${weekly.avgLibido.toFixed(1)}/10`}
           </p>
         )}
-        <Link to="/achievements" className="inline-block text-xs text-[var(--accent)]">
-          Ver estatísticas completas e troféus →
+        <Link to="/pontos" className="inline-block text-xs text-[var(--accent)]">
+          Ver pontos, títulos e troféus →
         </Link>
       </Card>
     </div>

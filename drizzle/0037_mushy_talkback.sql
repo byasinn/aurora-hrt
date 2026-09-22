@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "tags_user_type_label" ON "tags" USING btree ("user_id","type","label");

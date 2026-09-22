@@ -1,18 +1,21 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useProfile } from '../api/profile'
+import { treat } from '../lib/genderedText'
 import Avatar from './Avatar'
 
 const SEEN_KEY = 'transapp.welcomeSeenAt'
 
-const MESSAGES = [
-  'Um passo de cada vez. 💜',
-  'Você está indo bem — continue assim.',
-  'Cuidar de si mesma também é isso.',
-  'Cada dose é um dia mais perto de você.',
-  'Orgulho da sua jornada, hoje e sempre.',
-  'Respira. Você está no seu tempo certo.',
-]
+function messagesFor(style: string | null | undefined): string[] {
+  return [
+    'Um passo de cada vez. 💜',
+    'Você está indo bem — continue assim.',
+    `Cuidar de si ${treat(style, { feminine: 'mesma', masculine: 'mesmo', neutral: 'mesme' })} também é isso.`,
+    'Cada dose é um dia mais perto de você.',
+    'Orgulho da sua jornada, hoje e sempre.',
+    'Respira. Você está no seu tempo certo.',
+  ]
+}
 
 function greeting(): string {
   const h = new Date().getHours()
@@ -34,7 +37,8 @@ export default function WelcomeBanner() {
     return () => clearTimeout(t)
   }, [])
 
-  const dayIndex = new Date().getDate() % MESSAGES.length
+  const messages = messagesFor(profile?.textStyle)
+  const dayIndex = new Date().getDate() % messages.length
   const name = profile?.displayName?.trim()
 
   return (
@@ -59,7 +63,7 @@ export default function WelcomeBanner() {
               {greeting()}
               {name ? `, ${name}` : ''}
             </p>
-            <p className="max-w-xs text-2xl font-semibold text-white">{MESSAGES[dayIndex]}</p>
+            <p className="max-w-xs text-2xl font-semibold text-white">{messages[dayIndex]}</p>
           </motion.div>
         </motion.div>
       )}

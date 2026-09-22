@@ -1,0 +1,43 @@
+name = "aurora"
+main = "worker/index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "aurora-images"
+
+[triggers]
+crons = ["*/15 * * * *"]
+
+[vars]
+ENVIRONMENT = "production"
+
+# Ambiente de staging — mesmo código, worker/bucket/banco separados, pra testar antes de ir pra
+# produção (que agora tem gente de verdade usando). Deploy com `npm run deploy:staging`.
+# DATABASE_URL do staging aponta pra um branch do Neon, não pro banco de produção — configurado via
+# `wrangler secret put DATABASE_URL --env staging`, nunca commitado aqui.
+[env.staging]
+name = "aurora-staging"
+
+[env.staging.assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+[[env.staging.r2_buckets]]
+binding = "IMAGES"
+bucket_name = "aurora-images-staging"
+
+# sem isso, o [triggers] de produção é herdado e o cron roda a cada 15min aqui também — não queremos
+# lembretes/push de teste disparando sozinhos contra o branch de staging.
+[env.staging.triggers]
+crons = []
+
+[env.staging.vars]
+ENVIRONMENT = "staging"

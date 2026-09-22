@@ -1,10 +1,12 @@
-import { useRef, useState } from 'react'
-import { Heart, MessageSquare, Plus, Trash2, Users, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { useParams, Link } from 'react-router-dom'
+import { ArrowLeft, Plus, Users, X, Palette } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import clsx from 'clsx'
+import { getCollectibleIcon } from '../../lib/collectibleIcons'
 import { Button, Card, EmptyState, ScreenTitle } from '../../components/ui'
 import Avatar from '../../components/Avatar'
-import MediaCollage from '../../components/MediaCollage'
+import FeedItemCard from '../../components/FeedItemCard'
 import CommunityPostComments from '../../components/CommunityPostComments'
 import {
   useCommunity,
@@ -18,47 +20,69 @@ import {
 } from '../../api/community'
 import { useProfile } from '../../api/profile'
 import { useMe } from '../../api/auth'
-import { fileToFittedDataUrl } from '../../lib/image'
-import type { CommunityFeedPost } from '../../../shared/types'
+import ImageCropper from '../../components/ImageCropper'
+import { toastError } from '../../lib/toast'
+import { deleteImage } from '../../lib/apiClient'
+import { useThemeStore } from '../../lib/themeStore'
+import { FONT_STYLE_OPTIONS, fontStyleClass } from '../../lib/postStyle'
+import type { PostFontStyle } from '../../../shared/types'
 
-function timeAgo(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime()
-  const mins = Math.floor(diffMs / 60_000)
-  if (mins < 1) return 'agora'
-  if (mins < 60) return `${mins}min`
-  const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours}h`
-  const days = Math.floor(hours / 24)
-  if (days < 7) return `${days}d`
-  return new Date(iso).toLocaleDateString('pt-BR')
-}
-
-function Composer() {
+function Composer({ communityId }: { communityId: number }) {
   const { data: profile } = useProfile()
-  const createPost = useCreateCommunityPost()
+  const createPost = useCreateCommunityPost(communityId)
+  const theme = useThemeStore()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [text, setText] = useState('')
   const [images, setImages] = useState<string[]>([])
-  const [uploading, setUploading] = useState(false)
+  const [cropQueue, setCropQueue] = useState<File[]>([])
+  const [fontStyle, setFontStyle] = useState<PostFontStyle | null>(null)
+  const [cardStyle, setCardStyle] = useState(false)
+  const imagesRef = useRef(images)
+  imagesRef.current = images
 
-  async function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
+  // mesmo fix do PostComposer.tsx: composer de comunidade some do DOM quando o usuário fecha (o + vira
+  // X) sem postar — sem isso, fotos já subidas pro R2 ficam órfãs.
+  useEffect(() => {
+    return () => {
+      for (const url of imagesRef.current) deleteImage(url)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? [])
     if (files.length === 0) return
-    setUploading(true)
-    try {
-      const dataUrls = await Promise.all(files.slice(0, 4 - images.length).map((f) => fileToFittedDataUrl(f)))
-      setImages((cur) => [...cur, ...dataUrls])
-    } finally {
-      setUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ''
-    }
+    setCropQueue((cur) => [...cur, ...files.slice(0, 4 - images.length - cur.length)])
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  function handleCropConfirm(dataUrl: string) {
+    setImages((cur) => [...cur, dataUrl])
+    setCropQueue((cur) => cur.slice(1))
+  }
+
+  function handleCropCancel() {
+    setCropQueue((cur) => cur.slice(1))
   }
 
   async function handlePost() {
     if (!text.trim() && images.length === 0) return
-    await createPost.mutateAsync({ text: text.trim() || null, images })
-    setText('')
-    setImages([])
+    try {
+      await createPost.mutateAsync({
+        text: text.trim() || null,
+        images,
+        fontStyle,
+        cardStyle,
+        cardColor: cardStyle ? theme.accent : null,
+        cardColor2: cardStyle ? theme.accent2 : null,
+      })
+      setText('')
+      setImages([])
+      setFontStyle(null)
+      setCardStyle(false)
+    } catch (err) {
+      toastError(err, 'Não foi possível publicar o post. Tenta de novo.')
+    }
   }
 
   return (
@@ -70,8 +94,45 @@ function Composer() {
           onChange={(e) => setText(e.target.value)}
           placeholder="Compartilha algo com a comunidade…"
           rows={2}
-          className="flex-1 resize-none rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
+          className={clsx(
+            'flex-1 resize-none rounded-lg border px-3 py-2 text-sm outline-none focus:border-[var(--accent)]',
+            fontStyleClass(fontStyle),
+            cardStyle ? 'text-white placeholder:text-white/70 border-transparent' : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text)]',
+          )}
+          style={cardStyle ? { background: `linear-gradient(135deg, ${theme.accent}, ${theme.accent2})` } : undefined}
         />
+      </div>
+      <p className="text-[11px] text-[var(--text-muted)]">Cole um link do Pinterest pra mostrar o vídeo ou foto direto no post.</p>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {FONT_STYLE_OPTIONS.map((opt) => (
+          <button
+            key={opt.label}
+            type="button"
+            onClick={() => setFontStyle(opt.value)}
+            className={clsx(
+              'rounded-full border px-3 py-1 text-xs transition',
+              opt.className,
+              fontStyle === opt.value
+                ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
+                : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]',
+            )}
+          >
+            Aa {opt.label}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => setCardStyle((v) => !v)}
+          className={clsx(
+            'flex items-center gap-1 rounded-full border px-3 py-1 text-xs transition',
+            cardStyle
+              ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
+              : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]',
+          )}
+        >
+          <Palette size={12} /> Cartão
+        </button>
       </div>
 
       {images.length > 0 && (
@@ -80,7 +141,10 @@ function Composer() {
             <div key={i} className="relative">
               <img src={src} alt="" className="aspect-square w-full rounded-lg object-cover" />
               <button
-                onClick={() => setImages((cur) => cur.filter((_, idx) => idx !== i))}
+                onClick={() => {
+                  deleteImage(src)
+                  setImages((cur) => cur.filter((_, idx) => idx !== i))
+                }}
                 className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white"
               >
                 <X size={12} />
@@ -99,119 +163,73 @@ function Composer() {
             multiple
             className="hidden"
             onChange={handleFiles}
-            disabled={images.length >= 4}
+            disabled={images.length + cropQueue.length >= 4}
           />
-          {uploading ? <span className="h-3 w-3 animate-pulse rounded-full bg-[var(--accent)]" /> : <Plus size={16} />}
+          <Plus size={16} />
         </label>
         <Button onClick={handlePost} disabled={createPost.isPending || (!text.trim() && images.length === 0)}>
           Postar
         </Button>
       </div>
-    </Card>
-  )
-}
 
-function CommunityPostCard({ post, myUserId }: { post: CommunityFeedPost; myUserId?: number }) {
-  const deletePost = useDeleteCommunityPost()
-  const likePost = useLikeCommunityPost()
-  const unlikePost = useUnlikeCommunityPost()
-  const [commentsOpen, setCommentsOpen] = useState(false)
-  const [burst, setBurst] = useState(false)
-  const isOwn = post.userId === myUserId
-  const lastTapRef = useRef(0)
-
-  function handleMediaTap() {
-    const now = Date.now()
-    if (now - lastTapRef.current < 300) {
-      if (!post.likedByMe) likePost.mutate(post.id)
-      setBurst(true)
-      setTimeout(() => setBurst(false), 700)
-    }
-    lastTapRef.current = now
-  }
-
-  return (
-    <Card className="space-y-2">
-      <div className="flex items-center gap-2">
-        <div className="flex flex-1 items-center gap-2">
-          <Avatar src={post.author.avatarUrl} icon={post.author.avatarIcon} name={post.author.displayName} size={32} />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-[var(--text)]">
-              {isOwn ? 'Você' : post.author.displayName || 'Sem nome'}
-            </p>
-            <p className="text-xs text-[var(--text-muted)]">{timeAgo(post.createdAt as unknown as string)}</p>
-          </div>
-        </div>
-        {isOwn && (
-          <button onClick={() => deletePost.mutate(post.id)} className="text-[var(--text-muted)]">
-            <Trash2 size={16} />
-          </button>
-        )}
-      </div>
-      {post.text && <p className="whitespace-pre-wrap text-sm text-[var(--text)]">{post.text}</p>}
-
-      <div className="relative" onClick={handleMediaTap}>
-        <MediaCollage images={(post.images as string[]) ?? []} />
-        <AnimatePresence>
-          {burst && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={{ opacity: 1, scale: 1.15 }}
-              exit={{ opacity: 0, scale: 1.3 }}
-              transition={{ duration: 0.35 }}
-              className="pointer-events-none absolute inset-0 flex items-center justify-center"
-            >
-              <Heart size={72} className="text-white drop-shadow-lg" fill="currentColor" />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      <div className="flex items-center gap-4 pt-1 text-xs text-[var(--text-muted)]">
-        <button
-          onClick={() => (post.likedByMe ? unlikePost.mutate(post.id) : likePost.mutate(post.id))}
-          className={clsx('flex items-center gap-1', post.likedByMe && 'text-red-500')}
-        >
-          <Heart size={16} fill={post.likedByMe ? 'currentColor' : 'none'} />
-          {post.likeCount > 0 && post.likeCount}
-        </button>
-        <button onClick={() => setCommentsOpen((o) => !o)} className="flex items-center gap-1">
-          <MessageSquare size={16} />
-          {post.commentCount > 0 && post.commentCount}
-        </button>
-      </div>
-
-      {commentsOpen && <CommunityPostComments postId={post.id} />}
+      {cropQueue[0] && (
+        <ImageCropper
+          file={cropQueue[0]}
+          aspect={1}
+          shape="rect"
+          outputSize={1080}
+          onCancel={handleCropCancel}
+          onConfirm={handleCropConfirm}
+        />
+      )}
     </Card>
   )
 }
 
 export default function CommunityScreen() {
-  const { data: community, isLoading } = useCommunity()
-  const join = useJoinCommunity()
-  const leave = useLeaveCommunity()
-  const { data: feedPosts, isLoading: feedLoading } = useCommunityFeed(!!community?.isMember)
+  const { id } = useParams<{ id: string }>()
+  const communityId = Number(id)
+  const { data: community, isLoading } = useCommunity(communityId)
+  const join = useJoinCommunity(communityId)
+  const leave = useLeaveCommunity(communityId)
+  const { data: feedPosts, isLoading: feedLoading } = useCommunityFeed(communityId, !!community?.isMember)
   const { data: me } = useMe(true)
   const [composerOpen, setComposerOpen] = useState(false)
+  const likePost = useLikeCommunityPost()
+  const unlikePost = useUnlikeCommunityPost()
+  const deletePost = useDeleteCommunityPost()
 
   if (isLoading || !community) {
     return <p className="text-sm text-[var(--text-muted)]">Carregando…</p>
   }
 
+  const CommunityIcon = getCollectibleIcon(community.icon) ?? Users
+
   return (
     <div className="space-y-4">
-      <ScreenTitle>Comunidade</ScreenTitle>
+      <div className="flex items-center gap-2">
+        <Link to="/comunidades" className="flex h-8 w-8 items-center justify-center text-[var(--text-muted)]">
+          <ArrowLeft size={18} />
+        </Link>
+        <ScreenTitle>{community.name}</ScreenTitle>
+      </div>
       <Card className="flex items-center gap-3">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-contrast)]">
-          <Heart size={22} />
+          <CommunityIcon size={22} />
         </div>
         <div className="flex-1">
-          <p className="font-medium text-[var(--text)]">{community.name}</p>
-          <p className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
-            <Users size={12} />
-            {community.memberCount} membro{community.memberCount === 1 ? '' : 's'}
-            {community.isAdmin && ' · você é admin'}
-          </p>
+          {community.description && <p className="text-xs text-[var(--text-muted)]">{community.description}</p>}
+          {community.isAdmin ? (
+            <Link to={`/comunidade/${communityId}/membros`} className="flex items-center gap-1 text-xs text-[var(--accent)] underline">
+              <Users size={12} />
+              {community.memberCount} membro{community.memberCount === 1 ? '' : 's'} · você é admin
+            </Link>
+          ) : (
+            <p className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
+              <Users size={12} />
+              {community.memberCount} membro{community.memberCount === 1 ? '' : 's'}
+            </p>
+          )}
         </div>
         <Button
           variant={community.isMember ? 'secondary' : 'primary'}
@@ -245,7 +263,7 @@ export default function CommunityScreen() {
                 exit={{ height: 0, opacity: 0 }}
                 className="overflow-hidden"
               >
-                <Composer />
+                <Composer communityId={communityId} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -257,7 +275,28 @@ export default function CommunityScreen() {
 
           <div className="space-y-3">
             {feedPosts?.map((post) => (
-              <CommunityPostCard key={post.id} post={post} myUserId={me?.id} />
+              <FeedItemCard
+                key={post.id}
+                kind="community"
+                text={post.text}
+                images={post.images}
+                createdAt={post.createdAt as unknown as string}
+                author={post.author}
+                likeCount={post.likeCount}
+                commentCount={post.commentCount}
+                likedByMe={post.likedByMe}
+                isOwn={post.userId === me?.id}
+                fontStyle={post.fontStyle}
+                cardStyle={post.cardStyle}
+                cardColor={post.cardColor}
+                cardColor2={post.cardColor2}
+                reportTargetType="community_post"
+                reportTargetId={post.id}
+                onLike={() => likePost.mutate(post.id)}
+                onUnlike={() => unlikePost.mutate(post.id)}
+                onDelete={post.userId === me?.id || me?.isAdmin ? () => deletePost.mutate(post.id) : undefined}
+                renderComments={() => <CommunityPostComments postId={post.id} />}
+              />
             ))}
           </div>
         </>

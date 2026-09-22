@@ -25,7 +25,7 @@ export function computeInsights(params: {
     const gap = daysBetween(lastMood.date, today)
     if (gap >= 2) {
       insights.push({
-        icon: '💜',
+        icon: 'heart',
         text: `Já fazem ${gap} dias sem check-in de humor — que tal registrar como você está?`,
       })
     }
@@ -40,7 +40,7 @@ export function computeInsights(params: {
   if (trackedCount >= 3) {
     const pct = Math.round((takenCount / trackedCount) * 100)
     insights.push({
-      icon: pct >= 90 ? '🌟' : pct >= 70 ? '👍' : '💡',
+      icon: pct >= 90 ? 'star' : pct >= 70 ? 'thumbs_up' : 'lightbulb',
       text: `${pct}% das doses em dia nos últimos 7 dias (${takenCount}/${trackedCount}).`,
     })
   }
@@ -73,7 +73,7 @@ export function computeInsights(params: {
     const otherAvg = avg(otherEnergies)
     if (otherAvg - afterAvg >= 0.8) {
       insights.push({
-        icon: '🔋',
+        icon: 'battery',
         text: 'Sua energia costuma ser mais baixa no dia seguinte à aplicação — pode ser normal, mas vale observar.',
       })
     }
@@ -81,7 +81,7 @@ export function computeInsights(params: {
 
   // Faltando check-in do dia (útil como incentivo, não crítico)
   if (!moodByDate.has(today) && moodEntries.length === 0) {
-    insights.push({ icon: '📝', text: 'Ainda não tem nenhum check-in de humor registrado. Que tal começar hoje?' })
+    insights.push({ icon: 'pen', text: 'Ainda não tem nenhum check-in de humor registrado. Que tal começar hoje?' })
   }
 
   return insights

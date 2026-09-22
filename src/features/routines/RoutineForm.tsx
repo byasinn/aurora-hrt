@@ -1,16 +1,25 @@
 import { useState, type FormEvent } from 'react'
 import { Button, Card } from '../../components/ui'
 import { useCreateRoutine, useUpdateRoutine } from '../../api/routines'
-import { useProfile } from '../../api/profile'
 import { ROUTINE_ICON_OPTIONS, DEFAULT_ROUTINE_ICON_KEY } from '../../lib/routineIcons'
 import { weekdayLabel } from '../../lib/dateUtils'
 import type { Routine, RoutineType } from '../../../shared/types'
 
-const NSFW_SUGGESTIONS: { name: string; icon: string; type: RoutineType }[] = [
-  { name: 'Momento a sós', icon: 'heart', type: 'checkbox' },
-  { name: 'Treino de resistência', icon: 'flame', type: 'timer' },
-  { name: 'Explorar o corpo', icon: 'flame', type: 'counter' },
-  { name: 'CEI', icon: 'flame', type: 'checkbox' },
+const DEFAULT_SUGGESTIONS: {
+  name: string
+  icon: string
+  type: RoutineType
+  targetCount?: number
+  targetMinutes?: number
+}[] = [
+  { name: 'Alongamento', icon: 'wind', type: 'checkbox' },
+  { name: 'Meditação', icon: 'leaf', type: 'timer', targetMinutes: 10 },
+  { name: 'Água', icon: 'droplet', type: 'counter', targetCount: 2 },
+  { name: 'Dieta', icon: 'utensils', type: 'checkbox' },
+  { name: 'Caminhada', icon: 'footprints', type: 'timer', targetMinutes: 30 },
+  { name: 'Academia', icon: 'dumbbell', type: 'checkbox' },
+  { name: 'Leitura', icon: 'book', type: 'timer', targetMinutes: 20 },
+  { name: 'Estudos', icon: 'pen', type: 'timer', targetMinutes: 45 },
 ]
 
 const TYPE_OPTIONS: { value: RoutineType; label: string }[] = [
@@ -23,7 +32,6 @@ export default function RoutineForm({ routine, onDone }: { routine?: Routine; on
   const isEdit = !!routine
   const createRoutine = useCreateRoutine()
   const updateRoutine = useUpdateRoutine()
-  const { data: profile } = useProfile()
 
   const [name, setName] = useState(routine?.name ?? '')
   const [icon, setIcon] = useState(routine?.icon ?? DEFAULT_ROUTINE_ICON_KEY)
@@ -80,9 +88,9 @@ export default function RoutineForm({ routine, onDone }: { routine?: Routine; on
           />
         </div>
 
-        {!isEdit && profile?.nsfwMode && (
+        {!isEdit && (
           <div className="flex flex-wrap gap-2">
-            {NSFW_SUGGESTIONS.map((s) => (
+            {DEFAULT_SUGGESTIONS.map((s) => (
               <button
                 type="button"
                 key={s.name}
@@ -90,6 +98,8 @@ export default function RoutineForm({ routine, onDone }: { routine?: Routine; on
                   setName(s.name)
                   setIcon(s.icon)
                   setType(s.type)
+                  if (s.targetCount != null) setTargetCount(s.targetCount)
+                  if (s.targetMinutes != null) setTargetMinutes(s.targetMinutes)
                 }}
                 className="rounded-full border border-dashed border-[var(--border)] px-3 py-1.5 text-sm text-[var(--text-muted)]"
               >

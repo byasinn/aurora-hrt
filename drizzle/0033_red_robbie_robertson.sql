@@ -1,0 +1,1 @@
+ALTER TABLE "profile" ALTER COLUMN "posts_collage_style" SET DEFAULT 'masonry';

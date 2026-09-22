@@ -6,10 +6,14 @@ import LoadingScreen from '../../components/LoadingScreen'
 import LoginScreen from './LoginScreen'
 import VerifyEmailScreen from './VerifyEmailScreen'
 import ResetPasswordScreen from './ResetPasswordScreen'
+import TermsScreen from '../legal/TermsScreen'
+import PrivacyScreen from '../legal/PrivacyScreen'
+
+const PUBLIC_PATHS = ['/verify-email', '/reset-password', '/termos', '/privacidade']
 
 export default function AuthGate({ children }: { children: ReactNode }) {
   const location = useLocation()
-  const isPublicRoute = location.pathname === '/verify-email' || location.pathname === '/reset-password'
+  const isPublicRoute = PUBLIC_PATHS.includes(location.pathname)
 
   const me = useMe(!isPublicRoute)
   const [faceIdUnlocked, setFaceIdUnlocked] = useState(() => !isFaceIdEnabled())
@@ -18,6 +22,8 @@ export default function AuthGate({ children }: { children: ReactNode }) {
 
   if (location.pathname === '/verify-email') return <VerifyEmailScreen />
   if (location.pathname === '/reset-password') return <ResetPasswordScreen />
+  if (location.pathname === '/termos') return <TermsScreen />
+  if (location.pathname === '/privacidade') return <PrivacyScreen />
 
   if (me.isLoading) return <LoadingScreen />
 
@@ -37,7 +43,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     }
 
     return (
-      <div className="flex min-h-svh items-center justify-center px-6">
+      <div className="flex min-h-app items-center justify-center px-6">
         <div className="w-full max-w-xs rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 text-center shadow-xl">
           <p className="mb-3 text-4xl">🔒</p>
           <h1 className="font-logo mb-1 text-2xl uppercase tracking-wide text-[var(--text)]">Aurora</h1>

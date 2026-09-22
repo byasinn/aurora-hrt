@@ -31,7 +31,7 @@ export default function ResetPasswordScreen() {
 
   if (done) {
     return (
-      <div className="flex min-h-svh items-center justify-center px-6">
+      <div className="flex min-h-app items-center justify-center px-6">
         <div className="w-full max-w-xs rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 text-center shadow-xl">
           <h1 className="font-logo mb-3 text-2xl uppercase tracking-wide text-[var(--text)]">Aurora</h1>
           <p className="mb-3 text-sm text-emerald-400">Senha alterada! Você já está logado.</p>
@@ -44,7 +44,7 @@ export default function ResetPasswordScreen() {
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center px-6">
+    <div className="flex min-h-app items-center justify-center px-6">
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-xs rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-xl"

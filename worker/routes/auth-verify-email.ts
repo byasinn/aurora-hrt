@@ -1,0 +1,48 @@
+import { Hono } from 'hono'
+import { eq, and, gt } from 'drizzle-orm'
+import { getDb } from '../shared/db'
+import { emailTokens, users } from '../../shared/schema'
+import { createSession, jsonResponse, sessionCookie } from '../shared/auth'
+import type { Env } from '../env'
+
+const app = new Hono<{ Bindings: Env }>()
+
+app.all('/api/auth-verify-email', async (c) => {
+  const req = c.req.raw
+  if (req.method !== 'POST') return jsonResponse({ error: 'method not allowed' }, { status: 405 })
+
+  try {
+    const { token } = (await req.json()) as { token?: string }
+    if (!token) return jsonResponse({ error: 'Token ausente.' }, { status: 400 })
+
+    const db = getDb(c.env)
+    const [row] = await db
+      .select()
+      .from(emailTokens)
+      .where(and(eq(emailTokens.token, token), eq(emailTokens.type, 'verify_email'), gt(emailTokens.expiresAt, new Date())))
+      .limit(1)
+
+    if (!row) {
+      return jsonResponse({ error: 'Link inválido ou expirado.' }, { status: 400 })
+    }
+
+    const [user] = await db
+      .update(users)
+      .set({ emailVerified: true })
+      .where(eq(users.id, row.userId))
+      .returning()
+
+    await db.delete(emailTokens).where(eq(emailTokens.id, row.id))
+
+    const { token: sessionToken, expiresAt } = await createSession(db, user.id)
+    return jsonResponse(
+      { id: user.id, email: user.email, emailVerified: user.emailVerified, isAdmin: user.isAdmin, createdAt: user.createdAt },
+      { headers: { 'set-cookie': sessionCookie(sessionToken, expiresAt, c.env) } },
+    )
+  } catch (err) {
+    console.error('auth-verify-email error', err)
+    return jsonResponse({ error: 'internal error' }, { status: 500 })
+  }
+})
+
+export default app

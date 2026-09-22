@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "mood_entries_user_date" ON "mood_entries" USING btree ("user_id","date");

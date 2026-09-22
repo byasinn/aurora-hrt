@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Bell, MessageCircle } from 'lucide-react'
+import { Bell, MessageCircle, UserPlus, Check, X } from 'lucide-react'
 import clsx from 'clsx'
-import { Card, EmptyState, ScreenTitle } from '../../components/ui'
+import { Card, Button, EmptyState, ScreenTitle } from '../../components/ui'
 import Avatar from '../../components/Avatar'
 import { useMessages, useMarkMessageRead } from '../../api/messages'
 import { useConversations } from '../../api/dm'
-import { getAchievementIcon } from '../../lib/achievementIcons'
+import { useFollowRequests, useAcceptFollowRequest, useDeclineFollowRequest } from '../../api/social'
+import { getCollectibleIcon } from '../../lib/collectibleIcons'
 
 function timeAgo(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime()
@@ -20,7 +21,51 @@ function timeAgo(iso: string): string {
   return new Date(iso).toLocaleDateString('pt-BR')
 }
 
-type Tab = 'notifications' | 'conversations'
+type Tab = 'notifications' | 'conversations' | 'requests'
+
+function RequestsTab() {
+  const { data: requests, isLoading } = useFollowRequests()
+  const accept = useAcceptFollowRequest()
+  const decline = useDeclineFollowRequest()
+
+  if (isLoading) return <p className="text-sm text-[var(--text-muted)]">Carregando…</p>
+  if (requests && requests.length === 0) {
+    return <EmptyState>Nenhuma solicitação pendente.</EmptyState>
+  }
+
+  return (
+    <div className="space-y-2">
+      {requests?.map((r) => (
+        <Card key={r.userId} className="flex items-center gap-3">
+          <Link to={`/u/${r.username}`} className="flex min-w-0 flex-1 items-center gap-3">
+            <Avatar src={r.avatarUrl} icon={r.avatarIcon} name={r.displayName} size={40} />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-[var(--text)]">{r.displayName || 'Sem nome'}</p>
+              {r.username && <p className="text-xs text-[var(--text-muted)]">@{r.username}</p>}
+            </div>
+          </Link>
+          <div className="flex shrink-0 gap-1.5">
+            <Button
+              onClick={() => accept.mutate(r.userId)}
+              disabled={accept.isPending || decline.isPending}
+              className="!h-9 !w-9 !p-0"
+            >
+              <Check size={16} />
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => decline.mutate(r.userId)}
+              disabled={accept.isPending || decline.isPending}
+              className="!h-9 !w-9 !p-0"
+            >
+              <X size={16} />
+            </Button>
+          </div>
+        </Card>
+      ))}
+    </div>
+  )
+}
 
 function NotificationsTab() {
   const { data: messages, isLoading } = useMessages()
@@ -40,7 +85,7 @@ function NotificationsTab() {
   return (
     <div className="space-y-2">
       {messages?.map((m) => {
-        const Icon = getAchievementIcon(m.icon)
+        const Icon = getCollectibleIcon(m.icon)
         return (
           <Card key={m.id} className={'flex items-start gap-3 ' + (m.read ? 'opacity-70' : 'border-[var(--accent)]')}>
             {Icon ? <Icon size={20} className="mt-0.5 text-[var(--accent)]" /> : <span className="text-xl">{m.icon}</span>}
@@ -97,14 +142,16 @@ export default function InboxScreen() {
   const [tab, setTab] = useState<Tab>('notifications')
   const { data: messages } = useMessages()
   const { data: threads } = useConversations()
+  const { data: requests } = useFollowRequests()
   const unreadNotifications = messages?.filter((m) => !m.read).length ?? 0
   const unreadConversations = threads?.reduce((sum, t) => sum + t.unreadCount, 0) ?? 0
+  const pendingRequests = requests?.length ?? 0
 
   return (
     <div className="space-y-4">
       <ScreenTitle>Caixa de entrada</ScreenTitle>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         <button
           onClick={() => setTab('notifications')}
           className={clsx(
@@ -137,9 +184,27 @@ export default function InboxScreen() {
             </span>
           )}
         </button>
+        <button
+          onClick={() => setTab('requests')}
+          className={clsx(
+            'flex items-center justify-center gap-1.5 rounded-2xl border py-2.5 text-sm transition',
+            tab === 'requests'
+              ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
+              : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)]',
+          )}
+        >
+          <UserPlus size={15} /> Pedidos
+          {pendingRequests > 0 && (
+            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white">
+              {pendingRequests}
+            </span>
+          )}
+        </button>
       </div>
 
-      {tab === 'notifications' ? <NotificationsTab /> : <ConversationsTab />}
+      {tab === 'notifications' && <NotificationsTab />}
+      {tab === 'conversations' && <ConversationsTab />}
+      {tab === 'requests' && <RequestsTab />}
     </div>
   )
 }

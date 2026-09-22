@@ -1,32 +1,40 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
-import { Pencil, ChevronDown } from 'lucide-react'
+import { Pencil, ChevronDown, BatteryLow, Zap, Snowflake, Flame } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { Button, Card, ScreenTitle } from '../../components/ui'
 import { useTags, useCreateTag } from '../../api/tags'
 import { useCreateMoodEntry, useUpdateMoodEntry, useMoodEntries } from '../../api/moods'
+import { useProfile } from '../../api/profile'
 import { todayStr } from '../../lib/dateUtils'
+import { toastError } from '../../lib/toast'
+import { treat } from '../../lib/genderedText'
 import type { Tag, MoodEntry } from '../../../shared/types'
 
-const MOOD_SUGGESTIONS = [
-  '😊 Feliz',
-  '😢 Triste',
-  '😡 Irritada',
-  '😌 Tranquila',
-  '😰 Ansiosa',
-  '🥱 Cansada',
-  '💪 Motivada',
-  '🥰 Afetuosa',
-  '😍 Confiante',
-  '🥹 Sensível',
-  '🙏 Grata',
-  '😔 Sozinha',
-  '✨ Esperançosa',
-  '😩 Sobrecarregada',
-  '🌈 Orgulhosa',
-  '😵 Confusa',
-  '🥳 Animada',
-  '😞 Desanimada',
+const MOOD_SUGGESTION_FORMS: { icon: string; feminine: string; masculine: string; neutral: string }[] = [
+  { icon: '😊', feminine: 'Feliz', masculine: 'Feliz', neutral: 'Feliz' },
+  { icon: '😢', feminine: 'Triste', masculine: 'Triste', neutral: 'Triste' },
+  { icon: '😡', feminine: 'Irritada', masculine: 'Irritado', neutral: 'Irritade' },
+  { icon: '😌', feminine: 'Tranquila', masculine: 'Tranquilo', neutral: 'Tranquile' },
+  { icon: '😰', feminine: 'Ansiosa', masculine: 'Ansioso', neutral: 'Ansiose' },
+  { icon: '🥱', feminine: 'Cansada', masculine: 'Cansado', neutral: 'Cansade' },
+  { icon: '💪', feminine: 'Motivada', masculine: 'Motivado', neutral: 'Motivade' },
+  { icon: '🥰', feminine: 'Afetuosa', masculine: 'Afetuoso', neutral: 'Afetuose' },
+  { icon: '😍', feminine: 'Confiante', masculine: 'Confiante', neutral: 'Confiante' },
+  { icon: '🥹', feminine: 'Sensível', masculine: 'Sensível', neutral: 'Sensível' },
+  { icon: '🙏', feminine: 'Grata', masculine: 'Grato', neutral: 'Grate' },
+  { icon: '😔', feminine: 'Sozinha', masculine: 'Sozinho', neutral: 'Sozinhe' },
+  { icon: '✨', feminine: 'Esperançosa', masculine: 'Esperançoso', neutral: 'Esperançose' },
+  { icon: '😩', feminine: 'Sobrecarregada', masculine: 'Sobrecarregado', neutral: 'Sobrecarregade' },
+  { icon: '🌈', feminine: 'Orgulhosa', masculine: 'Orgulhoso', neutral: 'Orgulhose' },
+  { icon: '😵', feminine: 'Confusa', masculine: 'Confuso', neutral: 'Confuse' },
+  { icon: '🥳', feminine: 'Animada', masculine: 'Animado', neutral: 'Animade' },
+  { icon: '😞', feminine: 'Desanimada', masculine: 'Desanimado', neutral: 'Desanimade' },
 ]
+
+function moodSuggestionsFor(style: string | null | undefined): string[] {
+  return MOOD_SUGGESTION_FORMS.map((f) => `${f.icon} ${treat(style, f)}`)
+}
 const SYMPTOM_SUGGESTIONS = [
   'Sensibilidade nos seios',
   'Ondas de calor',
@@ -52,14 +60,14 @@ function ScaleSlider({
   label,
   value,
   onChange,
-  lowEmoji,
-  highEmoji,
+  LowIcon,
+  HighIcon,
 }: {
   label: string
   value: number
   onChange: (v: number) => void
-  lowEmoji: string
-  highEmoji: string
+  LowIcon: LucideIcon
+  HighIcon: LucideIcon
 }) {
   return (
     <div>
@@ -68,7 +76,7 @@ function ScaleSlider({
         <span className="text-sm font-semibold text-[var(--text)]">{value}/10</span>
       </div>
       <div className="flex items-center gap-2">
-        <span className="text-lg">{lowEmoji}</span>
+        <LowIcon size={18} className="text-[var(--text-muted)]" />
         <input
           type="range"
           min={0}
@@ -78,7 +86,7 @@ function ScaleSlider({
           onChange={(e) => onChange(Number(e.target.value))}
           className="h-2 flex-1 accent-[var(--accent)]"
         />
-        <span className="text-lg">{highEmoji}</span>
+        <HighIcon size={18} className="text-[var(--accent)]" />
       </div>
     </div>
   )
@@ -97,14 +105,28 @@ function TagPicker({
 }) {
   const { data: tags = [] } = useTags(type)
   const createTag = useCreateTag()
+  // sem isso, clicar de novo numa sugestão pontilhada antes do primeiro clique terminar (a lista só
+  // atualiza depois que `tags` recarrega, o que demora um pouco) chamava criar de novo, duplicando a
+  // tag — a sugestão continuava visível até o refetch chegar.
+  const [pendingLabels, setPendingLabels] = useState<Set<string>>(new Set())
 
   async function addSuggestion(label: string) {
-    const created = await createTag.mutateAsync({ type, label, emoji: null, color: null, isCustom: false })
-    onToggle(created.id)
+    if (pendingLabels.has(label)) return
+    setPendingLabels((cur) => new Set(cur).add(label))
+    try {
+      const created = await createTag.mutateAsync({ type, label, emoji: null, color: null, isCustom: false })
+      onToggle(created.id)
+    } finally {
+      setPendingLabels((cur) => {
+        const next = new Set(cur)
+        next.delete(label)
+        return next
+      })
+    }
   }
 
   const existingLabels = new Set(tags.map((t) => t.label))
-  const remainingSuggestions = suggestions.filter((s) => !existingLabels.has(s))
+  const remainingSuggestions = suggestions.filter((s) => !existingLabels.has(s) && !pendingLabels.has(s))
 
   return (
     <div className="flex flex-wrap gap-2">
@@ -146,11 +168,15 @@ function TagNames({ ids }: { ids: number[] }) {
   return <>{names.join(', ')}</>
 }
 
-function EntrySummary({ entry, onEdit }: { entry: MoodEntry; onEdit: () => void }) {
+function EntrySummary({ entry, onEdit, embedded }: { entry: MoodEntry; onEdit: () => void; embedded?: boolean }) {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <ScreenTitle>Humor de hoje</ScreenTitle>
+        {embedded ? (
+          <p className="text-sm font-medium text-[var(--text)]">Humor</p>
+        ) : (
+          <ScreenTitle>Humor de hoje</ScreenTitle>
+        )}
         <Button variant="secondary" onClick={onEdit} className="flex items-center gap-1.5">
           <Pencil size={14} />
           Alterar
@@ -190,11 +216,13 @@ function EntrySummary({ entry, onEdit }: { entry: MoodEntry; onEdit: () => void 
   )
 }
 
-export default function MoodCheckIn() {
-  const today = todayStr()
+export default function MoodCheckIn({ date, embedded }: { date?: string; embedded?: boolean } = {}) {
+  const today = date ?? todayStr()
   const { data: entries } = useMoodEntries({ from: today, to: today })
+  const { data: profile } = useProfile()
   const createEntry = useCreateMoodEntry()
   const updateEntry = useUpdateMoodEntry()
+  const moodSuggestions = moodSuggestionsFor(profile?.textStyle)
 
   const existing = entries?.[0]
   const [editing, setEditing] = useState(false)
@@ -205,6 +233,10 @@ export default function MoodCheckIn() {
   const [energyLevel, setEnergyLevel] = useState(5)
   const [libidoLevel, setLibidoLevel] = useState(5)
   const [notes, setNotes] = useState('')
+  // guarda contra clique duplo de forma síncrona — `createEntry.isPending` só reflete depois de um
+  // re-render, então dois cliques bem rápidos (mais rápidos que o React re-renderizar com o botão
+  // desabilitado) passavam os dois antes de qualquer um marcar isPending=true.
+  const savingRef = useRef(false)
 
   useEffect(() => {
     if (!existing) return
@@ -221,39 +253,51 @@ export default function MoodCheckIn() {
   }
 
   async function handleSave() {
-    if (existing) {
-      await updateEntry.mutateAsync({
-        id: existing.id,
-        moodTagIds,
-        symptomTagIds,
-        energyLevel,
-        libidoLevel,
-        notes: notes || null,
-      })
-    } else {
-      await createEntry.mutateAsync({
-        date: today,
-        moodTagIds,
-        symptomTagIds,
-        energyLevel,
-        libidoLevel,
-        notes: notes || null,
-      })
+    if (savingRef.current) return
+    savingRef.current = true
+    try {
+      if (existing) {
+        await updateEntry.mutateAsync({
+          id: existing.id,
+          moodTagIds,
+          symptomTagIds,
+          energyLevel,
+          libidoLevel,
+          notes: notes || null,
+        })
+      } else {
+        await createEntry.mutateAsync({
+          date: today,
+          moodTagIds,
+          symptomTagIds,
+          energyLevel,
+          libidoLevel,
+          notes: notes || null,
+        })
+      }
+      setEditing(false)
+    } catch (err) {
+      toastError(err, 'Não foi possível salvar o check-in. Tenta de novo.')
+    } finally {
+      savingRef.current = false
     }
-    setEditing(false)
   }
 
   if (existing && !editing) {
-    return <EntrySummary entry={existing} onEdit={() => setEditing(true)} />
+    return <EntrySummary entry={existing} onEdit={() => setEditing(true)} embedded={embedded} />
   }
 
   return (
     <div className="space-y-5">
-      <ScreenTitle>{existing ? 'Alterar humor de hoje' : 'Como você está hoje?'}</ScreenTitle>
+      {embedded ? (
+        <p className="text-sm font-medium text-[var(--text)]">{existing ? 'Alterar humor' : 'Humor'}</p>
+      ) : (
+        <ScreenTitle>{existing ? 'Alterar humor de hoje' : 'Como você está hoje?'}</ScreenTitle>
+      )}
 
       <div>
         <h2 className="mb-2 text-sm font-medium text-[var(--text-muted)]">Humor</h2>
-        <TagPicker type="mood" suggestions={MOOD_SUGGESTIONS} selected={moodTagIds} onToggle={toggle(setMoodTagIds)} />
+        <TagPicker type="mood" suggestions={moodSuggestions} selected={moodTagIds} onToggle={toggle(setMoodTagIds)} />
       </div>
 
       <button
@@ -273,8 +317,8 @@ export default function MoodCheckIn() {
         />
       )}
 
-      <ScaleSlider label="Energia" value={energyLevel} onChange={setEnergyLevel} lowEmoji="🪫" highEmoji="⚡" />
-      <ScaleSlider label="Libido" value={libidoLevel} onChange={setLibidoLevel} lowEmoji="❄️" highEmoji="🔥" />
+      <ScaleSlider label="Energia" value={energyLevel} onChange={setEnergyLevel} LowIcon={BatteryLow} HighIcon={Zap} />
+      <ScaleSlider label="Libido" value={libidoLevel} onChange={setLibidoLevel} LowIcon={Snowflake} HighIcon={Flame} />
 
       <div>
         <h2 className="mb-2 text-sm font-medium text-[var(--text-muted)]">Notas (opcional)</h2>

@@ -20,25 +20,43 @@ export function isStandalone(): boolean {
   )
 }
 
+const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent)
+
 export async function enablePushNotifications(): Promise<{ ok: boolean; reason?: string }> {
-  if (!isPushSupported()) return { ok: false, reason: 'Navegador sem suporte a push.' }
-
-  const permission = await Notification.requestPermission()
-  if (permission !== 'granted') return { ok: false, reason: 'Permissão negada.' }
-
-  const registration = await navigator.serviceWorker.ready
-  const { publicKey } = await api.get<{ publicKey: string }>('/vapid-public-key')
-
-  let subscription = await registration.pushManager.getSubscription()
-  if (!subscription) {
-    subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(publicKey),
-    })
+  if (isIos && !isStandalone()) {
+    return {
+      ok: false,
+      reason: 'No iPhone, notificação só funciona com o app adicionado à Tela de Início (compartilhar → Adicionar à Tela de Início) — não funciona direto pelo Safari.',
+    }
   }
 
-  await api.post('/push-subscribe', subscription.toJSON())
-  return { ok: true }
+  if (!isPushSupported()) return { ok: false, reason: 'Navegador sem suporte a notificação push.' }
+
+  try {
+    const permission = await Notification.requestPermission()
+    if (permission !== 'granted') return { ok: false, reason: 'Permissão de notificação negada.' }
+
+    const registration = await Promise.race([
+      navigator.serviceWorker.ready,
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Tempo esgotado esperando o service worker.')), 10_000)),
+    ])
+
+    const { publicKey } = await api.get<{ publicKey: string }>('/vapid-public-key')
+
+    let subscription = await registration.pushManager.getSubscription()
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+      })
+    }
+
+    await api.post('/push-subscribe', subscription.toJSON())
+    return { ok: true }
+  } catch (err) {
+    console.error('enablePushNotifications falhou', err)
+    return { ok: false, reason: err instanceof Error ? err.message : 'Erro desconhecido ao ativar notificações.' }
+  }
 }
 
 export async function getNotificationPermissionState(): Promise<NotificationPermission | 'unsupported'> {
