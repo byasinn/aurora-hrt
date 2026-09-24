@@ -1,32 +1,71 @@
-# React + TypeScript + Vite
+# Aurora
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+PWA de acompanhamento de terapia hormonal (HRT) para pessoas trans, evoluído para uma plataforma
+social completa — em produção em [aurorahrt.com.br](https://aurorahrt.com.br).
 
-Currently, two official plugins are available:
+## O que tem aqui
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Saúde**: doses de medicação/hormônio (múltiplas por dia), humor, ciclo, medidas corporais,
+  exames laboratoriais, notas diárias
+- **Social**: posts, reposts, comentários, comunidades, mensagens diretas, perfis públicos com
+  privacidade configurável, bloqueios
+- **Gamificação**: pontos, troféus e títulos desbloqueáveis
+- **Rotinas e treinos**: programas com histórico de execução
+- **Explorar**: notícia do dia sorteada a partir de ingestão automática via RSS/Atom, sugestões de
+  seguir por interesse
+- **Confiança e segurança**: denúncias, log de moderação, moderação automática de imagem antes do
+  upload, exportação/exclusão de dados
+- PWA instalável, push notifications, 4 idiomas (PT/EN/ES/FR)
 
-## React Compiler
+## Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Backend**: Cloudflare Workers + [Hono](https://hono.dev), TypeScript
+- **Banco**: Neon Postgres (serverless) via [Drizzle ORM](https://orm.drizzle.team)
+- **Storage**: Cloudflare R2
+- **Frontend**: React + Vite + React Query + Tailwind + Framer Motion
 
-## Expanding the Oxlint configuration
+## Rodando localmente
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+Precisa de conta (grátis, nos planos free) nos seguintes serviços antes de começar:
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+| Serviço | Pra quê | Obrigatório? |
+|---|---|---|
+| [Cloudflare](https://dash.cloudflare.com) | Workers + R2 (`wrangler login`) | sim |
+| [Neon](https://neon.tech) | Postgres | sim |
+| [Resend](https://resend.com) | Envio de email (confirmação, reset de senha) | sim |
+| Google Cloud Console | Login com Google | opcional |
+| [Sightengine](https://sightengine.com) | Moderação de imagem no upload | opcional (sem isso, upload não é bloqueado) |
+
+```bash
+npm install
+cp .env.example .env    # preenche com suas credenciais
+wrangler login
+npm run db:push         # cria as tabelas no seu banco Neon
+npm run dev              # sobe o Worker localmente (wrangler dev)
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Rodar só o frontend com hot-reload mais rápido, sem o Worker: `npm run dev:vite`.
+
+### Outros comandos úteis
+
+```bash
+npm run build             # typecheck + build de produção
+npm run db:generate       # gera uma migration nova a partir de shared/schema.ts
+npm run db:studio         # abre o Drizzle Studio pra inspecionar o banco
+npm run lint               # oxlint
+```
+
+## Deploy
+
+Este repositório é o código-fonte do Aurora — **não** dá acesso à instância em produção
+(`aurorahrt.com.br`) nem ao banco de dados real. Rodar `npm run deploy` aqui publica no *seu*
+Cloudflare (`wrangler login`), não no nosso. Veja [SECURITY.md](./SECURITY.md) se encontrou uma
+vulnerabilidade na instância em produção.
+
+## Contribuindo
+
+Veja [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+## Licença
+
+[MIT](./LICENSE)
