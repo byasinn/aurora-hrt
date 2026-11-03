@@ -5,6 +5,14 @@ import type { FrequencyType, FrequencyValue } from './types'
 // Usado tanto pelo Worker (worker/routes/today.ts, worker/routes/medications.ts, worker/scheduled.ts)
 // quanto pelo front (useMedicationSchedule.ts, MedicationsScreen.tsx, MedicationsCarousel.tsx).
 
+/** Depois de quantas horas sem registro uma dose prevista conta como perdida. O /api/today mostra
+ * "perdida" a partir daí e o cron (worker/scheduled.ts) grava o log com status 'missed' — os dois
+ * precisam concordar, senão o app mostra uma coisa e o calendário/histórico outra. */
+export const DOSE_MISSED_AFTER_HOURS = 3
+
+/** Depois de quanto tempo sem registro o cron manda o "Você tomou?" (antes de virar perdida). */
+export const DOSE_FOLLOWUP_AFTER_MINUTES = 60
+
 export interface SchedulableMedication {
   frequencyType: FrequencyType | string
   frequencyValue?: FrequencyValue | unknown

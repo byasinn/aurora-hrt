@@ -1,12 +1,10 @@
 import { Hono } from 'hono'
-import { eq } from 'drizzle-orm'
+import { and, eq, gte, lte } from 'drizzle-orm'
 import { getDb } from '../shared/db'
 import { medications, doseLogs, profile } from '../../shared/schema'
 import { jsonResponse, requireUser } from '../shared/auth'
-import { dueMedicationsForDate, dateStrInTimezone } from '../../shared/scheduling'
+import { dueMedicationsForDate, dateStrInTimezone, DOSE_MISSED_AFTER_HOURS } from '../../shared/scheduling'
 import type { Env } from '../env'
-
-const GRACE_HOURS = 3
 
 const app = new Hono<{ Bindings: Env }>()
 
@@ -22,10 +20,9 @@ app.all('/api/today', async (c) => {
     const url = new URL(req.url)
     const dateParam = url.searchParams.get('date')
 
-    const [[profileRow], allMeds, dayLogs] = await Promise.all([
+    const [[profileRow], allMeds] = await Promise.all([
       db.select().from(profile).where(eq(profile.userId, user.id)).limit(1),
       db.select().from(medications).where(eq(medications.userId, user.id)),
-      db.select().from(doseLogs).where(eq(doseLogs.userId, user.id)),
     ])
     const timeZone = profileRow?.timezone ?? 'America/Sao_Paulo'
     const dateStr = dateParam ?? dateStrInTimezone(new Date(), timeZone)
@@ -33,12 +30,20 @@ app.all('/api/today', async (c) => {
     const activeMeds = allMeds.filter((m) => m.active)
     const due = dueMedicationsForDate(activeMeds, dateStr, timeZone)
 
+    // Só a janela do dia (±1 dia de folga pro fuso) — antes puxava o histórico inteiro de doses, que
+    // com o preenchimento retroativo chega a milhares de linhas por pessoa, a cada 60s de polling.
     const startOfDay = new Date(`${dateStr}T00:00:00.000Z`)
     const endOfDay = new Date(`${dateStr}T23:59:59.999Z`)
-    const relevantLogs = dayLogs.filter((l) => {
-      const t = new Date(l.scheduledFor).getTime()
-      return t >= startOfDay.getTime() - 86_400_000 && t <= endOfDay.getTime() + 86_400_000
-    })
+    const relevantLogs = await db
+      .select()
+      .from(doseLogs)
+      .where(
+        and(
+          eq(doseLogs.userId, user.id),
+          gte(doseLogs.scheduledFor, new Date(startOfDay.getTime() - 86_400_000)),
+          lte(doseLogs.scheduledFor, new Date(endOfDay.getTime() + 86_400_000)),
+        ),
+      )
 
     const now = Date.now()
     // um medicamento pode ter mais de um horário no mesmo dia agora — não dá mais pra casar um log
@@ -57,7 +62,7 @@ app.all('/api/today', async (c) => {
       let status: 'pending' | 'taken' | 'skipped' | 'missed' = 'pending'
       if (log) {
         status = log.status as typeof status
-      } else if (now - scheduledFor.getTime() > GRACE_HOURS * 3_600_000) {
+      } else if (now - scheduledFor.getTime() > DOSE_MISSED_AFTER_HOURS * 3_600_000) {
         status = 'missed'
       }
       return {

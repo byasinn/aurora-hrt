@@ -1,5 +1,5 @@
 import type { DoseLog, MoodEntry, Medication } from '../../shared/types'
-import { todayStr, daysBetween } from './dateUtils'
+import { todayStr, daysBetween, localDateStr } from './dateUtils'
 
 export interface Insight {
   icon: string
@@ -7,7 +7,7 @@ export interface Insight {
 }
 
 function dateStr(iso: string | Date): string {
-  return new Date(iso).toISOString().slice(0, 10)
+  return localDateStr(new Date(iso))
 }
 
 export function computeInsights(params: {
@@ -60,7 +60,7 @@ export function computeInsights(params: {
     if (mood.energyLevel == null) continue
     const prevDay = new Date(`${mood.date}T00:00:00`)
     prevDay.setDate(prevDay.getDate() - 1)
-    const prevDayStr = prevDay.toISOString().slice(0, 10)
+    const prevDayStr = localDateStr(prevDay)
     if (injectionTakenDates.has(prevDayStr)) {
       dayAfterInjectionEnergies.push(mood.energyLevel)
     } else {
@@ -98,7 +98,7 @@ export interface WeeklySummary {
 export function computeWeeklySummary(params: { doseLogs: DoseLog[]; moodEntries: MoodEntry[] }): WeeklySummary {
   const weekAgo = new Date()
   weekAgo.setDate(weekAgo.getDate() - 7)
-  const weekAgoStr = weekAgo.toISOString().slice(0, 10)
+  const weekAgoStr = localDateStr(weekAgo)
 
   const recentLogs = params.doseLogs.filter((l) => new Date(l.scheduledFor).getTime() >= weekAgo.getTime())
   const recentMoods = params.moodEntries.filter((m) => m.date >= weekAgoStr)

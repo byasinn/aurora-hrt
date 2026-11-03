@@ -18,6 +18,50 @@ function coerceDates<T extends Record<string, unknown>>(body: T): T {
 
 const app = new Hono<{ Bindings: Env }>()
 
+// Resposta dos botões "Tomei"/"Pulei hoje" da notificação de "Você tomou?" (src/sw.ts) — vem do
+// service worker, que não sabe se a dose já tem log, então isso aqui atualiza o existente ou cria.
+app.post('/api/doses/respond', async (c) => {
+  const req = c.req.raw
+  const db = getDb(c.env)
+  const auth = await requireUser(req, db)
+  if (auth instanceof Response) return auth
+  const { user } = auth
+
+  try {
+    const body = (await req.json()) as { medicationId?: number; scheduledFor?: string; status?: string }
+    if (typeof body.medicationId !== 'number' || !body.scheduledFor || (body.status !== 'taken' && body.status !== 'skipped')) {
+      return jsonResponse({ error: 'medicationId, scheduledFor e status (taken|skipped) são obrigatórios' }, { status: 400 })
+    }
+    const scheduledFor = new Date(body.scheduledFor)
+    if (Number.isNaN(scheduledFor.getTime())) return jsonResponse({ error: 'scheduledFor inválido' }, { status: 400 })
+
+    const [med] = await db
+      .select({ id: medications.id })
+      .from(medications)
+      .where(and(eq(medications.id, body.medicationId), eq(medications.userId, user.id)))
+      .limit(1)
+    if (!med) return jsonResponse({ error: 'medicamento não encontrado' }, { status: 404 })
+
+    const takenAt = body.status === 'taken' ? new Date() : null
+    const [existing] = await db
+      .select({ id: doseLogs.id })
+      .from(doseLogs)
+      .where(and(eq(doseLogs.userId, user.id), eq(doseLogs.medicationId, med.id), eq(doseLogs.scheduledFor, scheduledFor)))
+      .limit(1)
+
+    const [row] = existing
+      ? await db.update(doseLogs).set({ status: body.status, takenAt }).where(eq(doseLogs.id, existing.id)).returning()
+      : await db
+          .insert(doseLogs)
+          .values({ userId: user.id, medicationId: med.id, scheduledFor, status: body.status, takenAt })
+          .returning()
+    return jsonResponse(row)
+  } catch (err) {
+    console.error('doses respond error', err)
+    return jsonResponse({ error: 'internal error' }, { status: 500 })
+  }
+})
+
 app.all('/api/doses', async (c) => {
   const req = c.req.raw
   const db = getDb(c.env)

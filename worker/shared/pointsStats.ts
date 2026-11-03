@@ -13,6 +13,7 @@ import {
 } from '../../shared/schema'
 import { currentStreak, type PointsStats } from '../../src/lib/collectiblesEngine'
 import type { WorkoutExerciseLog } from '../../shared/types'
+import { dateStrInTimezone } from '../../shared/scheduling'
 import type { getDb } from './db'
 
 /** Data local (YYYY-MM-DD) no fuso salvo do perfil — o Worker roda em UTC, então "hoje" aqui só
@@ -51,9 +52,10 @@ export async function computeServerPointsStats(db: ReturnType<typeof getDb>, use
   const timezone = profileRows[0]?.timezone ?? 'America/Sao_Paulo'
   const today = todayInTz(timezone)
 
-  const takenDates = new Set(
-    doseRows.filter((l) => l.status === 'taken').map((l) => new Date(l.scheduledFor).toISOString().slice(0, 10)),
-  )
+  // histórico preenchido retroativamente (backfilled) não conta — senão quem cadastra "tomo desde 2019"
+  // ganha milhares de pontos e um streak de anos no primeiro dia
+  const realTakenLogs = doseRows.filter((l) => l.status === 'taken' && !l.backfilled)
+  const takenDates = new Set(realTakenLogs.map((l) => dateStrInTimezone(new Date(l.scheduledFor), timezone)))
   const moodDates = new Set(moodRows.map((m) => m.date))
 
   const routineById = new Map(routineRows.map((r) => [r.id, r]))
@@ -96,7 +98,7 @@ export async function computeServerPointsStats(db: ReturnType<typeof getDb>, use
     postsCount,
     commentsGivenCount,
     totalMoodEntries: moodRows.length,
-    totalDosesTaken: doseRows.filter((l) => l.status === 'taken').length,
+    totalDosesTaken: realTakenLogs.length,
     currentMoodStreakDays: currentStreak(moodDates, today),
     currentDoseStreakDays: currentStreak(takenDates, today),
     daysSinceTransitionStart: transitionStartDate ? daysBetween(transitionStartDate, today) : null,

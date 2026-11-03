@@ -5,8 +5,8 @@ const DAY_MS = 86_400_000
 const LUTEAL_PHASE_DAYS = 14 // média entre ovulação e o próximo período
 
 function addDays(dateStr: string, days: number): string {
-  const d = new Date(`${dateStr}T00:00:00`)
-  d.setDate(d.getDate() + days)
+  const d = new Date(`${dateStr}T12:00:00.000Z`)
+  d.setUTCDate(d.getUTCDate() + days)
   return d.toISOString().slice(0, 10)
 }
 

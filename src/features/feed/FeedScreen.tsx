@@ -128,7 +128,7 @@ export default function FeedScreen() {
     const fresh = await qc.fetchQuery({ queryKey: ['feed'], queryFn: () => api.get<FeedItem[]>('/feed') })
     qc.setQueryData(['feed'], fresh)
     acknowledge(fresh.length > 0 ? `${fresh[0].kind}-${fresh[0].id}` : null)
-    document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const likePost = useLikePost()

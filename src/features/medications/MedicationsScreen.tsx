@@ -6,7 +6,7 @@ import { useMedications, useDeleteMedication } from '../../api/medications'
 import { useDoseLogs, useUpdateDoseLog } from '../../api/doses'
 import { useProfile } from '../../api/profile'
 import { daysUntilNextDue } from '../../../shared/scheduling'
-import { formatDateBR } from '../../lib/dateUtils'
+import { formatDateBR, localDateStr } from '../../lib/dateUtils'
 import MedicationForm from './MedicationForm'
 import type { DoseLog, DoseStatus, Medication } from '../../../shared/types'
 
@@ -87,7 +87,7 @@ function HistoryRow({ log }: { log: DoseLog }) {
       className="flex w-full items-center justify-between rounded-lg px-1 py-1.5 text-left text-xs hover:bg-[var(--surface-2)]"
     >
       <span className="text-[var(--text-muted)]">
-        {formatDateBR(new Date(log.scheduledFor as unknown as string).toISOString().slice(0, 10))}
+        {formatDateBR(localDateStr(new Date(log.scheduledFor as unknown as string)))}
       </span>
       <span
         className={clsx(

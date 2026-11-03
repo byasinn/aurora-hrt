@@ -5,7 +5,7 @@ import { useRoutines, useRoutineLogs } from '../../api/routines'
 import { useWorkoutLogs } from '../../api/workouts'
 import { useMySocialStats } from '../../api/social'
 import { currentStreak, type PointsStats } from '../../lib/collectiblesEngine'
-import { todayStr, daysBetween } from '../../lib/dateUtils'
+import { todayStr, daysBetween, localDateStr } from '../../lib/dateUtils'
 import type { WorkoutExerciseLog } from '../../../shared/types'
 
 export function usePointsStats(): PointsStats {
@@ -18,9 +18,10 @@ export function usePointsStats(): PointsStats {
   const { data: socialStats } = useMySocialStats()
 
   const today = todayStr()
-  const takenDates = new Set(
-    doseLogs.filter((l) => l.status === 'taken').map((l) => new Date(l.scheduledFor).toISOString().slice(0, 10)),
-  )
+  // histórico preenchido retroativamente (backfilled) não conta — senão quem cadastra "tomo desde 2019"
+  // ganha milhares de pontos e um streak de anos no primeiro dia
+  const realTakenLogs = doseLogs.filter((l) => l.status === 'taken' && !l.backfilled)
+  const takenDates = new Set(realTakenLogs.map((l) => localDateStr(new Date(l.scheduledFor))))
   const moodDates = new Set(moods.map((m) => m.date))
 
   const routineById = new Map(routines.map((r) => [r.id, r]))
@@ -62,7 +63,7 @@ export function usePointsStats(): PointsStats {
     postsCount,
     commentsGivenCount,
     totalMoodEntries: moods.length,
-    totalDosesTaken: doseLogs.filter((l) => l.status === 'taken').length,
+    totalDosesTaken: realTakenLogs.length,
     currentMoodStreakDays: currentStreak(moodDates, today),
     currentDoseStreakDays: currentStreak(takenDates, today),
     daysSinceTransitionStart: profile?.transitionStartDate ? daysBetween(profile.transitionStartDate, today) : null,

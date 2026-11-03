@@ -30,6 +30,7 @@ async function backfillDoseLogs(
           scheduledFor,
           takenAt: scheduledFor,
           status: 'taken',
+          backfilled: true,
         })
       }
     }

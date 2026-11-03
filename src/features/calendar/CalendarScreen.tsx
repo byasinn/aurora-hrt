@@ -9,6 +9,7 @@ import {
   subMonths,
   isSameMonth,
   isToday,
+  endOfDay,
   format,
 } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -28,7 +29,7 @@ import { intimateDetailLines } from './IntimateDayForm'
 import { useDayNotes } from '../../api/dayNotes'
 import { useProfile, useUpdateProfile } from '../../api/profile'
 import { predictCycle } from '../../lib/cyclePredictions'
-import { formatDateBR } from '../../lib/dateUtils'
+import { formatDateBR, formatTime, localDateStr } from '../../lib/dateUtils'
 import type { CycleFlow } from '../../../shared/types'
 
 function toDateStr(d: Date): string {
@@ -40,6 +41,12 @@ const FLOW_COLOR: Record<CycleFlow, string> = {
   light: '#f87171',
   medium: '#ef4444',
   heavy: '#b91c1c',
+}
+
+const DOSE_STATUS_STYLE: Record<string, { label: string; className: string }> = {
+  taken: { label: 'Tomada', className: 'bg-emerald-500/15 text-emerald-500' },
+  skipped: { label: 'Pulada', className: 'bg-[var(--surface-2)] text-[var(--text-muted)]' },
+  missed: { label: 'Perdida', className: 'bg-red-500/15 text-red-500' },
 }
 
 export default function CalendarScreen() {
@@ -56,7 +63,9 @@ export default function CalendarScreen() {
 
   const from = toDateStr(gridStart)
   const to = toDateStr(gridEnd)
-  const { data: doseLogs } = useDoseLogs({ from: `${from}T00:00:00.000Z`, to: `${to}T23:59:59.999Z` })
+  // limites do grid no fuso do aparelho — com `${from}T00:00Z` (UTC) as doses das 21h–23h59 do último
+  // dia (horário de Brasília) ficavam de fora
+  const { data: doseLogs } = useDoseLogs({ from: gridStart.toISOString(), to: endOfDay(gridEnd).toISOString() })
   const { data: moods } = useMoodEntries({ from, to })
   const { data: meds } = useMedications()
   const { data: routines } = useRoutines()
@@ -72,7 +81,7 @@ export default function CalendarScreen() {
   const { data: intimateLogs = [] } = useIntimateLogs(intimateEnabled ? { from, to } : { from: to, to: from })
 
   const medById = new Map((meds ?? []).map((m) => [m.id, m]))
-  const routineById = new Map((routines ?? []).map((r) => [r.id, r]))
+  const routineById = useMemo(() => new Map((routines ?? []).map((r) => [r.id, r])), [routines])
 
   const prediction = useMemo(
     () => (cycleEnabled ? predictCycle(cycleLogs, profile?.averageCycleLength ?? 28) : null),
@@ -90,7 +99,7 @@ export default function CalendarScreen() {
       return entry
     }
     for (const log of doseLogs ?? []) {
-      const key = new Date(log.scheduledFor).toISOString().slice(0, 10)
+      const key = localDateStr(new Date(log.scheduledFor))
       const entry = entryFor(key)
       if (log.status === 'taken') entry.taken += 1
       else if (log.status === 'missed' || log.status === 'skipped') entry.missed += 1
@@ -122,7 +131,7 @@ export default function CalendarScreen() {
   }, [doseLogs, moods, routineLogs, routineById, notes, cycleLogs, cycleEnabled, intimateLogs, intimateEnabled])
 
   const selectedLogs = (doseLogs ?? []).filter(
-    (l) => selected && new Date(l.scheduledFor).toISOString().slice(0, 10) === selected,
+    (l) => selected && localDateStr(new Date(l.scheduledFor)) === selected,
   )
   const selectedMood = (moods ?? []).find((m) => m.date === selected)
   const selectedRoutineLogs = (routineLogs ?? []).filter((l) => {
@@ -325,12 +334,26 @@ export default function CalendarScreen() {
             !selectedInfo?.intimate &&
             !selectedNote && <p className="text-xs text-[var(--text-muted)]">Nenhum registro nesse dia.</p>}
 
-          {selectedLogs.map((log) => (
-            <p key={log.id} className="text-sm text-[var(--text)]">
-              {log.status === 'taken' ? '✓' : log.status === 'skipped' ? '–' : '•'}{' '}
-              {medById.get(log.medicationId)?.name ?? 'Medicamento'}
-            </p>
-          ))}
+          {[...selectedLogs]
+            .sort((a, b) => new Date(a.scheduledFor).getTime() - new Date(b.scheduledFor).getTime())
+            .map((log) => (
+              <div key={log.id} className="flex items-center justify-between gap-2 text-sm text-[var(--text)]">
+                <span className="min-w-0 truncate">
+                  {medById.get(log.medicationId)?.name ?? 'Medicamento'}
+                  <span className="ml-1.5 text-xs text-[var(--text-muted)]">
+                    {formatTime(new Date(log.scheduledFor).toISOString())}
+                  </span>
+                </span>
+                <span
+                  className={clsx(
+                    'shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium',
+                    DOSE_STATUS_STYLE[log.status]?.className ?? 'bg-[var(--surface-2)] text-[var(--text-muted)]',
+                  )}
+                >
+                  {DOSE_STATUS_STYLE[log.status]?.label ?? 'Pendente'}
+                </span>
+              </div>
+            ))}
           {selectedMood && (
             <p className="text-sm text-[var(--text-muted)]">
               Humor registrado · energia {selectedMood.energyLevel ?? '-'}/10

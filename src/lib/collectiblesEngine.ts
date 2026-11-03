@@ -144,18 +144,20 @@ export const TROPHIES_SFW: CollectibleDef[] = [
 /** Conta dias consecutivos (terminando hoje ou ontem) presentes em `dateStrs` (formato YYYY-MM-DD). */
 export function currentStreak(dateStrs: Set<string>, todayStr: string): number {
   let streak = 0
-  const cursor = new Date(`${todayStr}T00:00:00`)
+  // meio-dia UTC + passos em UTC: a chave sai igual em qualquer fuso (com meia-noite local, quem
+  // está a leste de UTC caía no dia anterior)
+  const cursor = new Date(`${todayStr}T12:00:00.000Z`)
   while (true) {
     const key = cursor.toISOString().slice(0, 10)
     if (!dateStrs.has(key)) {
       if (streak === 0 && key === todayStr) {
-        cursor.setDate(cursor.getDate() - 1)
+        cursor.setUTCDate(cursor.getUTCDate() - 1)
         continue
       }
       break
     }
     streak += 1
-    cursor.setDate(cursor.getDate() - 1)
+    cursor.setUTCDate(cursor.getUTCDate() - 1)
   }
   return streak
 }

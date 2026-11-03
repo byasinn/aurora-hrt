@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, matchPath } from 'react-router-dom'
 import { Home, Image, Users, MessageCircle } from 'lucide-react'
 import clsx from 'clsx'
@@ -21,6 +21,11 @@ export default function Layout() {
   const { data: profile } = useProfile()
   const location = useLocation()
   const [drawerOpen, setDrawerOpen] = useState(false)
+
+  // Com o documento rolando, a posição ficaria da tela anterior ao navegar — volta pro topo.
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [location.pathname])
   const spaceActive = location.pathname === '/profile' || location.pathname === '/perfil'
   const inboxActive = location.pathname === '/inbox' || location.pathname.startsWith('/conversas')
 
@@ -41,7 +46,10 @@ export default function Layout() {
         </button>
         <span className="font-logo flag-gradient-text text-lg uppercase tracking-wide">Aurora</span>
       </header>
-      <main className="flex-1 overflow-y-auto overscroll-y-contain px-4 pb-24">
+      {/* Quem rola é o documento, não o <main>. Com overflow-y-auto aqui (sem altura travada) o <main>
+          virava um scroll container que nunca rolava, e o overscroll-contain bloqueava a rolagem de
+          chegar na página — no PC só rolava com o mouse fora da coluna, no Android às vezes nem isso. */}
+      <main className="flex-1 px-4 pb-24">
         <Outlet />
       </main>
       <NavDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} profile={profile} />

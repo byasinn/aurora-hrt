@@ -104,35 +104,52 @@ export const profile = pgTable(
   (table) => [uniqueIndex('profile_username_idx').on(table.username)],
 )
 
-export const medications = pgTable('medications', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-  doseAmount: text('dose_amount').notNull(),
-  doseUnit: text('dose_unit').notNull(),
-  route: text('route').notNull(), // 'oral' | 'injection' | 'patch' | 'gel' | 'other'
-  frequencyType: text('frequency_type').notNull(), // 'daily' | 'every_n_days' | 'specific_days'
-  // daily: {} | every_n_days: { intervalDays: number, anchorDate: string } | specific_days: { days: number[] } (0=Sun..6=Sat)
-  frequencyValue: jsonb('frequency_value').notNull().default({}),
-  preferredTimes: jsonb('preferred_times').notNull().default([]).$type<string[]>(), // 'HH:MM' local, uma ou mais doses por dia
-  notes: text('notes'),
-  active: boolean('active').notNull().default(true),
-  remindersEnabled: boolean('reminders_enabled').notNull().default(true),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+export const medications = pgTable(
+  'medications',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    doseAmount: text('dose_amount').notNull(),
+    doseUnit: text('dose_unit').notNull(),
+    route: text('route').notNull(), // 'oral' | 'injection' | 'patch' | 'gel' | 'other'
+    frequencyType: text('frequency_type').notNull(), // 'daily' | 'every_n_days' | 'specific_days'
+    // daily: {} | every_n_days: { intervalDays: number, anchorDate: string } | specific_days: { days: number[] } (0=Sun..6=Sat)
+    frequencyValue: jsonb('frequency_value').notNull().default({}),
+    preferredTimes: jsonb('preferred_times').notNull().default([]).$type<string[]>(), // 'HH:MM' local, uma ou mais doses por dia
+    notes: text('notes'),
+    active: boolean('active').notNull().default(true),
+    remindersEnabled: boolean('reminders_enabled').notNull().default(true),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('medications_user_idx').on(table.userId)],
+)
 
-export const doseLogs = pgTable('dose_logs', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
-  medicationId: integer('medication_id')
-    .notNull()
-    .references(() => medications.id, { onDelete: 'cascade' }),
-  scheduledFor: timestamp('scheduled_for', { withTimezone: true }).notNull(),
-  takenAt: timestamp('taken_at', { withTimezone: true }),
-  status: text('status').notNull().default('pending'), // 'pending' | 'taken' | 'skipped' | 'missed'
-  notes: text('notes'),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+export const doseLogs = pgTable(
+  'dose_logs',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
+    medicationId: integer('medication_id')
+      .notNull()
+      .references(() => medications.id, { onDelete: 'cascade' }),
+    scheduledFor: timestamp('scheduled_for', { withTimezone: true }).notNull(),
+    takenAt: timestamp('taken_at', { withTimezone: true }),
+    status: text('status').notNull().default('pending'), // 'pending' | 'taken' | 'skipped' | 'missed'
+    notes: text('notes'),
+    // true = linha gerada pelo preenchimento de histórico ao cadastrar o remédio ("tomo desde 2019"),
+    // não uma dose registrada de verdade — não conta pontos nem streak (senão quem preenche anos de
+    // histórico ganha milhares de pontos de graça).
+    backfilled: boolean('backfilled').notNull().default(false),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  // histórico retroativo deixa essa tabela com milhares de linhas por pessoa — toda leitura filtra por
+  // usuário + janela de tempo (hoje, calendário do mês, cron de lembretes)
+  (table) => [
+    index('dose_logs_user_scheduled_idx').on(table.userId, table.scheduledFor),
+    index('dose_logs_med_scheduled_idx').on(table.medicationId, table.scheduledFor),
+  ],
+)
 
 export const tags = pgTable(
   'tags',
@@ -265,7 +282,10 @@ export const posts = pgTable(
   // NULL nunca colide com NULL num índice único, então isso não afeta posts normais (as duas colunas
   // ficam null) — só impede duas linhas com o mesmo (userId, repostOfKind, repostOfId) preenchidos,
   // fechando a corrida de clique duplo no botão de repostar.
-  (table) => [uniqueIndex('posts_repost_pair').on(table.userId, table.repostOfKind, table.repostOfId)],
+  (table) => [
+    uniqueIndex('posts_repost_pair').on(table.userId, table.repostOfKind, table.repostOfId),
+    index('posts_user_created_idx').on(table.userId, table.createdAt),
+  ],
 )
 
 export const routines = pgTable('routines', {
@@ -280,16 +300,20 @@ export const routines = pgTable('routines', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
-export const routineLogs = pgTable('routine_logs', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
-  routineId: integer('routine_id')
-    .notNull()
-    .references(() => routines.id, { onDelete: 'cascade' }),
-  date: date('date').notNull(),
-  count: integer('count').notNull().default(0),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+export const routineLogs = pgTable(
+  'routine_logs',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
+    routineId: integer('routine_id')
+      .notNull()
+      .references(() => routines.id, { onDelete: 'cascade' }),
+    date: date('date').notNull(),
+    count: integer('count').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('routine_logs_user_date_idx').on(table.userId, table.date)],
+)
 
 // Programa de treino opcional (ativado em profile.workoutsEnabled) — cada dia tem seus próprios
 // exercícios e dias da semana, permitindo splits tipo "Glúteos seg/qua/sex" + "Pernas ter/qui".
@@ -335,24 +359,32 @@ export const workoutLogs = pgTable(
   (table) => [uniqueIndex('workout_logs_day_date').on(table.workoutDayId, table.date)],
 )
 
-export const messages = pgTable('messages', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
-  icon: text('icon').notNull().default('heart'),
-  title: text('title').notNull(),
-  body: text('body').notNull(),
-  read: boolean('read').notNull().default(false),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+export const messages = pgTable(
+  'messages',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
+    icon: text('icon').notNull().default('heart'),
+    title: text('title').notNull(),
+    body: text('body').notNull(),
+    read: boolean('read').notNull().default(false),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('messages_user_idx').on(table.userId)],
+)
 
-export const pushSubscriptions = pgTable('push_subscriptions', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
-  endpoint: text('endpoint').notNull().unique(),
-  p256dh: text('p256dh').notNull(),
-  auth: text('auth').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+export const pushSubscriptions = pgTable(
+  'push_subscriptions',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
+    endpoint: text('endpoint').notNull().unique(),
+    p256dh: text('p256dh').notNull(),
+    auth: text('auth').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('push_subscriptions_user_idx').on(table.userId)],
+)
 
 export const unlockedAchievements = pgTable(
   'unlocked_achievements',
@@ -466,18 +498,22 @@ export const postLikes = pgTable(
   (table) => [uniqueIndex('post_likes_pair').on(table.postId, table.userId)],
 )
 
-export const postComments = pgTable('post_comments', {
-  id: serial('id').primaryKey(),
-  postId: integer('post_id')
-    .notNull()
-    .references(() => posts.id, { onDelete: 'cascade' }),
-  userId: integer('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  parentCommentId: integer('parent_comment_id').references((): AnyPgColumn => postComments.id, { onDelete: 'cascade' }),
-  text: text('text').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+export const postComments = pgTable(
+  'post_comments',
+  {
+    id: serial('id').primaryKey(),
+    postId: integer('post_id')
+      .notNull()
+      .references(() => posts.id, { onDelete: 'cascade' }),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    parentCommentId: integer('parent_comment_id').references((): AnyPgColumn => postComments.id, { onDelete: 'cascade' }),
+    text: text('text').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('post_comments_post_idx').on(table.postId)],
+)
 
 export const postCommentLikes = pgTable(
   'post_comment_likes',
@@ -494,18 +530,25 @@ export const postCommentLikes = pgTable(
   (table) => [uniqueIndex('post_comment_likes_pair').on(table.commentId, table.userId)],
 )
 
-export const directMessages = pgTable('direct_messages', {
-  id: serial('id').primaryKey(),
-  senderId: integer('sender_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  recipientId: integer('recipient_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  body: text('body').notNull(),
-  readAt: timestamp('read_at', { withTimezone: true }),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+export const directMessages = pgTable(
+  'direct_messages',
+  {
+    id: serial('id').primaryKey(),
+    senderId: integer('sender_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    recipientId: integer('recipient_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    body: text('body').notNull(),
+    readAt: timestamp('read_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index('direct_messages_pair_idx').on(table.senderId, table.recipientId, table.createdAt),
+    index('direct_messages_recipient_idx').on(table.recipientId, table.createdAt),
+  ],
+)
 
 // Múltiplas comunidades — quem administra é quem tem users.isAdmin (sem papel por comunidade ainda).
 export const communities = pgTable('communities', {
@@ -534,22 +577,26 @@ export const communityMembers = pgTable(
 
 // Posts DENTRO da comunidade (tipo Reddit) — diferente dos posts pessoais do perfil.
 // Só quem é membro da comunidade vê esses posts (no Explorar e na própria comunidade).
-export const communityPosts = pgTable('community_posts', {
-  id: serial('id').primaryKey(),
-  communityId: integer('community_id')
-    .notNull()
-    .references(() => communities.id, { onDelete: 'cascade' }),
-  userId: integer('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  text: text('text'),
-  images: jsonb('images').notNull().default([]), // string[] data URLs
-  fontStyle: text('font_style'),
-  cardStyle: boolean('card_style').notNull().default(false),
-  cardColor: text('card_color'),
-  cardColor2: text('card_color2'),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+export const communityPosts = pgTable(
+  'community_posts',
+  {
+    id: serial('id').primaryKey(),
+    communityId: integer('community_id')
+      .notNull()
+      .references(() => communities.id, { onDelete: 'cascade' }),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    text: text('text'),
+    images: jsonb('images').notNull().default([]), // string[] data URLs
+    fontStyle: text('font_style'),
+    cardStyle: boolean('card_style').notNull().default(false),
+    cardColor: text('card_color'),
+    cardColor2: text('card_color2'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('community_posts_community_idx').on(table.communityId, table.createdAt)],
+)
 
 export const communityPostLikes = pgTable(
   'community_post_likes',
@@ -566,21 +613,25 @@ export const communityPostLikes = pgTable(
   (table) => [uniqueIndex('community_post_likes_pair').on(table.postId, table.userId)],
 )
 
-export const communityPostComments = pgTable('community_post_comments', {
-  id: serial('id').primaryKey(),
-  postId: integer('post_id')
-    .notNull()
-    .references(() => communityPosts.id, { onDelete: 'cascade' }),
-  userId: integer('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  parentCommentId: integer('parent_comment_id').references(
-    (): AnyPgColumn => communityPostComments.id,
-    { onDelete: 'cascade' },
-  ),
-  text: text('text').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+export const communityPostComments = pgTable(
+  'community_post_comments',
+  {
+    id: serial('id').primaryKey(),
+    postId: integer('post_id')
+      .notNull()
+      .references(() => communityPosts.id, { onDelete: 'cascade' }),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    parentCommentId: integer('parent_comment_id').references(
+      (): AnyPgColumn => communityPostComments.id,
+      { onDelete: 'cascade' },
+    ),
+    text: text('text').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('community_post_comments_post_idx').on(table.postId)],
+)
 
 export const communityPostCommentLikes = pgTable(
   'community_post_comment_likes',
