@@ -1,5 +1,5 @@
 import { NavLink, matchPath, useLocation } from 'react-router-dom'
-import { MessageCircle } from 'lucide-react'
+import { MessageCircle, User } from 'lucide-react'
 import clsx from 'clsx'
 import { useTranslation } from 'react-i18next'
 import Avatar from './Avatar'
@@ -7,7 +7,18 @@ import { useMainNavItems, useSecondaryNavItems, type NavItem } from './navItems'
 import { playSound } from '../lib/sounds'
 import type { Profile } from '../../shared/types'
 
-function SidebarLink({ item, active, badge }: { item: NavItem; active?: boolean; badge?: number }) {
+function SidebarLink({
+  item,
+  active,
+  badge,
+  icon,
+}: {
+  item: NavItem
+  active?: boolean
+  badge?: number
+  /** troca o ícone padrão (ex.: avatar no Meu espaço) */
+  icon?: React.ReactNode
+}) {
   const { to, label, Icon, match } = item
   const location = useLocation()
   const extraActive = active ?? (match ? !!matchPath(match, location.pathname) : false)
@@ -27,7 +38,7 @@ function SidebarLink({ item, active, badge }: { item: NavItem; active?: boolean;
     >
       {({ isActive }) => (
         <>
-          <Icon size={22} className={isActive || extraActive ? 'text-[var(--accent)]' : undefined} />
+          {icon ?? <Icon size={22} className={isActive || extraActive ? 'text-[var(--accent)]' : undefined} />}
           <span className="flex-1">{label}</span>
           {!!badge && (
             <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[11px] font-bold text-white">
@@ -47,6 +58,7 @@ export default function DesktopSidebar({ profile, unread }: { profile: Profile |
   const main = useMainNavItems()
   const secondary = useSecondaryNavItems()
   const inboxActive = location.pathname === '/inbox' || location.pathname.startsWith('/conversas')
+  const spaceActive = location.pathname === '/profile'
 
   return (
     <aside className="sticky top-0 hidden h-app w-64 shrink-0 flex-col gap-6 overflow-y-auto py-8 pl-6 pr-2 lg:flex">
@@ -57,6 +69,11 @@ export default function DesktopSidebar({ profile, unread }: { profile: Profile |
           <SidebarLink key={item.to} item={item} />
         ))}
         <SidebarLink item={{ to: '/inbox', label: t('nav.messages'), Icon: MessageCircle }} active={inboxActive} badge={unread} />
+        <SidebarLink
+          item={{ to: '/profile', label: t('nav.mySpace'), Icon: User }}
+          active={spaceActive}
+          icon={<Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} frame={profile?.equippedAvatarFrame} size={24} />}
+        />
       </nav>
 
       <nav className="space-y-1 border-t border-[var(--border)] pt-4">
@@ -66,14 +83,14 @@ export default function DesktopSidebar({ profile, unread }: { profile: Profile |
       </nav>
 
       <NavLink
-        to="/profile"
+        to="/perfil"
         onClick={() => playSound('tap')}
         className="mt-auto flex items-center gap-3 rounded-2xl p-2 hover:bg-[var(--surface-2)]"
       >
-        <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} size={40} />
+        <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} frame={profile?.equippedAvatarFrame} size={40} />
         <span className="min-w-0">
           <span className="block truncate text-sm font-bold text-[var(--text)]">{profile?.displayName}</span>
-          <span className="block text-xs text-[var(--text-muted)]">{t('nav.mySpace')}</span>
+          <span className="block text-xs text-[var(--text-muted)]">{t('nav.profile')}</span>
         </span>
       </NavLink>
     </aside>

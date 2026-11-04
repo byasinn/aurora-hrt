@@ -279,6 +279,7 @@ export interface PostCommentWithAuthor extends PostComment {
     avatarUrl: string | null
     avatarIcon: string | null
     isVerified: boolean
+    avatarFrame?: string | null
   }
   likeCount: number
   likedByMe: boolean
@@ -297,6 +298,9 @@ export interface PublicUserSummary {
   pronouns: string
   isFollowedByMe: boolean
   isVerified: boolean
+  /** itens da lojinha equipados (shared/shopCatalog.ts) — só vêm onde o visual aparece (feed, perfil) */
+  avatarFrame?: string | null
+  postFrame?: string | null
 }
 
 export interface ExternalLink {
@@ -352,6 +356,7 @@ export interface RepostOriginal {
   cardStyle: boolean
   cardColor: string | null
   cardColor2: string | null
+  cardSkin: string | null
 }
 
 export interface FeedItem {
@@ -371,6 +376,7 @@ export interface FeedItem {
   cardStyle: boolean
   cardColor: string | null
   cardColor2: string | null
+  cardSkin: string | null
   repostOf: RepostOriginal | null
   repostCount: number
   repostedByMe: boolean
@@ -438,6 +444,7 @@ export interface CommunityPostCommentWithAuthor extends CommunityPostComment {
     avatarUrl: string | null
     avatarIcon: string | null
     isVerified: boolean
+    avatarFrame?: string | null
   }
   likeCount: number
   likedByMe: boolean

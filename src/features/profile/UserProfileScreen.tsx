@@ -115,7 +115,7 @@ export default function UserProfileScreen() {
 
       <div className="px-4">
         <div className="relative z-10 -mt-10 w-fit rounded-full ring-4 ring-[var(--bg)]">
-          <Avatar src={profile.avatarUrl} icon={profile.avatarIcon} name={profile.displayName} size={72} />
+          <Avatar src={profile.avatarUrl} icon={profile.avatarIcon} name={profile.displayName} frame={profile.avatarFrame} size={72} />
         </div>
 
         <div className="mt-2">

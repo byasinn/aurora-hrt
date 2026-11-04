@@ -61,6 +61,7 @@ app.all('/api/post-comments', async (c) => {
             avatarUrl: p?.avatarUrl ?? null,
             avatarIcon: p?.avatarIcon ?? null,
             isVerified: p?.isVerified ?? false,
+            avatarFrame: p?.equippedAvatarFrame ?? null,
           },
           likeCount: likeCountByComment.get(r.id) ?? 0,
           likedByMe: likedByMeSet.has(r.id),

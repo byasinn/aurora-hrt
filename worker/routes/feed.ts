@@ -118,6 +118,7 @@ app.all('/api/feed', async (c) => {
           cardStyle: original.cardStyle,
           cardColor: original.cardColor,
           cardColor2: original.cardColor2,
+          cardSkin: original.cardSkin,
         }
         return [
           {
@@ -137,6 +138,7 @@ app.all('/api/feed', async (c) => {
             cardStyle: original.cardStyle,
             cardColor: original.cardColor,
             cardColor2: original.cardColor2,
+            cardSkin: original.cardSkin,
             repostOf,
             repostCount: repostCountByOriginal.get(original.id) ?? 0,
             repostedByMe: repostedByMeSet.has(original.id),

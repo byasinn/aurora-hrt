@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Plus, Users, X, Palette } from 'lucide-react'
+import { ArrowLeft, Plus, Users, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import clsx from 'clsx'
 import { getCollectibleIcon } from '../../lib/collectibleIcons'
@@ -23,6 +23,7 @@ import { useMe } from '../../api/auth'
 import ImageCropper from '../../components/ImageCropper'
 import { toastError } from '../../lib/toast'
 import { deleteImage } from '../../lib/apiClient'
+import CardSkinPicker, { cardPayload, cardPreview, type CardChoice } from '../../components/CardSkinPicker'
 import { useThemeStore } from '../../lib/themeStore'
 import { FONT_STYLE_OPTIONS, fontStyleClass } from '../../lib/postStyle'
 import type { PostFontStyle } from '../../../shared/types'
@@ -36,7 +37,8 @@ function Composer({ communityId }: { communityId: number }) {
   const [images, setImages] = useState<string[]>([])
   const [cropQueue, setCropQueue] = useState<File[]>([])
   const [fontStyle, setFontStyle] = useState<PostFontStyle | null>(null)
-  const [cardStyle, setCardStyle] = useState(false)
+  const [card, setCard] = useState<CardChoice>(null)
+  const preview = cardPreview(card, theme)
   const imagesRef = useRef(images)
   imagesRef.current = images
 
@@ -72,14 +74,12 @@ function Composer({ communityId }: { communityId: number }) {
         text: text.trim() || null,
         images,
         fontStyle,
-        cardStyle,
-        cardColor: cardStyle ? theme.accent : null,
-        cardColor2: cardStyle ? theme.accent2 : null,
+        ...cardPayload(card, theme),
       })
       setText('')
       setImages([])
       setFontStyle(null)
-      setCardStyle(false)
+      setCard(null)
     } catch (err) {
       toastError(err, 'Não foi possível publicar o post. Tenta de novo.')
     }
@@ -88,7 +88,7 @@ function Composer({ communityId }: { communityId: number }) {
   return (
     <Card className="space-y-3">
       <div className="flex gap-2">
-        <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} size={36} />
+        <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} frame={profile?.equippedAvatarFrame} size={36} />
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -97,9 +97,9 @@ function Composer({ communityId }: { communityId: number }) {
           className={clsx(
             'flex-1 resize-none rounded-lg border px-3 py-2 text-sm outline-none focus:border-[var(--accent)]',
             fontStyleClass(fontStyle),
-            cardStyle ? 'text-white placeholder:text-white/70 border-transparent' : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text)]',
+            preview.className,
           )}
-          style={cardStyle ? { background: `linear-gradient(135deg, ${theme.accent}, ${theme.accent2})` } : undefined}
+          style={preview.style}
         />
       </div>
       <p className="text-[11px] text-[var(--text-muted)]">Cole um link do Pinterest pra mostrar o vídeo ou foto direto no post.</p>
@@ -121,19 +121,8 @@ function Composer({ communityId }: { communityId: number }) {
             Aa {opt.label}
           </button>
         ))}
-        <button
-          type="button"
-          onClick={() => setCardStyle((v) => !v)}
-          className={clsx(
-            'flex items-center gap-1 rounded-full border px-3 py-1 text-sm transition',
-            cardStyle
-              ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
-              : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]',
-          )}
-        >
-          <Palette size={12} /> Cartão
-        </button>
       </div>
+      <CardSkinPicker value={card} onChange={setCard} theme={theme} />
 
       {images.length > 0 && (
         <div className="grid grid-cols-4 gap-2">
@@ -290,6 +279,7 @@ export default function CommunityScreen() {
                 cardStyle={post.cardStyle}
                 cardColor={post.cardColor}
                 cardColor2={post.cardColor2}
+                cardSkin={post.cardSkin}
                 reportTargetType="community_post"
                 reportTargetId={post.id}
                 onLike={() => likePost.mutate(post.id)}

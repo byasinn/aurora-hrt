@@ -1,11 +1,13 @@
 import { Hono } from 'hono'
 import { and, eq } from 'drizzle-orm'
 import { getDb } from '../shared/db'
-import { profile } from '../../shared/schema'
+import { profile, unlockedTitles } from '../../shared/schema'
 import { jsonResponse, requireUser } from '../shared/auth'
 import { validateSingleImage, validateText, validateExternalLinks, validateIntRange } from '../shared/contentLimits'
 import { validateUsernameFormat, generateUniqueUsername } from '../shared/username'
 import { deleteR2Images } from '../shared/images'
+import { computeServerPointsStats } from '../shared/pointsStats'
+import { SFW_TITLES } from '../../src/lib/titles'
 import type { ProfileInput } from '../../shared/types'
 import type { Env } from '../env'
 
@@ -13,6 +15,39 @@ const DISPLAY_NAME_MAX_CHANGES = 3
 const DISPLAY_NAME_WINDOW_MS = 30 * 24 * 60 * 60 * 1000
 const USERNAME_MAX_CHANGES = 3
 const USERNAME_WINDOW_MS = 30 * 24 * 60 * 60 * 1000
+
+// O PUT grava o corpo inteiro no perfil, então tudo que a pessoa não pode escolher sozinha sai daqui:
+// dono, selo de verificado (só admin), contadores de troca de nome (calculados abaixo) e itens da
+// lojinha (equipar passa por /api/shop/equip, que confere a compra).
+const PROTECTED_FIELDS = [
+  'id',
+  'userId',
+  'createdAt',
+  'isVerified',
+  'usernameChangeCount',
+  'usernameChangeWindowStart',
+  'displayNameChangeCount',
+  'displayNameChangeWindowStart',
+  'equippedAvatarFrame',
+  'equippedPostFrame',
+  'equippedTheme',
+  'equippedCalendar',
+] as const
+
+/** Título só pode ser equipado se já foi desbloqueado (salvo) ou se o Brilho atual alcança. */
+async function canEquipTitle(db: ReturnType<typeof getDb>, userId: number, key: string): Promise<boolean> {
+  const title = SFW_TITLES.find((t) => t.key === key)
+  if (!title) return false
+  if (title.threshold === 0) return true
+  const [saved] = await db
+    .select({ id: unlockedTitles.id })
+    .from(unlockedTitles)
+    .where(and(eq(unlockedTitles.userId, userId), eq(unlockedTitles.titleKey, key)))
+    .limit(1)
+  if (saved) return true
+  const stats = await computeServerPointsStats(db, userId)
+  return stats.brilho >= title.threshold
+}
 
 async function getOrCreateProfile(db: ReturnType<typeof getDb>, userId: number) {
   const [existing] = await db.select().from(profile).where(eq(profile.userId, userId)).limit(1)
@@ -40,6 +75,13 @@ app.all('/api/profile', async (c) => {
     if (req.method === 'PUT') {
       const current = await getOrCreateProfile(db, user.id)
       const body = (await req.json()) as ProfileInput
+      for (const field of PROTECTED_FIELDS) delete (body as Record<string, unknown>)[field]
+
+      if (typeof body.equippedTitleSfw === 'string' && body.equippedTitleSfw !== current.equippedTitleSfw) {
+        if (!(await canEquipTitle(db, user.id, body.equippedTitleSfw))) {
+          return jsonResponse({ error: 'Esse título ainda não foi desbloqueado.' }, { status: 403 })
+        }
+      }
 
       const avatarError = validateSingleImage(body.avatarUrl)
       if (avatarError) return jsonResponse({ error: avatarError }, { status: 413 })

@@ -38,7 +38,7 @@ export default function NavDrawer({
           >
             <div className="flex items-center justify-between px-4 pb-4">
               <Link to="/perfil" onClick={onClose} className="flex min-w-0 items-center gap-3">
-                <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} size={48} />
+                <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} frame={profile?.equippedAvatarFrame} size={48} />
                 <span className="truncate text-base font-bold text-[var(--text)]">{profile?.displayName || t('nav.profile')}</span>
               </Link>
               <button

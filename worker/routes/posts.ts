@@ -8,6 +8,7 @@ import { validateImages, validateText, validateFontStyle, validateHexColor, stri
 import { deleteR2Images } from '../shared/images'
 import { canViewPost } from '../shared/social'
 import { logModerationAction } from '../shared/moderation'
+import { validateCardSkin } from './shop'
 import type { PostInput } from '../../shared/types'
 import type { Env } from '../env'
 
@@ -76,6 +77,8 @@ app.all('/api/posts', async (c) => {
       if (fontError) return jsonResponse({ error: fontError }, { status: 400 })
       const colorError = validateHexColor(body.cardColor) ?? validateHexColor(body.cardColor2)
       if (colorError) return jsonResponse({ error: colorError }, { status: 400 })
+      const skinError = await validateCardSkin(db, user.id, body.cardSkin)
+      if (skinError) return jsonResponse({ error: skinError }, { status: 403 })
 
       if (await isRateLimited(db, `post:${user.id}`, POST_WINDOW_MS, POST_MAX_PER_USER)) {
         return jsonResponse({ error: 'Muitos posts em pouco tempo. Espere um pouco antes de postar de novo.' }, { status: 429 })

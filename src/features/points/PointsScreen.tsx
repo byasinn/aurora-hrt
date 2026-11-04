@@ -7,11 +7,13 @@ import { useProfile } from '../../api/profile'
 import { currentTitle, titleName } from '../../lib/titles'
 import { getCollectibleIcon } from '../../lib/collectibleIcons'
 import PixelIcon from '../../components/PixelIcon'
+import { useShop } from '../../api/shop'
 
 export default function PointsScreen() {
   useSyncCollectibles()
   const stats = usePointsStats()
   const { data: profile } = useProfile()
+  const { data: shop } = useShop()
   const sfwTitle = currentTitle(stats.brilho)
   const SfwIcon = getCollectibleIcon(sfwTitle.icon)
 
@@ -27,6 +29,22 @@ export default function PointsScreen() {
           <p className="mt-1 flex items-center gap-1.5 rounded-full bg-[var(--accent-soft)] px-3 py-1 text-sm font-bold text-[var(--text)]">
             {SfwIcon && <SfwIcon size={14} className="text-[var(--accent)]" />} {titleName(sfwTitle, profile?.textStyle)}
           </p>
+        </Card>
+      </Link>
+
+      <Link to="/loja">
+        <Card className="flex items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)]">
+            <PixelIcon name="bag" size={22} />
+          </span>
+          <div className="flex-1">
+            <p className="font-bold text-[var(--text)]">Lojinha</p>
+            <p className="text-sm text-[var(--text-muted)]">Molduras, cards, temas e calendários</p>
+          </div>
+          <span className="flex items-center gap-1.5 rounded-full bg-[var(--surface-2)] px-3 py-1">
+            <PixelIcon name="coin" size={14} />
+            <span className="font-pixel text-base font-bold text-[var(--text)]">{shop?.balance ?? '–'}</span>
+          </span>
         </Card>
       </Link>
 

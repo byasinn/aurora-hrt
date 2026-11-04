@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from 'react'
+import { useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Heart, MessageSquare, Trash2, Repeat2 } from 'lucide-react'
@@ -12,6 +12,7 @@ import ReportButton from './ReportButton'
 import { findPinterestUrl, stripUrlFromText } from '../lib/pinterest'
 import { fontStyleClass } from '../lib/postStyle'
 import { playSound } from '../lib/sounds'
+import { CARD_SKINS, POST_FRAMES } from '../lib/shopVisuals'
 import type { PublicUserSummary, RepostOriginal, ReportTargetType } from '../../shared/types'
 
 function timeAgo(iso: string): string {
@@ -41,6 +42,7 @@ export interface FeedItemCardProps {
   cardStyle?: boolean
   cardColor?: string | null
   cardColor2?: string | null
+  cardSkin?: string | null
   repostOf?: RepostOriginal | null
   repostCount?: number
   repostedByMe?: boolean
@@ -69,6 +71,7 @@ export default function FeedItemCard({
   cardStyle,
   cardColor,
   cardColor2,
+  cardSkin,
   repostOf,
   repostCount = 0,
   repostedByMe = false,
@@ -94,7 +97,11 @@ export default function FeedItemCard({
     cardStyle: !!cardStyle,
     cardColor: cardColor ?? null,
     cardColor2: cardColor2 ?? null,
+    cardSkin: cardSkin ?? null,
   }
+  const skin = content.cardSkin ? CARD_SKINS[content.cardSkin] : undefined
+  // borda comprada pelo autor do conteúdo (num repost, a de quem escreveu o original)
+  const postFrame = content.author.postFrame ? POST_FRAMES[content.author.postFrame] : undefined
   const canRepost = (repostOf?.kind ?? kind) === 'post'
 
   const pinterestUrl = content.text ? findPinterestUrl(content.text) : null
@@ -120,8 +127,8 @@ export default function FeedItemCard({
     if (confirm(message)) onDelete?.()
   }
 
-  return (
-    <Card className="space-y-2">
+  const card = (
+    <Card className={clsx('space-y-2', postFrame && 'border-transparent', postFrame?.pixel && '!rounded-none')}>
       {repostOf && (
         <p className="flex items-center gap-1 text-xs font-medium text-[var(--text-muted)]">
           <Repeat2 size={13} /> {isOwn ? 'Você' : author.displayName || 'Alguém'} repostou
@@ -133,7 +140,13 @@ export default function FeedItemCard({
           to={!repostOf && isOwn ? '/profile' : `/u/${content.author.username}`}
           className="flex flex-1 items-center gap-2"
         >
-          <Avatar src={content.author.avatarUrl} icon={content.author.avatarIcon} name={content.author.displayName} size={32} />
+          <Avatar
+            src={content.author.avatarUrl}
+            icon={content.author.avatarIcon}
+            name={content.author.displayName}
+            frame={content.author.avatarFrame}
+            size={32}
+          />
           <div className="flex-1">
             <p className="flex items-center gap-1 text-sm font-medium text-[var(--text)]">
               {!repostOf && isOwn ? 'Você' : content.author.displayName || 'Sem nome'}
@@ -156,7 +169,18 @@ export default function FeedItemCard({
       </div>
 
       {displayText &&
-        (content.cardStyle ? (
+        (skin ? (
+          <p
+            className={clsx(
+              'whitespace-pre-wrap px-3 py-3 text-sm',
+              skin.pixel ? 'pixel-frame mx-[3px] !rounded-none' : 'rounded-xl',
+              fontStyleClass(content.fontStyle),
+            )}
+            style={{ ...skin.style, color: skin.color, paddingLeft: skin.paddingLeft, ...(skin.pixel ? ({ '--pf': '#9c59d1' } as CSSProperties) : {}) }}
+          >
+            {displayText}
+          </p>
+        ) : content.cardStyle ? (
           <p
             className={clsx('whitespace-pre-wrap rounded-xl px-3 py-3 text-sm text-white', fontStyleClass(content.fontStyle))}
             style={{ background: `linear-gradient(135deg, ${content.cardColor ?? 'var(--accent)'}, ${content.cardColor2 ?? 'var(--accent-2)'})` }}
@@ -223,5 +247,19 @@ export default function FeedItemCard({
 
       {commentsOpen && renderComments()}
     </Card>
+  )
+
+  if (!postFrame) return card
+  if (postFrame.pixel) {
+    return (
+      <div className="pixel-frame m-1" style={{ '--pf': postFrame.border, '--pf-size': '4px' } as CSSProperties}>
+        {card}
+      </div>
+    )
+  }
+  return (
+    <div className="rounded-[calc(1.5rem+3px)] p-[3px]" style={{ background: postFrame.border, boxShadow: postFrame.glow }}>
+      {card}
+    </div>
   )
 }

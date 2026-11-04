@@ -44,6 +44,7 @@ import dmMessages from './routes/dm-messages'
 import blocks from './routes/blocks'
 import dmThreads from './routes/dm-threads'
 import doses from './routes/doses'
+import shop from './routes/shop'
 import exportData from './routes/export-data'
 import feed from './routes/feed'
 import follows from './routes/follows'
@@ -190,6 +191,7 @@ const routes = [
   dmMessages,
   dmThreads,
   doses,
+  shop,
   exportData,
   feed,
   follows,

@@ -134,6 +134,8 @@ app.all('/api/users-profile', async (c) => {
       pronouns: targetProfile.pronouns,
       isFollowedByMe: following,
       isVerified: targetProfile.isVerified,
+      avatarFrame: targetProfile.equippedAvatarFrame,
+      postFrame: targetProfile.equippedPostFrame,
       bio: targetProfile.bio,
       coverUrl: targetProfile.coverUrl,
       textStyle: targetProfile.textStyle,

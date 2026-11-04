@@ -8,6 +8,7 @@ import { isRateLimited } from '../shared/rateLimit'
 import { validateImages, validateText, validateFontStyle, validateHexColor, stripOwnerFields } from '../shared/contentLimits'
 import { deleteR2Images } from '../shared/images'
 import { logModerationAction } from '../shared/moderation'
+import { validateCardSkin } from './shop'
 import type { CommunityPostInput } from '../../shared/types'
 import type { Env } from '../env'
 
@@ -58,6 +59,8 @@ app.all('/api/community-posts', async (c) => {
       if (fontError) return jsonResponse({ error: fontError }, { status: 400 })
       const colorError = validateHexColor(postFields.cardColor) ?? validateHexColor(postFields.cardColor2)
       if (colorError) return jsonResponse({ error: colorError }, { status: 400 })
+      const skinError = await validateCardSkin(db, user.id, postFields.cardSkin)
+      if (skinError) return jsonResponse({ error: skinError }, { status: 403 })
 
       const isMember = await isCommunityMember(db, communityId, user.id)
       if (!isMember) return jsonResponse({ error: 'entre na comunidade pra postar' }, { status: 403 })

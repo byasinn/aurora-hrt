@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { QueryClientProvider } from '@tanstack/react-query'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { queryClient } from './lib/queryClient'
 import { useThemeStore, applyTheme } from './lib/themeStore'
 import AuthGate from './features/auth/AuthGate'
@@ -33,7 +33,7 @@ import BrilhoScreen from './features/points/BrilhoScreen'
 import ColecaoScreen from './features/points/ColecaoScreen'
 import MeasurementsScreen from './features/measurements/MeasurementsScreen'
 import LabsScreen from './features/labs/LabsScreen'
-import TipsScreen from './features/tips/TipsScreen'
+import ShopScreen from './features/shop/ShopScreen'
 import FeedScreen from './features/feed/FeedScreen'
 import SettingsScreen from './features/settings/SettingsScreen'
 import AccountSettingsScreen from './features/settings/AccountSettingsScreen'
@@ -56,6 +56,7 @@ import GradientBlobs from './components/GradientBlobs'
 import ToastContainer from './components/ToastContainer'
 import LoadingScreen from './components/LoadingScreen'
 import { useProfile } from './api/profile'
+import { THEMES } from './lib/shopVisuals'
 
 function ThemeInitializer() {
   const { mode, accent, accent2, accent3 } = useThemeStore()
@@ -67,6 +68,14 @@ function ThemeInitializer() {
 
 function RootGate() {
   const { data: profile, isLoading, refetch } = useProfile()
+  const skin = profile?.equippedTheme ? THEMES[profile.equippedTheme]?.skin : undefined
+
+  // tema da lojinha: tinge o fundo (src/index.css, data-skin) — as cores de acento ficam no themeStore
+  useEffect(() => {
+    const root = document.documentElement
+    if (skin) root.setAttribute('data-skin', skin)
+    else root.removeAttribute('data-skin')
+  }, [skin])
 
   if (isLoading || !profile) return <LoadingScreen />
 
@@ -92,7 +101,9 @@ function RootGate() {
         <Route path="pontos/colecao" element={<ColecaoScreen />} />
         <Route path="measurements" element={<MeasurementsScreen />} />
         <Route path="labs" element={<LabsScreen />} />
-        <Route path="tips" element={<TipsScreen />} />
+        <Route path="loja" element={<ShopScreen />} />
+        {/* Dicas saiu — a Lojinha entrou no lugar; link antigo salvo cai lá */}
+        <Route path="tips" element={<Navigate to="/loja" replace />} />
         <Route path="feed" element={<FeedScreen />} />
         <Route path="settings" element={<SettingsScreen />} />
         <Route path="settings/conta" element={<AccountSettingsScreen />} />

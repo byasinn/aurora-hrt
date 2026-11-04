@@ -107,7 +107,7 @@ export default function PublicProfileScreen() {
           onClick={() => avatarInputRef.current?.click()}
           className="relative z-10 -mt-10 block w-fit rounded-full ring-4 ring-[var(--bg)]"
         >
-          <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} size={72} />
+          <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} frame={profile?.equippedAvatarFrame} size={72} />
         </button>
         <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
 

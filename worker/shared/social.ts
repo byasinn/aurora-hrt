@@ -82,6 +82,8 @@ export async function enrichPosts(
         pronouns: authorProfile?.pronouns ?? '',
         isFollowedByMe: p.userId != null && followingSet.has(p.userId),
         isVerified: authorProfile?.isVerified ?? false,
+        avatarFrame: authorProfile?.equippedAvatarFrame ?? null,
+        postFrame: authorProfile?.equippedPostFrame ?? null,
       },
       likeCount: likeCountByPost.get(p.id) ?? 0,
       commentCount: commentCountByPost.get(p.id) ?? 0,

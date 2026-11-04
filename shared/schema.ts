@@ -88,6 +88,11 @@ export const profile = pgTable(
   appIconVariant: text('app_icon_variant').notNull().default('default'), // qual /icons/variants/* usar no manifest
   equippedTitleSfw: text('equipped_title_sfw'), // key de src/lib/titles.ts SFW_TITLES
   showTitlesSfw: boolean('show_titles_sfw').notNull().default(false),
+  // itens da lojinha equipados (keys de shared/shopCatalog.ts) — só mudam por /api/shop/equip, que confere a compra
+  equippedAvatarFrame: text('equipped_avatar_frame'),
+  equippedPostFrame: text('equipped_post_frame'),
+  equippedTheme: text('equipped_theme'),
+  equippedCalendar: text('equipped_calendar'),
   showAchievementsOnProfile: boolean('show_achievements_on_profile').notNull().default(false),
   showTrophiesOnProfile: boolean('show_trophies_on_profile').notNull().default(false),
   postsCollageStyle: text('posts_collage_style').notNull().default('masonry'), // 'grid' | 'row' | 'masonry'
@@ -273,6 +278,7 @@ export const posts = pgTable(
     cardStyle: boolean('card_style').notNull().default(false),
     cardColor: text('card_color'), // snapshot da cor de tema do autor no momento do post
     cardColor2: text('card_color2'),
+    cardSkin: text('card_skin'), // card da lojinha (shared/shopCatalog.ts) — quando tem, substitui as cores acima
     // repost — quando preenchido, esse post é um "repost" apontando pro original (post ou post de comunidade),
     // sem duplicar conteúdo: texto/imagens do repost em si ficam vazios, o feed resolve o original na hora de montar.
     repostOfKind: text('repost_of_kind'), // null | 'post' | 'community'
@@ -593,6 +599,7 @@ export const communityPosts = pgTable(
     cardStyle: boolean('card_style').notNull().default(false),
     cardColor: text('card_color'),
     cardColor2: text('card_color2'),
+    cardSkin: text('card_skin'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index('community_posts_community_idx').on(table.communityId, table.createdAt)],
@@ -738,4 +745,20 @@ export const rateLimitHits = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index('rate_limit_hits_key_idx').on(table.key)],
+)
+
+// Compras da lojinha. Saldo = Brilho total ganho − soma de price (worker/routes/shop.ts). O preço fica
+// gravado no momento da compra pra uma mudança de preço futura não mexer no saldo de quem já comprou.
+export const shopPurchases = pgTable(
+  'shop_purchases',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    itemKey: text('item_key').notNull(),
+    price: integer('price').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex('shop_purchases_user_item_idx').on(table.userId, table.itemKey)],
 )

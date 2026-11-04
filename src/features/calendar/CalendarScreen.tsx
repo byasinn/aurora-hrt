@@ -28,6 +28,7 @@ import { cycleStatus } from './CycleDayForm'
 import { intimateDetailLines } from './IntimateDayForm'
 import { useDayNotes } from '../../api/dayNotes'
 import { useProfile, useUpdateProfile } from '../../api/profile'
+import { CALENDAR_SKINS } from '../../lib/shopVisuals'
 import { predictCycle } from '../../lib/cyclePredictions'
 import { formatDateBR, formatTime, localDateStr } from '../../lib/dateUtils'
 import type { CycleFlow } from '../../../shared/types'
@@ -51,6 +52,7 @@ const DOSE_STATUS_STYLE: Record<string, { label: string; className: string }> = 
 
 export default function CalendarScreen() {
   const { data: profile } = useProfile()
+  const calSkin = profile?.equippedCalendar ? CALENDAR_SKINS[profile.equippedCalendar] : undefined
   const updateProfile = useUpdateProfile()
   const [cursor, setCursor] = useState(() => new Date())
   const [selected, setSelected] = useState<string | null>(null)
@@ -205,7 +207,7 @@ export default function CalendarScreen() {
         </Card>
       )}
 
-      <Card className="space-y-4">
+      <Card className={clsx('space-y-4', calSkin?.cardClass)} style={calSkin?.cardStyle}>
         <div className="flex items-center justify-between">
           <button
             onClick={() => setCursor((c) => subMonths(c, 1))}
@@ -214,7 +216,7 @@ export default function CalendarScreen() {
           >
             <ChevronLeft size={20} />
           </button>
-          <p className="text-lg font-extrabold capitalize text-[var(--text)]">
+          <p className={clsx('text-lg font-extrabold capitalize text-[var(--text)]', calSkin?.titleClass)}>
             {format(cursor, 'MMMM yyyy', { locale: ptBR })}
           </p>
           <button
@@ -263,11 +265,14 @@ export default function CalendarScreen() {
               <button
                 key={key}
                 onClick={() => setSelected(key)}
-                style={background ? { background } : undefined}
+                style={background ? { background } : calSkin?.emptyDayStyle?.(day.getDay())}
                 className={clsx(
-                  'relative flex aspect-square max-h-16 w-full flex-col items-center justify-center gap-0.5 rounded-lg text-sm font-medium transition',
+                  'relative flex aspect-square max-h-16 w-full flex-col items-center justify-center gap-0.5 text-sm font-medium transition',
+                  calSkin?.dayShape ?? 'rounded-lg',
                   !inMonth && 'opacity-30',
-                  colors.length > 0 ? 'text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.45)]' : 'text-[var(--text)]',
+                  colors.length > 0
+                    ? 'text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.45)]'
+                    : (calSkin?.emptyDayClass(day.getDay()) ?? 'text-[var(--text)]'),
                   !background && isFertile && 'bg-[var(--accent-2)]/15',
                   !background && !isFertile && 'hover:bg-[var(--surface-2)]',
                   selected === key && 'ring-2 ring-[var(--accent)] ring-offset-1 ring-offset-[var(--surface)]',

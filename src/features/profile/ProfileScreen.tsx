@@ -60,6 +60,7 @@ export default function ProfileScreen() {
                 src={profile?.avatarUrl}
                 icon={profile?.avatarIcon}
                 name={profile?.displayName}
+                frame={profile?.equippedAvatarFrame}
                 size={64}
                 ring={false}
                 className="ring-4 ring-[var(--surface)]"

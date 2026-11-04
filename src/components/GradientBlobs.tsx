@@ -5,6 +5,11 @@ export default function GradientBlobs() {
       className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-app overflow-hidden"
       style={{ background: 'var(--bg)' }}
     >
+      {/* padrão de fundo dos temas da lojinha (estrelas, quadriculado) — vazio sem tema */}
+      <div
+        className="absolute inset-0"
+        style={{ backgroundImage: 'var(--bg-pattern, none)', backgroundSize: 'var(--bg-pattern-size, auto)' }}
+      />
       <div
         className="absolute -top-24 -left-20 h-72 w-72 rounded-full opacity-30 blur-3xl"
         style={{ background: 'var(--accent)' }}

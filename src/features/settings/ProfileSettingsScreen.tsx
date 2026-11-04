@@ -127,13 +127,6 @@ export default function ProfileSettingsScreen() {
 
       <Card className="space-y-2">
         <div className="flex items-center justify-between gap-3 py-1">
-          <span className="min-w-0 flex-1 text-sm text-[var(--text)]">Mostrar dica do dia na Home</span>
-          <Switch
-            checked={profile?.showTipsOnHome ?? true}
-            onChange={(v) => updateProfile.mutate({ showTipsOnHome: v })}
-          />
-        </div>
-        <div className="flex items-center justify-between gap-3 py-1">
           <div className="min-w-0 flex-1">
             <p className="text-sm text-[var(--text)]">Treinos</p>
             <p className="text-xs text-[var(--text-muted)]">Ativa o botão de Treinos no Meu espaço e na Home.</p>

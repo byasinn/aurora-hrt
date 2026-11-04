@@ -15,6 +15,7 @@ interface CommentAuthor {
   avatarUrl: string | null
   avatarIcon: string | null
   isVerified: boolean
+  avatarFrame?: string | null
 }
 
 interface CommentLike {
@@ -63,7 +64,7 @@ function CommentRow({
   return (
     <div className={clsx('flex items-start gap-2', isReply && 'ml-8')}>
       <Link to={`/u/${comment.author.username}`}>
-        <Avatar src={comment.author.avatarUrl} icon={comment.author.avatarIcon} name={comment.author.displayName} size={isReply ? 20 : 24} />
+        <Avatar src={comment.author.avatarUrl} icon={comment.author.avatarIcon} name={comment.author.displayName} frame={comment.author.avatarFrame} size={isReply ? 20 : 24} />
       </Link>
       <div className="flex-1">
         <p className="text-xs">

@@ -216,6 +216,7 @@ export default function FeedScreen() {
               cardStyle={item.cardStyle}
               cardColor={item.cardColor}
               cardColor2={item.cardColor2}
+              cardSkin={item.cardSkin}
               repostOf={item.repostOf}
               repostCount={item.repostCount}
               repostedByMe={item.repostedByMe}

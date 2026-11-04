@@ -10,7 +10,6 @@ import { useRoutines } from '../../api/routines'
 import { useWorkoutPrograms, useWorkoutLogs } from '../../api/workouts'
 import { todayStr } from '../../lib/dateUtils'
 import WelcomeBanner from '../../components/WelcomeBanner'
-import TipOfDayCard from '../../components/TipOfDayCard'
 import MedicationForm from './MedicationForm'
 import MedicationsCarousel from './MedicationsCarousel'
 import { WorkoutTodayCarousel, RoutinesTodayList, type WorkoutTodayItem } from './TodayActivitiesCarousel'
@@ -184,10 +183,6 @@ export default function TodayScreen() {
       )}
 
       <div className="mt-5">
-        <TipOfDayCard />
-      </div>
-
-      <div className="mt-1">
         <BigLinkButton to="/dia" icon={Heart} label={t('today.registerDay')} variant="accent" big />
       </div>
       <div className="mt-2">

@@ -17,13 +17,14 @@ async function main() {
   const [row] = await db
     .insert(schema.appAnnouncements)
     .values({
-      version: '1.2.0',
-      title: 'Explorar do jeito novo',
+      version: '1.3.0',
+      title: 'Lojinha, visual novo e um ajuste no Brilho',
       body: [
-        '• Páginas de tópico no Explorar: não-binário, trans masc, trans fem, moda, entretenimento e notícias — com posts automáticos (links de notícias e vídeos)',
-        '• Siga os tópicos que te interessam e apareça sugestões de quem seguir com base nisso',
-        '• Aviso de "novos posts" no topo do feed, sem perder o que você já tava vendo',
-        '• Correções de scroll em alguns Android',
+        '• Lojinha no lugar das Dicas: troque seu Brilho por molduras de perfil, bordas e cards de post, temas e calendários',
+        '• Comprar não tira seus títulos — eles continuam contando todo o Brilho que você já ganhou',
+        '• Sobre o Brilho: as doses que entravam sozinhas como "histórico" ao cadastrar um remédio (de antes de você usar o app) deixaram de contar pontos. Agora só conta o que você marca no dia. Por isso o número de algumas pessoas caiu — os títulos que você já tinha continuam seus',
+        '• Visual novo, botões maiores, versão pra computador e sons fofos (dá pra desligar em Aparência)',
+        '• "Você tomou?" uma hora depois do horário da dose, com botões direto na notificação',
       ].join('\n'),
     })
     .returning()

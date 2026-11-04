@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom'
-import { Pill, Ruler, FlaskConical, Lightbulb } from 'lucide-react'
+import { Pill, Ruler, FlaskConical, Store } from 'lucide-react'
 import { Card, ScreenTitle } from '../../components/ui'
 
 const LINKS = [
   { to: '/medications', label: 'Doses / Remédios', icon: Pill },
   { to: '/measurements', label: 'Medidas', icon: Ruler },
   { to: '/labs', label: 'Exames', icon: FlaskConical },
-  { to: '/tips', label: 'Dicas', icon: Lightbulb },
+  { to: '/loja', label: 'Lojinha', icon: Store },
 ]
 
 export default function SaudeScreen() {

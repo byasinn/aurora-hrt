@@ -1,4 +1,4 @@
-import { Home, Image, Users, User, Sparkles, ListChecks, Calendar, Settings } from 'lucide-react'
+import { Home, Image, Users, User, Sparkles, Store, ListChecks, Calendar, Settings } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 export interface NavItem {
@@ -25,6 +25,7 @@ export function useSecondaryNavItems(): NavItem[] {
   return [
     { to: '/perfil', label: t('nav.profile'), Icon: User },
     { to: '/pontos', label: t('nav.points'), Icon: Sparkles },
+    { to: '/loja', label: t('nav.shop'), Icon: Store },
     { to: '/routines', label: t('nav.routines'), Icon: ListChecks },
     { to: '/calendar', label: t('nav.history'), Icon: Calendar },
     { to: '/settings', label: t('nav.settings'), Icon: Settings },

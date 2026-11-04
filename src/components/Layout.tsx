@@ -71,7 +71,7 @@ export default function Layout() {
             aria-label={t('nav.profile')}
             className="absolute left-2 top-[max(0.25rem,calc(env(safe-area-inset-top)-0.5rem))] flex h-11 w-11 items-center justify-center rounded-full"
           >
-            <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} size={32} />
+            <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} frame={profile?.equippedAvatarFrame} size={32} />
           </button>
           <span className="font-logo flag-gradient-text text-lg uppercase tracking-wide">Aurora</span>
         </header>
@@ -103,7 +103,7 @@ export default function Layout() {
               )}
             </TabItem>
             <TabItem to="/profile" label={t('nav.mySpace')} active={spaceActive}>
-              <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} size={24} />
+              <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} frame={profile?.equippedAvatarFrame} size={24} />
             </TabItem>
           </ul>
         </nav>

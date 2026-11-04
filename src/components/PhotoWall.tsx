@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import clsx from 'clsx'
 import { usePosts } from '../api/posts'
 import { fontStyleClass } from '../lib/postStyle'
+import { CARD_SKINS } from '../lib/shopVisuals'
 import type { Post } from '../../shared/types'
 
 export type CollageStyle = 'grid' | 'row' | 'masonry'
@@ -17,7 +18,7 @@ function tileVariant(key: string): 0 | 1 {
 
 type WallTile =
   | { type: 'image'; key: string; src: string; imageIndex: number }
-  | { type: 'text'; key: string; text: string; fontStyle: string | null; cardStyle: boolean; cardColor: string | null; cardColor2: string | null }
+  | { type: 'text'; key: string; text: string; fontStyle: string | null; cardStyle: boolean; cardColor: string | null; cardColor2: string | null; cardSkin: string | null }
 
 function PhotoLightbox({ images, index, onClose, onNavigate }: { images: string[]; index: number; onClose: () => void; onNavigate: (i: number) => void }) {
   return (
@@ -103,6 +104,7 @@ export default function PhotoWall({
         cardStyle: !!p.cardStyle,
         cardColor: p.cardColor ?? null,
         cardColor2: p.cardColor2 ?? null,
+        cardSkin: p.cardSkin ?? null,
       })
     }
   }
@@ -153,9 +155,11 @@ export default function PhotoWall({
               key={tile.key}
               className={textTileClassFor(tile)}
               style={
-                tile.cardStyle
-                  ? { background: `linear-gradient(135deg, ${tile.cardColor ?? 'var(--accent)'}, ${tile.cardColor2 ?? 'var(--accent-2)'})` }
-                  : undefined
+                tile.cardSkin && CARD_SKINS[tile.cardSkin]
+                  ? { ...CARD_SKINS[tile.cardSkin].style, color: CARD_SKINS[tile.cardSkin].color }
+                  : tile.cardStyle
+                    ? { background: `linear-gradient(135deg, ${tile.cardColor ?? 'var(--accent)'}, ${tile.cardColor2 ?? 'var(--accent-2)'})` }
+                    : undefined
               }
             >
               <p
@@ -163,7 +167,7 @@ export default function PhotoWall({
                   'text-xs',
                   style === 'masonry' && tileVariant(tile.key) === 1 ? 'line-clamp-6' : 'line-clamp-3',
                   fontStyleClass(tile.fontStyle),
-                  tile.cardStyle ? 'text-white' : 'text-[var(--text)]',
+                  tile.cardSkin ? undefined : tile.cardStyle ? 'text-white' : 'text-[var(--text)]',
                 )}
               >
                 {tile.text}

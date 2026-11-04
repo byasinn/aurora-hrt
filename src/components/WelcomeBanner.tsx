@@ -58,7 +58,7 @@ export default function WelcomeBanner() {
             transition={{ type: 'spring', stiffness: 300, damping: 24 }}
             className="flex flex-col items-center gap-3 text-center"
           >
-            <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} size={64} />
+            <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} frame={profile?.equippedAvatarFrame} size={64} />
             <p className="text-lg text-white/80">
               {greeting()}
               {name ? `, ${name}` : ''}

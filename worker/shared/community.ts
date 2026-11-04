@@ -57,6 +57,8 @@ export async function enrichCommunityPosts(
         pronouns: authorProfile?.pronouns ?? '',
         isFollowedByMe: false,
         isVerified: authorProfile?.isVerified ?? false,
+        avatarFrame: authorProfile?.equippedAvatarFrame ?? null,
+        postFrame: authorProfile?.equippedPostFrame ?? null,
       },
       likeCount: likeCountByPost.get(p.id) ?? 0,
       commentCount: commentCountByPost.get(p.id) ?? 0,

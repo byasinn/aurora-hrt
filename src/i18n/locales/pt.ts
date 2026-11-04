@@ -17,6 +17,7 @@ export default {
     mySpace: 'Meu espaço',
     profile: 'Perfil',
     points: 'Pontos',
+    shop: 'Lojinha',
     routines: 'Rotinas',
     history: 'Histórico',
     settings: 'Configurações',
