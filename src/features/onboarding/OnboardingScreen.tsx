@@ -541,7 +541,7 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
       </AnimatePresence>
 
       {step > 0 && step < TOTAL_STEPS - 1 && (
-        <button onClick={back} className="mt-4 text-center text-xs text-[var(--text-muted)]">
+        <button onClick={back} className="mt-4 text-center text-sm text-[var(--text-muted)]">
           {t('common.back')}
         </button>
       )}

@@ -11,6 +11,7 @@ import VerifiedBadge from './VerifiedBadge'
 import ReportButton from './ReportButton'
 import { findPinterestUrl, stripUrlFromText } from '../lib/pinterest'
 import { fontStyleClass } from '../lib/postStyle'
+import { playSound } from '../lib/sounds'
 import type { PublicUserSummary, RepostOriginal, ReportTargetType } from '../../shared/types'
 
 function timeAgo(iso: string): string {
@@ -102,7 +103,10 @@ export default function FeedItemCard({
   function handleMediaTap() {
     const now = Date.now()
     if (now - lastTapRef.current < 300) {
-      if (!likedByMe) onLike()
+      if (!likedByMe) {
+        playSound('pop')
+        onLike()
+      }
       setBurst(true)
       setTimeout(() => setBurst(false), 700)
     }
@@ -181,26 +185,37 @@ export default function FeedItemCard({
         </AnimatePresence>
       </div>
 
-      <div className="flex items-center gap-4 pt-1 text-xs text-[var(--text-muted)]">
+      {/* -ml-2: o botão tem área de toque maior que o ícone, mas o ícone fica alinhado com o texto */}
+      <div className="-ml-2 flex items-center gap-1 pt-1 text-sm font-semibold text-[var(--text-muted)]">
         <motion.button
           whileTap={{ scale: 0.85 }}
-          onClick={() => (likedByMe ? onUnlike() : onLike())}
-          className={clsx('flex items-center gap-1', likedByMe && 'text-red-500')}
+          onClick={() => {
+            if (!likedByMe) playSound('pop')
+            if (likedByMe) onUnlike()
+            else onLike()
+          }}
+          aria-label="Curtir"
+          className={clsx('flex min-h-10 items-center gap-1.5 rounded-full px-2 hover:bg-[var(--surface-2)]', likedByMe && 'text-red-500')}
         >
-          <Heart size={16} fill={likedByMe ? 'currentColor' : 'none'} />
+          <Heart size={20} fill={likedByMe ? 'currentColor' : 'none'} />
           {likeCount > 0 && likeCount}
         </motion.button>
-        <button onClick={() => setCommentsOpen((o) => !o)} className="flex items-center gap-1">
-          <MessageSquare size={16} />
+        <button
+          onClick={() => setCommentsOpen((o) => !o)}
+          aria-label="Comentários"
+          className="flex min-h-10 items-center gap-1.5 rounded-full px-2 hover:bg-[var(--surface-2)]"
+        >
+          <MessageSquare size={20} />
           {commentCount > 0 && commentCount}
         </button>
         {canRepost && (onRepost || onUnrepost) && (
           <motion.button
             whileTap={{ scale: 0.85 }}
             onClick={() => (repostedByMe ? onUnrepost?.() : onRepost?.())}
-            className={clsx('flex items-center gap-1', repostedByMe && 'text-emerald-500')}
+            aria-label="Repostar"
+            className={clsx('flex min-h-10 items-center gap-1.5 rounded-full px-2 hover:bg-[var(--surface-2)]', repostedByMe && 'text-emerald-500')}
           >
-            <Repeat2 size={16} />
+            <Repeat2 size={20} />
             {repostCount > 0 && repostCount}
           </motion.button>
         )}

@@ -40,7 +40,7 @@ export default function TopicPageScreen() {
         <button
           onClick={() => (topic.isFollowedByMe ? unfollow.mutate(topic.id) : follow.mutate(topic.id))}
           disabled={follow.isPending || unfollow.isPending}
-          className="shrink-0 cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium transition disabled:opacity-50"
+          className="shrink-0 cursor-pointer rounded-full px-3 py-1.5 text-sm font-medium transition disabled:opacity-50"
           style={
             topic.isFollowedByMe
               ? { border: '1px solid var(--border)', color: 'var(--text)' }

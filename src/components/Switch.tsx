@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { playSound } from '../lib/sounds'
 
 export default function Switch({
   checked,
@@ -15,7 +16,10 @@ export default function Switch({
       role="switch"
       aria-checked={checked}
       disabled={disabled}
-      onClick={() => onChange(!checked)}
+      onClick={() => {
+        playSound('toggle')
+        onChange(!checked)
+      }}
       className={clsx(
         'relative h-7 w-12 shrink-0 rounded-full transition-colors disabled:opacity-50',
         checked ? 'bg-[var(--accent)]' : 'bg-[var(--border)]',

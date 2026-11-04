@@ -71,10 +71,10 @@ function HistoryRow({ log }: { log: DoseLog }) {
             className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-xs text-[var(--text)]"
           />
         )}
-        <button onClick={save} className="text-xs font-medium text-[var(--accent)]">
+        <button onClick={save} className="text-sm font-medium text-[var(--accent)]">
           Salvar
         </button>
-        <button onClick={() => setEditing(false)} className="text-xs text-[var(--text-muted)]">
+        <button onClick={() => setEditing(false)} className="text-sm text-[var(--text-muted)]">
           Cancelar
         </button>
       </div>
@@ -84,7 +84,7 @@ function HistoryRow({ log }: { log: DoseLog }) {
   return (
     <button
       onClick={() => setEditing(true)}
-      className="flex w-full items-center justify-between rounded-lg px-1 py-1.5 text-left text-xs hover:bg-[var(--surface-2)]"
+      className="flex w-full items-center justify-between rounded-lg px-1 py-1.5 text-left text-sm hover:bg-[var(--surface-2)]"
     >
       <span className="text-[var(--text-muted)]">
         {formatDateBR(localDateStr(new Date(log.scheduledFor as unknown as string)))}
@@ -155,7 +155,7 @@ function MedicationRow({ medication, timeZone, onEdit }: { medication: Medicatio
 
       <button
         onClick={() => setHistoryOpen((o) => !o)}
-        className="flex w-full items-center justify-between text-xs text-[var(--text-muted)]"
+        className="flex w-full items-center justify-between text-sm text-[var(--text-muted)]"
       >
         Histórico de doses
         <ChevronDown size={14} className={clsx('transition', historyOpen && 'rotate-180')} />

@@ -15,7 +15,7 @@ import {
 import { ptBR } from 'date-fns/locale'
 import clsx from 'clsx'
 import { Link } from 'react-router-dom'
-import { Trophy, Droplet, Pencil } from 'lucide-react'
+import { Trophy, Droplet, Pencil, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Card, EmptyState, ScreenTitle } from '../../components/ui'
 import Switch from '../../components/Switch'
 import { useDoseLogs } from '../../api/doses'
@@ -209,22 +209,24 @@ export default function CalendarScreen() {
         <div className="flex items-center justify-between">
           <button
             onClick={() => setCursor((c) => subMonths(c, 1))}
-            className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-[var(--text)]"
+            aria-label="Mês anterior"
+            className="btn-press-soft flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--border)] text-[var(--text)]"
           >
-            ‹
+            <ChevronLeft size={20} />
           </button>
-          <p className="font-medium capitalize text-[var(--text)]">
+          <p className="text-lg font-extrabold capitalize text-[var(--text)]">
             {format(cursor, 'MMMM yyyy', { locale: ptBR })}
           </p>
           <button
             onClick={() => setCursor((c) => addMonths(c, 1))}
-            className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-[var(--text)]"
+            aria-label="Próximo mês"
+            className="btn-press-soft flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--border)] text-[var(--text)]"
           >
-            ›
+            <ChevronRight size={20} />
           </button>
         </div>
 
-        <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-[var(--text-muted)]">
+        <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-[var(--text-muted)]">
           {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => (
             <div key={i}>{d}</div>
           ))}
@@ -263,7 +265,7 @@ export default function CalendarScreen() {
                 onClick={() => setSelected(key)}
                 style={background ? { background } : undefined}
                 className={clsx(
-                  'relative flex aspect-square flex-col items-center justify-center gap-0.5 rounded-lg text-xs font-medium transition',
+                  'relative flex aspect-square max-h-16 w-full flex-col items-center justify-center gap-0.5 rounded-lg text-sm font-medium transition',
                   !inMonth && 'opacity-30',
                   colors.length > 0 ? 'text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.45)]' : 'text-[var(--text)]',
                   !background && isFertile && 'bg-[var(--accent-2)]/15',
@@ -286,7 +288,7 @@ export default function CalendarScreen() {
           })}
         </div>
 
-        <div className="flex flex-wrap gap-3 text-[10px] text-[var(--text-muted)]">
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-[var(--text-muted)]">
           <span className="flex items-center gap-1">
             <span className="h-2 w-2 rounded-full bg-emerald-500" /> dose tomada
           </span>
@@ -346,7 +348,7 @@ export default function CalendarScreen() {
                 </span>
                 <span
                   className={clsx(
-                    'shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium',
+                    'shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold',
                     DOSE_STATUS_STYLE[log.status]?.className ?? 'bg-[var(--surface-2)] text-[var(--text-muted)]',
                   )}
                 >

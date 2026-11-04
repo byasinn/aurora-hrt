@@ -56,7 +56,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
           >
             {faceIdChecking ? 'Verificando…' : '🔓 Desbloquear'}
           </button>
-          <button onClick={() => setFaceIdUnlocked(true)} className="text-xs text-[var(--text-muted)] underline">
+          <button onClick={() => setFaceIdUnlocked(true)} className="text-sm text-[var(--text-muted)] underline">
             Continuar sem Face ID
           </button>
         </div>

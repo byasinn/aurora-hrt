@@ -34,7 +34,7 @@ function ExerciseLibraryPicker({ onPick, onClose }: { onPick: (name: string) => 
             key={g}
             onClick={() => setGroup((cur) => (cur === g ? null : g))}
             className={
-              'rounded-full border px-2 py-0.5 text-[11px] transition ' +
+              'rounded-full border px-2 py-0.5 text-xs transition ' +
               (group === g
                 ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
                 : 'border-[var(--border)] text-[var(--text-muted)]')
@@ -50,14 +50,14 @@ function ExerciseLibraryPicker({ onPick, onClose }: { onPick: (name: string) => 
             type="button"
             key={r.name}
             onClick={() => onPick(r.name)}
-            className="block w-full rounded-lg px-2 py-1.5 text-left text-xs text-[var(--text)] hover:bg-[var(--surface-2)]"
+            className="block w-full rounded-lg px-2 py-1.5 text-left text-sm text-[var(--text)] hover:bg-[var(--surface-2)]"
           >
             {r.name}
           </button>
         ))}
         {results.length === 0 && <p className="px-2 py-1.5 text-xs text-[var(--text-muted)]">Nada encontrado.</p>}
       </div>
-      <button type="button" onClick={onClose} className="w-full text-center text-[11px] text-[var(--text-muted)]">
+      <button type="button" onClick={onClose} className="w-full text-center text-xs text-[var(--text-muted)]">
         Fechar
       </button>
     </Card>
@@ -198,7 +198,7 @@ function DayEditor({
             key={d}
             onClick={() => toggleDay(d)}
             className={
-              'rounded-lg border px-2 py-1 text-xs transition ' +
+              'rounded-lg border px-2 py-1 text-sm transition ' +
               (day.daysOfWeek.includes(d)
                 ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
                 : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)]')
@@ -216,7 +216,7 @@ function DayEditor({
         <button
           type="button"
           onClick={addExercise}
-          className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-[var(--border)] py-1.5 text-xs text-[var(--text-muted)]"
+          className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-[var(--border)] py-1.5 text-sm text-[var(--text-muted)]"
         >
           <Plus size={12} /> Exercício
         </button>
@@ -314,7 +314,7 @@ export default function WorkoutProgramForm({ program, onDone }: { program?: Work
           <button
             type="button"
             onClick={addDay}
-            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-[var(--border)] py-2 text-xs text-[var(--text-muted)]"
+            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-[var(--border)] py-2 text-sm text-[var(--text-muted)]"
           >
             <Plus size={14} /> Adicionar dia
           </button>

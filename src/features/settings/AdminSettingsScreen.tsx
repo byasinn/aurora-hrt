@@ -90,7 +90,7 @@ export default function AdminSettingsScreen() {
                   <button
                     onClick={() => setVerified.mutate({ id: u.id, isVerified: !u.isVerified })}
                     disabled={setVerified.isPending}
-                    className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--text)] disabled:opacity-50"
+                    className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-2 py-1 text-sm text-[var(--text)] disabled:opacity-50"
                   >
                     <BadgeCheck size={12} />
                     {u.isVerified ? 'Remover selo' : 'Verificar'}
@@ -98,7 +98,7 @@ export default function AdminSettingsScreen() {
                   <button
                     onClick={() => setAdmin.mutate({ id: u.id, isAdmin: !u.isAdmin })}
                     disabled={setAdmin.isPending}
-                    className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-2 py-1 text-xs text-[var(--text)] disabled:opacity-50"
+                    className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-2 py-1 text-sm text-[var(--text)] disabled:opacity-50"
                   >
                     <Shield size={12} />
                     {u.isAdmin ? 'Remover admin' : 'Tornar admin'}
@@ -107,7 +107,7 @@ export default function AdminSettingsScreen() {
                     onClick={() => setBanned.mutate({ id: u.id, banned: !u.banned })}
                     disabled={setBanned.isPending}
                     className={
-                      'flex items-center gap-1 rounded-lg border px-2 py-1 text-xs disabled:opacity-50 ' +
+                      'flex items-center gap-1 rounded-lg border px-2 py-1 text-sm disabled:opacity-50 ' +
                       (u.banned ? 'border-[var(--border)] text-[var(--text)]' : 'border-red-500/40 text-red-500')
                     }
                   >
@@ -117,7 +117,7 @@ export default function AdminSettingsScreen() {
                   <button
                     onClick={() => handleDeleteUser(u.id, u.email)}
                     disabled={deleteUser.isPending}
-                    className="flex items-center gap-1 rounded-lg border border-red-500/40 px-2 py-1 text-xs text-red-500 disabled:opacity-50"
+                    className="flex items-center gap-1 rounded-lg border border-red-500/40 px-2 py-1 text-sm text-red-500 disabled:opacity-50"
                   >
                     <Trash2 size={12} />
                     Excluir

@@ -99,7 +99,7 @@ export default function PostComposer({ onPosted }: { onPosted?: () => void }) {
             type="button"
             onClick={() => setFontStyle(opt.value)}
             className={clsx(
-              'rounded-full border px-3 py-1 text-xs transition',
+              'rounded-full border px-3 py-1 text-sm transition',
               opt.className,
               fontStyle === opt.value
                 ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
@@ -113,7 +113,7 @@ export default function PostComposer({ onPosted }: { onPosted?: () => void }) {
           type="button"
           onClick={() => setCardStyle((v) => !v)}
           className={clsx(
-            'flex items-center gap-1 rounded-full border px-3 py-1 text-xs transition',
+            'flex items-center gap-1 rounded-full border px-3 py-1 text-sm transition',
             cardStyle
               ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
               : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]',

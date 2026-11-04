@@ -207,7 +207,7 @@ export default function MedicationForm({
                   key={d}
                   onClick={() => toggleDay(d)}
                   className={
-                    'rounded-lg border px-2.5 py-1.5 text-xs transition ' +
+                    'rounded-lg border px-2.5 py-1.5 text-sm transition ' +
                     (days.includes(d)
                       ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
                       : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]')

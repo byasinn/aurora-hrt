@@ -66,14 +66,14 @@ export default function CycleDayForm({ date }: { date: string }) {
       <div>
         <p className="mb-2 text-xs text-[var(--text-muted)]">Fluxo</p>
         <div className="flex flex-wrap gap-2">
-          <Button variant={!existing?.flow ? 'primary' : 'secondary'} className="!py-1.5 !text-xs" onClick={() => setFlow(null)}>
+          <Button variant={!existing?.flow ? 'primary' : 'secondary'} size="sm" onClick={() => setFlow(null)}>
             Nenhum
           </Button>
           {FLOW_OPTIONS.map((opt) => (
             <Button
               key={opt.value}
               variant={existing?.flow === opt.value ? 'primary' : 'secondary'}
-              className="!py-1.5 !text-xs"
+              size="sm"
               onClick={() => setFlow(opt.value)}
             >
               {opt.label}

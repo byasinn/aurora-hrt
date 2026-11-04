@@ -149,7 +149,7 @@ export default function AdminTopicsScreen() {
             <button
               onClick={() => setSourceActive.mutate({ id: s.id, active: !s.active })}
               className={
-                'shrink-0 rounded-full border px-2 py-1 text-[10px] ' +
+                'shrink-0 rounded-full border px-2 py-1 text-xs ' +
                 (s.active ? 'border-[var(--accent)] text-[var(--accent)]' : 'border-[var(--border)] text-[var(--text-muted)]')
               }
             >

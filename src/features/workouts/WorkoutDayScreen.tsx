@@ -148,7 +148,7 @@ function ExerciseLogger({
       <button
         type="button"
         onClick={addSet}
-        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-[var(--border)] py-1.5 text-xs text-[var(--text-muted)]"
+        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-[var(--border)] py-1.5 text-sm text-[var(--text-muted)]"
       >
         <Plus size={12} /> Série
       </button>

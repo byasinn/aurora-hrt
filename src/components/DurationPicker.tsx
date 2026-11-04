@@ -29,7 +29,7 @@ export default function DurationPicker({
           type="button"
           onClick={() => onChange(undefined)}
           className={clsx(
-            'rounded-lg border px-2.5 py-1.5 text-xs transition',
+            'rounded-lg border px-2.5 py-1.5 text-sm transition',
             value == null
               ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
               : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]',
@@ -43,7 +43,7 @@ export default function DurationPicker({
             key={d.key}
             onClick={() => onChange(d.seconds)}
             className={clsx(
-              'rounded-lg border px-2.5 py-1.5 text-xs transition',
+              'rounded-lg border px-2.5 py-1.5 text-sm transition',
               value === d.seconds
                 ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
                 : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]',
@@ -55,7 +55,7 @@ export default function DurationPicker({
         <button
           type="button"
           onClick={() => setCustomOpen((o) => !o)}
-          className="rounded-lg border border-dashed border-[var(--border)] px-2.5 py-1.5 text-xs text-[var(--text-muted)]"
+          className="rounded-lg border border-dashed border-[var(--border)] px-2.5 py-1.5 text-sm text-[var(--text-muted)]"
         >
           Personalizado
         </button>
@@ -81,7 +81,7 @@ export default function DurationPicker({
           <button
             type="button"
             onClick={applyCustom}
-            className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-medium text-[var(--accent-contrast)]"
+            className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-[var(--accent-contrast)]"
           >
             Usar
           </button>

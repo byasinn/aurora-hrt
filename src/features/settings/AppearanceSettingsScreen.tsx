@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom'
-import { Check, ChevronRight, Smartphone } from 'lucide-react'
+import { Check, ChevronRight, Smartphone, Volume2 } from 'lucide-react'
 import { Card, Button } from '../../components/ui'
 import { useThemeStore, applyTheme, COLOR_SHORTCUTS } from '../../lib/themeStore'
 import { useProfile, useUpdateProfile } from '../../api/profile'
 import SettingsSubHeader from './SettingsSubHeader'
+import Switch from '../../components/Switch'
+import { playSound, useSoundStore } from '../../lib/sounds'
 
 const ICON_VARIANTS = [
   { key: 'default', label: 'Rosa & Azul' },
@@ -17,6 +19,7 @@ export default function AppearanceSettingsScreen() {
   const theme = useThemeStore()
   const { data: profile } = useProfile()
   const updateProfile = useUpdateProfile()
+  const sounds = useSoundStore()
 
   return (
     <div className="space-y-4">
@@ -114,6 +117,24 @@ export default function AppearanceSettingsScreen() {
             </label>
           </div>
         </div>
+      </Card>
+
+      <Card className="flex items-center gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--accent)]">
+          <Volume2 size={18} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-semibold text-[var(--text)]">Sons</span>
+          <span className="block text-xs text-[var(--text-muted)]">Barulhinhos ao tomar dose, curtir e navegar</span>
+        </span>
+        <Switch
+          checked={sounds.enabled}
+          onChange={(on) => {
+            sounds.setEnabled(on)
+            // toca depois de ligar, pra pessoa ouvir como é
+            if (on) setTimeout(() => playSound('success'), 80)
+          }}
+        />
       </Card>
 
       <Card className="space-y-2">

@@ -51,7 +51,7 @@ export default function FollowSuggestions() {
               <button
                 onClick={() => handleFollow(s.userId)}
                 disabled={follow.isPending}
-                className="flex w-full cursor-pointer items-center justify-center gap-1 rounded-full bg-[var(--accent)] px-2 py-1.5 text-[11px] font-medium text-[var(--accent-contrast)] disabled:opacity-50"
+                className="flex w-full cursor-pointer items-center justify-center gap-1 rounded-full bg-[var(--accent)] px-2 py-1.5 text-xs font-medium text-[var(--accent-contrast)] disabled:opacity-50"
               >
                 <UserPlus size={12} /> Seguir
               </button>

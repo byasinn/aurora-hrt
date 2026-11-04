@@ -89,14 +89,14 @@ export default function AdminModerationScreen() {
               <div className="flex gap-2">
                 <Button
                   variant="secondary"
-                  className="flex-1 !py-1.5 !text-xs"
+                  size="sm" className="flex-1"
                   onClick={() => updateStatus.mutate({ id: r.id, status: 'dismissed' })}
                   disabled={updateStatus.isPending}
                 >
                   Descartar
                 </Button>
                 <Button
-                  className="flex-1 !py-1.5 !text-xs"
+                  size="sm" className="flex-1"
                   onClick={() => updateStatus.mutate({ id: r.id, status: 'reviewed' })}
                   disabled={updateStatus.isPending}
                 >

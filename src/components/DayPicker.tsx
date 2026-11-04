@@ -22,7 +22,7 @@ export default function DayPicker({
           type="button"
           onClick={() => setSingleSession(true)}
           className={clsx(
-            'flex-1 rounded-xl border px-2 py-2 text-xs transition',
+            'flex-1 rounded-xl border px-2 py-2 text-sm transition',
             singleSession
               ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
               : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]',
@@ -34,7 +34,7 @@ export default function DayPicker({
           type="button"
           onClick={() => setSingleSession(false)}
           className={clsx(
-            'flex-1 rounded-xl border px-2 py-2 text-xs transition',
+            'flex-1 rounded-xl border px-2 py-2 text-sm transition',
             !singleSession
               ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
               : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]',
@@ -51,7 +51,7 @@ export default function DayPicker({
               key={d}
               onClick={() => toggleDay(d)}
               className={clsx(
-                'rounded-lg border px-2.5 py-1.5 text-xs transition',
+                'rounded-lg border px-2.5 py-1.5 text-sm transition',
                 days.includes(d)
                   ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
                   : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]',

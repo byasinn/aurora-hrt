@@ -87,7 +87,7 @@ export default function ColecaoScreen() {
             key={t}
             onClick={() => setTab(t)}
             className={clsx(
-              'rounded-xl border px-2 py-2 text-xs font-medium capitalize transition',
+              'rounded-xl border px-2 py-2 text-sm font-medium capitalize transition',
               tab === t
                 ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
                 : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)]',

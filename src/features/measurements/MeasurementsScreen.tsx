@@ -90,7 +90,7 @@ function MeasurementCard({ def }: { def: MeasurementDef }) {
           {sorted.length > 3 && (
             <button
               onClick={() => setShowAll((s) => !s)}
-              className="text-xs text-[var(--accent)]"
+              className="text-sm text-[var(--accent)]"
             >
               {showAll ? 'Ver menos' : `Ver histórico completo (${sorted.length})`}
             </button>

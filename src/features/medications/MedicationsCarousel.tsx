@@ -4,6 +4,7 @@ import { Check, Pill, Syringe, Bandage, Droplet, Sparkles, Trash2, Undo2, PartyP
 import { useLogDose, useUpdateDoseLog } from '../../api/doses'
 import { useDeleteMedication } from '../../api/medications'
 import { formatTime } from '../../lib/dateUtils'
+import { playSound } from '../../lib/sounds'
 import { formatDaysUntil } from '../../../shared/scheduling'
 import { useMedicationSchedule, type MedCard } from './useMedicationSchedule'
 
@@ -30,6 +31,7 @@ function MedCardView({ item, onEdit }: { item: MedCard; onEdit: () => void }) {
 
   function markTaken(e: React.MouseEvent) {
     e.stopPropagation()
+    playSound('success')
     if (item.doseLogId) {
       updateDose.mutate({ id: item.doseLogId, status: 'taken', takenAt: new Date() })
     } else if (item.scheduledFor) {
@@ -104,7 +106,7 @@ function MedCardView({ item, onEdit }: { item: MedCard; onEdit: () => void }) {
           </button>
         )}
         {item.state === 'taken' && (
-          <button onClick={undo} className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
+          <button onClick={undo} className="flex items-center gap-1 text-sm text-[var(--text-muted)]">
             <Undo2 size={14} /> desfazer
           </button>
         )}

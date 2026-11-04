@@ -166,7 +166,7 @@ export default function FeedScreen() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             onClick={handleShowNewPosts}
-            className="sticky top-0 z-10 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full bg-[var(--accent)] px-3 py-2 text-xs font-medium text-[var(--accent-contrast)] [box-shadow:var(--shadow)]"
+            className="sticky top-0 z-10 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full bg-[var(--accent)] px-3 py-2 text-sm font-medium text-[var(--accent-contrast)] [box-shadow:var(--shadow)]"
           >
             <ArrowUp size={14} /> Novos posts
           </motion.button>

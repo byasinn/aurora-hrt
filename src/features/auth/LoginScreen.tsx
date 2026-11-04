@@ -214,7 +214,7 @@ export default function LoginScreen({ authError }: { authError?: string | null }
           {error && <p className="text-sm text-red-400">{error}</p>}
           {notice && <p className="text-sm text-emerald-400">{notice}</p>}
           {showResend && (
-            <button type="button" onClick={handleResend} className="text-xs text-[var(--accent)] underline">
+            <button type="button" onClick={handleResend} className="text-sm text-[var(--accent)] underline">
               {t('auth.resendVerification')}
             </button>
           )}

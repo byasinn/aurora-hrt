@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Plus, Heart, ListChecks } from 'lucide-react'
+import { Plus, Heart, ListChecks, History } from 'lucide-react'
 import { EmptyState } from '../../components/ui'
 import { useToday } from '../../api/doses'
 import { useProfile } from '../../api/profile'
@@ -22,18 +22,18 @@ function AddDoseButton({ prominent, onClick }: { prominent: boolean; onClick: ()
     return (
       <button
         onClick={onClick}
-        className="flex w-full flex-col items-center justify-center gap-1.5 rounded-2xl py-6 text-[var(--accent-contrast)] [box-shadow:var(--shadow)]"
+        className="btn-press flex w-full flex-col items-center justify-center gap-1.5 rounded-3xl py-6 text-[var(--accent-contrast)]"
         style={{ background: 'var(--accent)' }}
       >
         <Plus size={24} />
-        <span className="text-sm font-medium">{t('today.addDose')}</span>
+        <span className="text-base font-bold">{t('today.addDose')}</span>
       </button>
     )
   }
   return (
     <button
       onClick={onClick}
-      className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--border)] py-3 text-sm text-[var(--text-muted)]"
+      className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--border)] text-sm font-bold text-[var(--text-muted)]"
     >
       <Plus size={16} />
       {t('today.addDose')}
@@ -59,9 +59,9 @@ function BigLinkButton({
   if (variant === 'outline') {
     return (
       <Link to={to} state={state} className="flex-1">
-        <div className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--border)] py-3.5 text-sm text-[var(--text-muted)]">
+        <div className="flex min-h-13 items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--border)] text-[15px] text-[var(--text-muted)]">
           <Icon size={18} />
-          <span className="font-medium">{label}</span>
+          <span className="font-bold">{label}</span>
         </div>
       </Link>
     )
@@ -70,13 +70,17 @@ function BigLinkButton({
     <Link to={to} state={state} className="flex-1">
       <div
         className={
-          'flex flex-col items-center justify-center gap-1.5 rounded-2xl text-[var(--accent-contrast)] [box-shadow:var(--shadow)] ' +
+          'btn-press flex flex-col items-center justify-center gap-1.5 rounded-3xl text-[var(--accent-contrast)] ' +
           (big ? 'py-7' : 'py-5')
         }
-        style={{ background: variant === 'accent' ? 'var(--accent)' : 'var(--accent-2)' }}
+        style={
+          variant === 'accent'
+            ? { background: 'var(--accent)' }
+            : ({ background: 'var(--accent-2)', '--press-shadow': 'color-mix(in srgb, var(--accent-2) 55%, #000)' } as React.CSSProperties)
+        }
       >
         <Icon size={big ? 28 : 22} />
-        <span className={big ? 'text-base font-semibold' : 'text-sm font-medium'}>{label}</span>
+        <span className={big ? 'text-lg font-extrabold' : 'text-[15px] font-bold'}>{label}</span>
       </div>
     </Link>
   )
@@ -139,11 +143,19 @@ export default function TodayScreen() {
       {!hasNoMedsAtAll && formState === 'closed' && (
         <div className="mb-4 space-y-2">
           <MedicationsCarousel onEdit={openEdit} />
-          <div className="flex items-center justify-between px-0.5">
-            <button onClick={() => setFormState('create')} className="text-xs text-[var(--accent)]">
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => setFormState('create')}
+              className="btn-press-soft flex min-h-11 items-center justify-center gap-1.5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm font-bold text-[var(--text)]"
+            >
+              <Plus size={16} className="text-[var(--accent)]" />
               {t('today.addMedication')}
             </button>
-            <Link to="/medications" className="text-xs text-[var(--accent)]">
+            <Link
+              to="/medications"
+              className="btn-press-soft flex min-h-11 items-center justify-center gap-1.5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm font-bold text-[var(--text)]"
+            >
+              <History size={16} className="text-[var(--accent)]" />
               {t('today.manageHistory')}
             </Link>
           </div>

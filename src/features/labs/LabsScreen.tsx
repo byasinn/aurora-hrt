@@ -84,7 +84,7 @@ function LabCard({ def, entries }: { def: LabDef; entries: LabResult[] }) {
             </div>
           ))}
           {sorted.length > 3 && (
-            <button onClick={() => setShowAll((s) => !s)} className="text-xs text-[var(--accent)]">
+            <button onClick={() => setShowAll((s) => !s)} className="text-sm text-[var(--accent)]">
               {showAll ? 'Ver menos' : `Ver histórico completo (${sorted.length})`}
             </button>
           )}

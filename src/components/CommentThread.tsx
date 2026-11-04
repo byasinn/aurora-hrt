@@ -5,6 +5,7 @@ import clsx from 'clsx'
 import Avatar from './Avatar'
 import VerifiedBadge from './VerifiedBadge'
 import ReportButton from './ReportButton'
+import { playSound } from '../lib/sounds'
 import type { ReportTargetType } from '../../shared/types'
 
 interface CommentAuthor {
@@ -75,14 +76,18 @@ function CommentRow({
         <p className="text-sm text-[var(--text)]">{comment.text}</p>
         <div className="mt-1 flex items-center gap-3">
           <button
-            onClick={() => (comment.likedByMe ? onUnlike(comment.id) : onLike(comment.id))}
-            className={clsx('flex items-center gap-1 text-[11px]', comment.likedByMe ? 'text-red-500' : 'text-[var(--text-muted)]')}
+            onClick={() => {
+              if (comment.likedByMe) return onUnlike(comment.id)
+              playSound('pop')
+              onLike(comment.id)
+            }}
+            className={clsx('-ml-1 flex min-h-8 items-center gap-1 rounded-full px-1 text-sm font-semibold', comment.likedByMe ? 'text-red-500' : 'text-[var(--text-muted)]')}
           >
-            <Heart size={12} fill={comment.likedByMe ? 'currentColor' : 'none'} />
+            <Heart size={14} fill={comment.likedByMe ? 'currentColor' : 'none'} />
             {comment.likeCount > 0 && comment.likeCount}
           </button>
           {!isReply && (
-            <button onClick={() => onReply(comment)} className="flex items-center gap-1 text-[11px] text-[var(--text-muted)]">
+            <button onClick={() => onReply(comment)} className="flex min-h-8 items-center gap-1 px-1 text-sm font-semibold text-[var(--text-muted)]">
               <MessageCircle size={12} /> Responder
             </button>
           )}
