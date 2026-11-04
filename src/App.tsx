@@ -57,6 +57,7 @@ import ToastContainer from './components/ToastContainer'
 import LoadingScreen from './components/LoadingScreen'
 import { useProfile } from './api/profile'
 import { THEMES } from './lib/shopVisuals'
+import { DEFAULT_THEME } from '../shared/shopCatalog'
 
 function ThemeInitializer() {
   const { mode, accent, accent2, accent3 } = useThemeStore()
@@ -68,14 +69,22 @@ function ThemeInitializer() {
 
 function RootGate() {
   const { data: profile, isLoading, refetch } = useProfile()
-  const skin = profile?.equippedTheme ? THEMES[profile.equippedTheme]?.skin : undefined
+  const equippedTheme = profile?.equippedTheme ?? null
 
-  // tema da lojinha: tinge o fundo (src/index.css, data-skin) — as cores de acento ficam no themeStore
+  // O tema equipado (lojinha) manda no modo, nas cores e no fundo. Sem tema escolhido, fica a Aurora
+  // clara ou escura conforme o modo que a pessoa já usava — as cores livres saíram de Aparência.
   useEffect(() => {
+    if (!profile) return
+    const store = useThemeStore.getState()
+    const key = equippedTheme && THEMES[equippedTheme] ? equippedTheme : DEFAULT_THEME[store.mode]
+    const visual = THEMES[key]
+    if (store.mode !== visual.mode) store.setMode(visual.mode)
+    if (store.accent !== visual.accent || store.accent2 !== visual.accent2) store.setAccent(visual.accent, visual.accent2)
+    if (store.accent3 !== visual.accent3) store.setAccent3(visual.accent3)
     const root = document.documentElement
-    if (skin) root.setAttribute('data-skin', skin)
+    if (visual.skin) root.setAttribute('data-skin', visual.skin)
     else root.removeAttribute('data-skin')
-  }, [skin])
+  }, [profile, equippedTheme])
 
   if (isLoading || !profile) return <LoadingScreen />
 

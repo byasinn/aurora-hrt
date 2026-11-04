@@ -12,6 +12,15 @@ const PALETTE: Record<string, string> = {
   y: '#fff3b0', // brilho dourado
   o: '#fb923c',
   r: '#ef4444',
+  g: '#22c55e',
+  i: '#7dd3fc', // gelo
+  x: '#111827', // preto
+  p: '#f5a9b8', // rosa bandeira trans
+  q: '#5bcefa', // azul bandeira trans
+  P: '#db2777',
+  v: '#9c59d1', // roxo bandeira NB
+  n: '#fcf434', // amarelo bandeira NB
+  m: '#9f1239', // vinho
 }
 
 const ICONS = {
@@ -88,6 +97,71 @@ const ICONS = {
     'ccccccccc',
     'kkkkkkkkk',
   ],
+  snowflake: [
+    'i..i..i',
+    '.i.i.i.',
+    '..iwi..',
+    'iiwwwii',
+    '..iwi..',
+    '.i.i.i.',
+    'i..i..i',
+  ],
+  bat: [
+    'x.........x',
+    'xx..x.x..xx',
+    'xxxxxxxxxxx',
+    'xxxxrxrxxxx',
+    '.xx.xxx.xx.',
+    '.....x.....',
+  ],
+  tree: [
+    '....y....',
+    '...yyy...',
+    '....g....',
+    '...ggg...',
+    '..ggrgg..',
+    '...ggg...',
+    '..ggggg..',
+    '.gggqggg.',
+    'ggrggggyg',
+    '....k....',
+    '....k....',
+  ],
+  flower: [
+    '..p.p..',
+    '.ppppp.',
+    'pppyppp',
+    '.ppppp.',
+    '..p.p..',
+    '...g...',
+    '..gg...',
+  ],
+  moon: [
+    '..yyy..',
+    '.yy....',
+    'yy.....',
+    'yy.....',
+    'yy.....',
+    '.yy....',
+    '..yyy..',
+  ],
+  bow: [
+    'PP.....PP',
+    'PppP.PppP',
+    'PpppPpppP',
+    'PppP.PppP',
+    'PP.....PP',
+  ],
+  candy: [
+    '.rwr.',
+    'w...r',
+    'r...w',
+    '....r',
+    '....w',
+    '....r',
+    '....w',
+    '....r',
+  ],
   pill: [
     '.aaaabbbb.',
     'aawaabbbbb',
@@ -104,8 +178,11 @@ export default function PixelIcon({
   size = 20,
   className,
   title,
+  palette,
 }: {
   name: PixelIconName
+  /** troca cores da paleta (ex.: { a: '#f5a9b8' } pra um coração rosa fixo, sem depender do tema) */
+  palette?: Record<string, string>
   /** altura em px — a largura segue a proporção da grade */
   size?: number
   className?: string
@@ -122,7 +199,7 @@ export default function PixelIcon({
       const ch = row[x]
       let len = 1
       while (x + len < w && row[x + len] === ch) len++
-      if (ch !== '.') rects.push({ x, y, len, fill: PALETTE[ch] })
+      if (ch !== '.') rects.push({ x, y, len, fill: palette?.[ch] ?? PALETTE[ch] })
       x += len
     }
   })

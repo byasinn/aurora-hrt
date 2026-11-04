@@ -3,22 +3,6 @@ import { persist } from 'zustand/middleware'
 
 export type ThemeMode = 'light' | 'dark'
 
-export interface ColorShortcut {
-  key: string
-  accent: string
-  accent2: string
-}
-
-/** Atalhos de cor — apenas combinações bonitas, sem associação de gênero. */
-export const COLOR_SHORTCUTS: ColorShortcut[] = [
-  { key: 'rosa-azul', accent: '#F5A9B8', accent2: '#5BCEFA' },
-  { key: 'azul-rosa', accent: '#5BCEFA', accent2: '#F5A9B8' },
-  { key: 'roxo-amarelo', accent: '#9C59D1', accent2: '#FFF433' },
-  { key: 'verde-turquesa', accent: '#34D399', accent2: '#22D3EE' },
-  { key: 'coral-pessego', accent: '#FB7185', accent2: '#FDBA74' },
-  { key: 'lavanda', accent: '#A78BFA', accent2: '#C4B5FD' },
-]
-
 interface ThemeState {
   mode: ThemeMode
   accent: string

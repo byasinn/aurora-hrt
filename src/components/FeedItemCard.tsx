@@ -13,6 +13,7 @@ import { findPinterestUrl, stripUrlFromText } from '../lib/pinterest'
 import { fontStyleClass } from '../lib/postStyle'
 import { playSound } from '../lib/sounds'
 import { CARD_SKINS, POST_FRAMES } from '../lib/shopVisuals'
+import PixelIcon from './PixelIcon'
 import type { PublicUserSummary, RepostOriginal, ReportTargetType } from '../../shared/types'
 
 function timeAgo(iso: string): string {
@@ -250,16 +251,23 @@ export default function FeedItemCard({
   )
 
   if (!postFrame) return card
+  const ornament = postFrame.ornament && (
+    <span className="pointer-events-none absolute -right-1.5 -top-2.5 z-10 drop-shadow-[0_1px_1px_rgba(0,0,0,0.25)]">
+      <PixelIcon name={postFrame.ornament.icon} size={22} palette={postFrame.ornament.palette} />
+    </span>
+  )
   if (postFrame.pixel) {
     return (
-      <div className="pixel-frame m-1" style={{ '--pf': postFrame.border, '--pf-size': '4px' } as CSSProperties}>
+      <div className="pixel-frame relative m-1" style={{ '--pf': postFrame.border, '--pf-size': '4px' } as CSSProperties}>
         {card}
+        {ornament}
       </div>
     )
   }
   return (
-    <div className="rounded-[calc(1.5rem+3px)] p-[3px]" style={{ background: postFrame.border, boxShadow: postFrame.glow }}>
+    <div className="relative rounded-[calc(1.5rem+3px)] p-[3px]" style={{ background: postFrame.border, boxShadow: postFrame.glow }}>
       {card}
+      {ornament}
     </div>
   )
 }

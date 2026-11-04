@@ -6,6 +6,7 @@ import { jsonResponse, requireUser } from '../shared/auth'
 import { computeServerPointsStats } from '../shared/pointsStats'
 import {
   SHOP_ITEM_BY_KEY,
+  bundlePriceFor,
   ownsItem,
   type EquippableKind,
   type ShopEquipped,
@@ -77,21 +78,26 @@ app.post('/api/shop/buy', async (c) => {
     if (item.price === 0) return jsonResponse({ error: 'esse item é grátis, não precisa comprar' }, { status: 400 })
 
     const state = await loadState(db, user.id)
-    if (state.owned.includes(item.key)) return jsonResponse({ error: 'você já tem esse item' }, { status: 409 })
-    if (state.balance < item.price) {
-      return jsonResponse({ error: `Falta ${item.price - state.balance} de Brilho pra esse item.` }, { status: 400 })
+    const owned = new Set(state.owned)
+    if (ownsItem(owned, item.key)) return jsonResponse({ error: 'você já tem esse item' }, { status: 409 })
+    // pacote: cobra só a parte que a pessoa ainda não tem; os itens entram com preço 0 (o gasto fica
+    // todo na linha do pacote, então a soma de price continua sendo o total gasto)
+    const price = item.kind === 'bundle' ? bundlePriceFor(item, owned) : item.price
+    if (state.balance < price) {
+      return jsonResponse({ error: `Falta ${price - state.balance} de Brilho pra esse item.` }, { status: 400 })
     }
+    const rows = [
+      { userId: user.id, itemKey: item.key, price },
+      ...(item.items ?? []).filter((k) => !ownsItem(owned, k)).map((k) => ({ userId: user.id, itemKey: k, price: 0 })),
+    ]
 
-    // o índice único (user, item) segura o clique duplo; dois itens diferentes ao mesmo tempo podem
-    // passar juntos da conta de saldo — aceitável pra moeda de enfeite, e o saldo nunca fica negativo
-    const [row] = await db
-      .insert(shopPurchases)
-      .values({ userId: user.id, itemKey: item.key, price: item.price })
-      .onConflictDoNothing()
-      .returning()
-    if (!row) return jsonResponse({ error: 'você já tem esse item' }, { status: 409 })
+    // um INSERT só (atômico); o índice único (user, item) segura o clique duplo. Dois itens diferentes
+    // ao mesmo tempo podem passar juntos da conta de saldo — aceitável pra moeda de enfeite, e o
+    // saldo exibido nunca fica negativo
+    const inserted = await db.insert(shopPurchases).values(rows).onConflictDoNothing().returning({ itemKey: shopPurchases.itemKey })
+    if (!inserted.some((r) => r.itemKey === item.key)) return jsonResponse({ error: 'você já tem esse item' }, { status: 409 })
 
-    return jsonResponse({ ...state, spent: state.spent + item.price, balance: state.balance - item.price, owned: [...state.owned, item.key] })
+    return jsonResponse(await loadState(db, user.id))
   } catch (err) {
     console.error('shop buy error', err)
     return jsonResponse({ error: 'internal error' }, { status: 500 })

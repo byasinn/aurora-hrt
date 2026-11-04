@@ -1,7 +1,12 @@
 import { Link } from 'react-router-dom'
-import { Check, ChevronRight, Smartphone, Volume2 } from 'lucide-react'
-import { Card, Button } from '../../components/ui'
-import { useThemeStore, applyTheme, COLOR_SHORTCUTS } from '../../lib/themeStore'
+import { Check, ChevronRight, Smartphone, Store, Volume2 } from 'lucide-react'
+import clsx from 'clsx'
+import { Card } from '../../components/ui'
+import { useThemeStore } from '../../lib/themeStore'
+import { useShop, useEquipItem } from '../../api/shop'
+import { toastError } from '../../lib/toast'
+import { ThemeSwatch } from '../shop/ItemPreview'
+import { DEFAULT_THEME, SHOP_ITEMS, ownsItem } from '../../../shared/shopCatalog'
 import { useProfile, useUpdateProfile } from '../../api/profile'
 import SettingsSubHeader from './SettingsSubHeader'
 import Switch from '../../components/Switch'
@@ -16,8 +21,13 @@ const ICON_VARIANTS = [
 ]
 
 export default function AppearanceSettingsScreen() {
-  const theme = useThemeStore()
+  const mode = useThemeStore((t) => t.mode)
   const { data: profile } = useProfile()
+  const { data: shop } = useShop()
+  const equip = useEquipItem()
+  // os 4 temas base são grátis; o resto aparece aqui depois de comprado na Lojinha
+  const themes = SHOP_ITEMS.filter((i) => i.kind === 'theme' && ownsItem(shop?.owned ?? [], i.key))
+  const currentTheme = profile?.equippedTheme ?? DEFAULT_THEME[mode]
   const updateProfile = useUpdateProfile()
   const sounds = useSoundStore()
 
@@ -25,97 +35,38 @@ export default function AppearanceSettingsScreen() {
     <div className="space-y-4">
       <SettingsSubHeader title="Aparência" />
 
-      <Card className="space-y-4">
-        <div>
-          <p className="mb-2 text-xs text-[var(--text-muted)]">Modo</p>
-          <div className="flex gap-2">
-            <Button
-              variant={theme.mode === 'light' ? 'primary' : 'secondary'}
-              className="flex-1"
-              onClick={() => {
-                theme.setMode('light')
-                applyTheme('light', theme.accent, theme.accent2)
-              }}
-            >
-              Claro
-            </Button>
-            <Button
-              variant={theme.mode === 'dark' ? 'primary' : 'secondary'}
-              className="flex-1"
-              onClick={() => {
-                theme.setMode('dark')
-                applyTheme('dark', theme.accent, theme.accent2)
-              }}
-            >
-              Escuro
-            </Button>
-          </div>
+      <Card className="space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="font-bold text-[var(--text)]">Tema</p>
+          <Link to="/loja" className="flex items-center gap-1 text-sm font-bold text-[var(--accent)]">
+            <Store size={15} /> Mais temas na Lojinha
+          </Link>
         </div>
-
-        <div>
-          <p className="mb-2 text-xs text-[var(--text-muted)]">Atalhos de cor</p>
-          <div className="flex flex-wrap gap-2">
-            {COLOR_SHORTCUTS.map((s) => (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {themes.map((item) => {
+            const selected = currentTheme === item.key
+            return (
               <button
-                key={s.key}
+                key={item.key}
                 type="button"
                 onClick={() => {
-                  theme.setAccent(s.accent, s.accent2)
-                  applyTheme(theme.mode, s.accent, s.accent2)
+                  if (selected) return
+                  playSound('success')
+                  equip.mutate({ kind: 'theme', itemKey: item.key }, { onError: (err) => toastError(err, 'Não deu pra trocar o tema agora.') })
                 }}
-                className="h-9 w-9 rounded-full border-2 border-[var(--border)] transition hover:scale-110"
-                style={{ background: `linear-gradient(135deg, ${s.accent}, ${s.accent2})` }}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="mb-2 text-xs text-[var(--text-muted)]">Cores livres</p>
-          <div className="flex gap-4">
-            <label className="flex flex-1 flex-col items-center gap-1 text-xs text-[var(--text-muted)]">
-              Principal
-              <input
-                type="color"
-                value={theme.accent}
-                onChange={(e) => {
-                  theme.setAccent(e.target.value, theme.accent2)
-                  applyTheme(theme.mode, e.target.value, theme.accent2)
-                }}
-                className="h-10 w-full cursor-pointer rounded-lg border border-[var(--border)] bg-transparent"
-              />
-            </label>
-            <label className="flex flex-1 flex-col items-center gap-1 text-xs text-[var(--text-muted)]">
-              Secundária
-              <input
-                type="color"
-                value={theme.accent2}
-                onChange={(e) => {
-                  theme.setAccent(theme.accent, e.target.value)
-                  applyTheme(theme.mode, theme.accent, e.target.value)
-                }}
-                className="h-10 w-full cursor-pointer rounded-lg border border-[var(--border)] bg-transparent"
-              />
-            </label>
-          </div>
-        </div>
-
-        <div>
-          <p className="mb-2 text-xs text-[var(--text-muted)]">Títulos e marcações</p>
-          <div className="flex gap-4">
-            <label className="flex flex-1 flex-col items-center gap-1 text-xs text-[var(--text-muted)]">
-              Aura (títulos especiais)
-              <input
-                type="color"
-                value={theme.accent3}
-                onChange={(e) => {
-                  theme.setAccent3(e.target.value)
-                  applyTheme(theme.mode, theme.accent, theme.accent2, e.target.value)
-                }}
-                className="h-10 w-full cursor-pointer rounded-lg border border-[var(--border)] bg-transparent"
-              />
-            </label>
-          </div>
+                className={clsx(
+                  'overflow-hidden rounded-2xl border-2 text-left transition',
+                  selected ? 'border-[var(--accent)]' : 'border-[var(--border)]',
+                )}
+              >
+                <ThemeSwatch itemKey={item.key} className="h-16 rounded-none" />
+                <span className="flex items-center justify-between gap-1 px-2.5 py-2 text-sm font-bold text-[var(--text)]">
+                  {item.name}
+                  {selected && <Check size={15} className="shrink-0 text-[var(--accent)]" />}
+                </span>
+              </button>
+            )
+          })}
         </div>
       </Card>
 
