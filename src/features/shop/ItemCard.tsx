@@ -1,7 +1,7 @@
-import { Check, Lock } from 'lucide-react'
+import { Check, Lock } from '../../components/icons'
 import clsx from 'clsx'
 import { Button, Card } from '../../components/ui'
-import PixelIcon from '../../components/PixelIcon'
+import { Coins } from '../../components/icons'
 import { useBuyItem, useEquipItem } from '../../api/shop'
 import { playSound } from '../../lib/sounds'
 import { useThemeStore } from '../../lib/themeStore'
@@ -34,7 +34,7 @@ const BUNDLE_PART_LABEL: Record<ShopKind, string> = {
 function PriceLabel({ price, full }: { price: number; full?: number }) {
   return (
     <>
-      <PixelIcon name="coin" size={14} />
+      <Coins size={14} className="text-amber-500" />
       <span className="font-pixel text-[15px]">{price}</span>
       {full != null && full > price && <span className="font-pixel text-xs line-through opacity-60">{full}</span>}
     </>

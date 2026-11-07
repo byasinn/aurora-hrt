@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Settings, ChevronRight, Sparkles, HeartPulse, Calendar, ListChecks, Users, Dumbbell } from 'lucide-react'
+import { Settings, ChevronRight, Sparkles, HeartPulse, Calendar, ListChecks, Users, Dumbbell } from '../../components/icons'
 import AppIcon from '../../components/AppIcon'
 import type { PixelIconName } from '../../components/PixelIcon'
 import { Card } from '../../components/ui'

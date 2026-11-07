@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Check } from 'lucide-react'
+import { Check } from '../../components/icons'
 import { Card } from '../../components/ui'
 import { SUPPORTED_LANGUAGES } from '../../i18n'
 import SettingsSubHeader from './SettingsSubHeader'

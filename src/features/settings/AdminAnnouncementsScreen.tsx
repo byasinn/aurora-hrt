@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronLeft, Megaphone } from 'lucide-react'
+import { Megaphone } from 'lucide-react'
+import { ChevronLeft } from '../../components/icons'
 import { Card, Button } from '../../components/ui'
 import { useLatestAnnouncement, useCreateAnnouncement } from '../../api/announcements'
 import { toastError } from '../../lib/toast'

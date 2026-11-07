@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Check, Store } from 'lucide-react'
+import { Check, Store } from './icons'
 import clsx from 'clsx'
 import type { CSSProperties } from 'react'
 import { useShop } from '../api/shop'

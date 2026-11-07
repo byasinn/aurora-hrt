@@ -1,4 +1,4 @@
-import { Heart } from 'lucide-react'
+import { Heart } from './icons'
 
 // Troca por sua página real assim que criar a conta (buymeacoffee.com/seu-usuario).
 // Fica só aqui, não precisa mexer em mais nada pra atualizar o link.

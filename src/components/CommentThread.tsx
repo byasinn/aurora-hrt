@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { Heart, Trash2, MessageCircle } from 'lucide-react'
+import { Heart, Trash2, MessageCircle } from './icons'
 import clsx from 'clsx'
 import Avatar from './Avatar'
 import VerifiedBadge from './VerifiedBadge'

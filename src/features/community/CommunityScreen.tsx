@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Plus, Users, X } from 'lucide-react'
+import { ArrowLeft, Plus, Users, X } from '../../components/icons'
 import { motion, AnimatePresence } from 'framer-motion'
 import clsx from 'clsx'
 import { getCollectibleIcon } from '../../lib/collectibleIcons'

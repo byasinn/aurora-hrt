@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown } from './icons'
 import type { LucideIcon } from 'lucide-react'
 import clsx from 'clsx'
 import { Card } from './ui'

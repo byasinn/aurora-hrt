@@ -15,7 +15,7 @@ import {
 import { ptBR } from 'date-fns/locale'
 import clsx from 'clsx'
 import { Link } from 'react-router-dom'
-import { Trophy, Droplet, Pencil, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Trophy, Droplet, Pencil, ChevronLeft, ChevronRight } from '../../components/icons'
 import { Card, EmptyState, ScreenTitle } from '../../components/ui'
 import Switch from '../../components/Switch'
 import { useDoseLogs } from '../../api/doses'

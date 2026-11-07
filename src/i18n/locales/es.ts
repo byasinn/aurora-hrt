@@ -174,6 +174,9 @@ export default {
       themeTitle: "Tema",
       frame: "Usar el marco Brillo",
       frameHint: "Regalo de bienvenida — gratis",
+      iconsTitle: "Estilo",
+      iconsPixel: "8-bit",
+      iconsClassic: "Clean",
     },
     done: {
       ready: "Todo listo",

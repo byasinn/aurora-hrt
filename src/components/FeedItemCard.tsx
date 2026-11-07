@@ -1,7 +1,7 @@
 import { useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Heart, MessageSquare, Trash2, Repeat2 } from 'lucide-react'
+import { Heart, MessageSquare, Trash2, Repeat2 } from './icons'
 import clsx from 'clsx'
 import { Card } from './ui'
 import Avatar from './Avatar'

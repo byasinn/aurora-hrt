@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Search, TrendingUp, Users, X } from 'lucide-react'
+import { TrendingUp } from 'lucide-react'
+import { Plus, Search, Users, X } from '../../components/icons'
 import { getCollectibleIcon } from '../../lib/collectibleIcons'
 import { Button, Card, EmptyState, ScreenTitle } from '../../components/ui'
 import { useCommunities, useCreateCommunity } from '../../api/community'

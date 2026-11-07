@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import clsx from 'clsx'
 import { Card, ScreenTitle } from '../../components/ui'
-import PixelIcon from '../../components/PixelIcon'
+import { Coins } from '../../components/icons'
 import { useShop } from '../../api/shop'
 import { playSound } from '../../lib/sounds'
 import ItemCard from './ItemCard'
@@ -38,7 +38,7 @@ export default function ShopScreen() {
       <ScreenTitle subtitle="Troque seu Brilho por enfeites pro seu perfil, seus posts e seu app.">Lojinha</ScreenTitle>
 
       <Card className="flex items-center gap-4">
-        <PixelIcon name="coin" size={44} />
+        <Coins size={44} className="text-amber-500" />
         <div className="flex-1">
           <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Seu saldo</p>
           <p className="font-pixel text-4xl font-bold leading-none text-[var(--text)]">{shop?.balance ?? '–'}</p>

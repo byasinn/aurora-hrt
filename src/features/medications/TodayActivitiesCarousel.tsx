@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { ChevronRight, CheckCircle2 } from 'lucide-react'
+import { CheckCircle2 } from 'lucide-react'
+import { ChevronRight } from '../../components/icons'
 import RoutineRow from '../routines/RoutineRow'
 import IconOrEmoji from '../../components/IconOrEmoji'
 import { resolveProgramIcon } from '../../lib/workoutTemplates'

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronLeft, Plus, Trash2 } from 'lucide-react'
+import { ChevronLeft, Plus, Trash2 } from '../../components/icons'
 import { Button, Card, EmptyState, ScreenTitle } from '../../components/ui'
 import { useProfile, useUpdateProfile } from '../../api/profile'
 import type { ExternalLink } from '../../../shared/types'

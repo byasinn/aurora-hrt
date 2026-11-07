@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Minus, Plus, TimerOff } from 'lucide-react'
+import { TimerOff } from 'lucide-react'
+import { Minus, Plus } from './icons'
 
 function formatSeconds(total: number): string {
   const m = Math.floor(total / 60)

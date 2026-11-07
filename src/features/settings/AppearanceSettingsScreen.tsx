@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { Check, ChevronRight, Home, MessageCircle, Smartphone, Store, User, Volume2 } from 'lucide-react'
+import { Smartphone, Volume2 } from 'lucide-react'
+import { Check, ChevronRight, Home, MessageCircle, Store, User } from '../../components/icons'
 import PixelIcon from '../../components/PixelIcon'
 import { useIconStyle } from '../../components/AppIcon'
 import clsx from 'clsx'
@@ -75,14 +76,14 @@ export default function AppearanceSettingsScreen() {
 
       <Card className="space-y-3">
         <div>
-          <p className="font-bold text-[var(--text)]">Ícones</p>
-          <p className="text-xs text-[var(--text-muted)]">Pixel art (8-bit) ou os de linha, como antes</p>
+          <p className="font-bold text-[var(--text)]">Visual</p>
+          <p className="text-xs text-[var(--text-muted)]">8-bit tem ícones e detalhes em pixel art; Clean é tudo como era antes</p>
         </div>
         <div className="grid grid-cols-2 gap-2">
           {(
             [
-              ['pixel', 'Pixel (8-bit)'],
-              ['classic', 'Clássicos'],
+              ['pixel', '8-bit'],
+              ['classic', 'Clean'],
             ] as const
           ).map(([value, label]) => (
             <button

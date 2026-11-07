@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Bell, Plus, X } from 'lucide-react'
+import { Bell, Plus, X } from '../../components/icons'
 import { Button, Card } from '../../components/ui'
 import Switch from '../../components/Switch'
 import { useCreateMedication, useUpdateMedication } from '../../api/medications'

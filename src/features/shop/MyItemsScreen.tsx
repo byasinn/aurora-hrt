@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Store } from 'lucide-react'
+import { Store } from '../../components/icons'
 import clsx from 'clsx'
 import { Card, EmptyState, ScreenTitle } from '../../components/ui'
 import Avatar from '../../components/Avatar'

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { Check, X, ZoomIn, ZoomOut } from 'lucide-react'
+import { ZoomIn, ZoomOut } from 'lucide-react'
+import { Check, X } from './icons'
 import { Button } from './ui'
 import { uploadImage } from '../lib/apiClient'
 import { toastError } from '../lib/toast'

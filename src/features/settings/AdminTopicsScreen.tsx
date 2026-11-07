@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronLeft, Compass, Plus, Trash2 } from 'lucide-react'
+import { Compass } from 'lucide-react'
+import { ChevronLeft, Plus, Trash2 } from '../../components/icons'
 import { Card, Button } from '../../components/ui'
 import { toastError } from '../../lib/toast'
 import {

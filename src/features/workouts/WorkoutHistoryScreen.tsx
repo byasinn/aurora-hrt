@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Trophy } from 'lucide-react'
+import { ArrowLeft, Trophy } from '../../components/icons'
 import { Card, EmptyState, ScreenTitle } from '../../components/ui'
 import IconOrEmoji from '../../components/IconOrEmoji'
 import { formatDateBR } from '../../lib/dateUtils'

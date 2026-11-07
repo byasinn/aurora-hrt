@@ -1,5 +1,5 @@
 import { NavLink, matchPath, useLocation } from 'react-router-dom'
-import { MessageCircle, User } from 'lucide-react'
+import { MessageCircle, User } from './icons'
 import clsx from 'clsx'
 import { useTranslation } from 'react-i18next'
 import Avatar from './Avatar'

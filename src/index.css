@@ -167,6 +167,12 @@ select {
   letter-spacing: 0.02em;
 }
 
+:root[data-visual='clean'] .font-pixel {
+  /* Clean: números e rótulos voltam pra fonte normal do app */
+  font-family: inherit;
+  letter-spacing: normal;
+}
+
 .pixelated {
   image-rendering: pixelated;
 }

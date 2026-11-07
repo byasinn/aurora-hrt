@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { LogOut, Trash2, TriangleAlert, Check } from 'lucide-react'
+import { LogOut, TriangleAlert } from 'lucide-react'
+import { Trash2, Check } from '../../components/icons'
 import { Button, Card } from '../../components/ui'
 import { ApiError } from '../../lib/apiClient'
 import { useProfile, useUpdateProfile } from '../../api/profile'

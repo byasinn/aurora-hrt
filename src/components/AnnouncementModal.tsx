@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Sparkles, X } from 'lucide-react'
+import { Sparkles, X } from './icons'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Button, Card } from './ui'
 import { useLatestAnnouncement } from '../api/announcements'

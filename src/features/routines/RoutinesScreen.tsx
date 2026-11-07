@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Plus } from 'lucide-react'
+import { Plus } from '../../components/icons'
 import { EmptyState, ScreenTitle } from '../../components/ui'
 import { useRoutines } from '../../api/routines'
 import RoutineForm from './RoutineForm'

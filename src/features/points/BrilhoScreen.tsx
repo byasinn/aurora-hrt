@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ChevronLeft, Sparkles } from 'lucide-react'
+import { ChevronLeft, Sparkles } from '../../components/icons'
 import { Card, ScreenTitle } from '../../components/ui'
 import { usePointsStats } from './usePointsStats'
 import { useUnlockedTitles } from '../../api/titles'

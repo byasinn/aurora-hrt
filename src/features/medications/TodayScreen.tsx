@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Plus, Heart, ListChecks, History } from 'lucide-react'
+import { Plus, Heart, ListChecks, History } from '../../components/icons'
 import { EmptyState } from '../../components/ui'
 import AppIcon from '../../components/AppIcon'
 import type { PixelIconName } from '../../components/PixelIcon'

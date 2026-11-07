@@ -1,6 +1,6 @@
 import { addDays, format, subDays } from 'date-fns'
 import { useSearchParams } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Droplet, Sparkles, Pencil } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Droplet, Sparkles, Pencil } from '../../components/icons'
 import { Card, ScreenTitle } from '../../components/ui'
 import DaySection from '../../components/DaySection'
 import MoodCheckIn from '../mood/MoodCheckIn'

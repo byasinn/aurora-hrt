@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Bell, MessageCircle, UserPlus, Check, X } from 'lucide-react'
+import { Bell, MessageCircle, UserPlus, Check, X } from '../../components/icons'
 import clsx from 'clsx'
 import { Card, Button, EmptyState, ScreenTitle } from '../../components/ui'
 import Avatar from '../../components/Avatar'

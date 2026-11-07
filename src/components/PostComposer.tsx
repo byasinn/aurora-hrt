@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Plus, X } from 'lucide-react'
+import { Plus, X } from './icons'
 import clsx from 'clsx'
 import { Button, Card } from './ui'
 import Avatar from './Avatar'

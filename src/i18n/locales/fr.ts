@@ -174,6 +174,9 @@ export default {
       themeTitle: "Thème",
       frame: "Utiliser le cadre Éclat",
       frameHint: "Cadeau de bienvenue — gratuit",
+      iconsTitle: "Style",
+      iconsPixel: "8-bit",
+      iconsClassic: "Clean",
     },
     done: {
       ready: "Tout est prêt",

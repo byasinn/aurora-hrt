@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { UserPlus } from 'lucide-react'
+import { UserPlus } from './icons'
 import { AnimatePresence, motion } from 'framer-motion'
 import Avatar from './Avatar'
 import { useFollowSuggestions } from '../api/topics'

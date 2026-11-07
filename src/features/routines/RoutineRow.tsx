@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { Pencil, Trash2, Check, Minus, Plus, Play, Pause, Sparkles } from 'lucide-react'
+import { Play, Pause } from 'lucide-react'
+import { Pencil, Trash2, Check, Minus, Plus, Sparkles } from '../../components/icons'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card } from '../../components/ui'
 import {

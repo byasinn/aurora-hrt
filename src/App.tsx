@@ -58,14 +58,20 @@ import GradientBlobs from './components/GradientBlobs'
 import ToastContainer from './components/ToastContainer'
 import LoadingScreen from './components/LoadingScreen'
 import { useProfile } from './api/profile'
+import { useIconStyle } from './components/AppIcon'
 import { THEMES } from './lib/shopVisuals'
 import { DEFAULT_THEME } from '../shared/shopCatalog'
 
 function ThemeInitializer() {
   const { mode, accent, accent2, accent3 } = useThemeStore()
+  const visual = useIconStyle((s) => s.style)
   useEffect(() => {
     applyTheme(mode, accent, accent2, accent3)
   }, [mode, accent, accent2, accent3])
+  // visual 8-bit ou Clean — o CSS usa isso pra desligar a fonte pixel no Clean (src/index.css)
+  useEffect(() => {
+    document.documentElement.setAttribute('data-visual', visual === 'pixel' ? '8bit' : 'clean')
+  }, [visual])
   return null
 }
 

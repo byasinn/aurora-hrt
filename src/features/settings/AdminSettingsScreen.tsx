@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { Shield, Ban, BadgeCheck, Trash2, Flag, Megaphone, Compass, ChevronRight } from 'lucide-react'
+import { Ban, BadgeCheck, Megaphone, Compass } from 'lucide-react'
+import { Shield, Trash2, Flag, ChevronRight } from '../../components/icons'
 import { Card } from '../../components/ui'
 import { useMe } from '../../api/auth'
 import { useAdminUsers, useSetUserBanned, useSetUserAdmin, useSetUserVerified, useDeleteUser } from '../../api/admin'

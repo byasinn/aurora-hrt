@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Flag, X } from 'lucide-react'
+import { Flag, X } from './icons'
 import { Button, Card } from './ui'
 import { useCreateReport } from '../api/reports'
 import { toastError, showToast } from '../lib/toast'

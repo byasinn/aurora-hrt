@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion, useMotionValue, animate, type PanInfo } from 'framer-motion'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2 } from './icons'
 
 const ACTIONS_WIDTH = 144
 

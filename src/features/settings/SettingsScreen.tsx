@@ -1,17 +1,5 @@
 import { Link } from 'react-router-dom'
-import {
-  User,
-  Sparkles,
-  Lock,
-  Bell,
-  Shield,
-  Palette,
-  Globe,
-  FileText,
-  Info,
-  ShieldCheck,
-  ChevronRight,
-} from 'lucide-react'
+import { User, Sparkles, Lock, Bell, Shield, Palette, Globe, FileText, Info, ShieldCheck, ChevronRight } from '../../components/icons'
 import { useTranslation } from 'react-i18next'
 import { Card, ScreenTitle } from '../../components/ui'
 import { useMe } from '../../api/auth'

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Send } from 'lucide-react'
+import { ArrowLeft, Send } from '../../components/icons'
 import clsx from 'clsx'
 import Avatar from '../../components/Avatar'
 import { useConversation, useSendMessage } from '../../api/dm'

@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom'
-import { LayoutGrid, ChevronRight } from 'lucide-react'
+import { LayoutGrid } from 'lucide-react'
+import { ChevronRight } from '../../components/icons'
 import { Card, ScreenTitle } from '../../components/ui'
 import { usePointsStats } from './usePointsStats'
 import { useSyncCollectibles } from './useSyncCollectibles'
 import { useProfile } from '../../api/profile'
 import { currentTitle, titleName } from '../../lib/titles'
 import { getCollectibleIcon } from '../../lib/collectibleIcons'
-import PixelIcon from '../../components/PixelIcon'
+import { Coins, Sparkles, Store } from '../../components/icons'
 import { useShop } from '../../api/shop'
 
 export default function PointsScreen() {
@@ -23,7 +24,7 @@ export default function PointsScreen() {
 
       <Link to="/pontos/brilho">
         <Card className="flex flex-col items-center gap-2 py-6 text-center">
-          <PixelIcon name="sparkle" size={36} />
+          <Sparkles size={36} className="text-[var(--accent)]" />
           <p className="font-pixel text-4xl font-bold text-[var(--text)]">{stats.brilho}</p>
           <p className="font-pixel text-sm uppercase tracking-widest text-[var(--text-muted)]">Brilho</p>
           <p className="mt-1 flex items-center gap-1.5 rounded-full bg-[var(--accent-soft)] px-3 py-1 text-sm font-bold text-[var(--text)]">
@@ -35,14 +36,14 @@ export default function PointsScreen() {
       <Link to="/loja">
         <Card className="flex items-center gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)]">
-            <PixelIcon name="bag" size={22} />
+            <Store size={22} className="text-[var(--accent)]" />
           </span>
           <div className="flex-1">
             <p className="font-bold text-[var(--text)]">Lojinha</p>
             <p className="text-sm text-[var(--text-muted)]">Molduras, cards, temas e calendários</p>
           </div>
           <span className="flex items-center gap-1.5 rounded-full bg-[var(--surface-2)] px-3 py-1">
-            <PixelIcon name="coin" size={14} />
+            <Coins size={14} className="text-amber-500" />
             <span className="font-pixel text-base font-bold text-[var(--text)]">{shop?.balance ?? '–'}</span>
           </span>
         </Card>

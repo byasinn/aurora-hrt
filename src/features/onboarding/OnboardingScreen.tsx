@@ -2,28 +2,12 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
-import {
-  Bell,
-  BellRing,
-  Calendar,
-  Camera,
-  Check,
-  CircleHelp,
-  Droplet,
-  Dumbbell,
-  Flower2,
-  Heart,
-  MessageCircle,
-  Pill,
-  Ruler,
-  Sparkles,
-  Store,
-  Users,
-  type LucideIcon,
-} from 'lucide-react'
+import { BellRing, CircleHelp, Flower2, UserRound, type LucideIcon } from 'lucide-react'
+import { Bell, Calendar, Camera, Check, Droplet, Dumbbell, Heart, Home, MessageCircle, Pill, Ruler, Sparkles, Store, Users } from '../../components/icons'
 import { Button } from '../../components/ui'
 import Avatar from '../../components/Avatar'
 import PixelIcon from '../../components/PixelIcon'
+import { useIconStyle } from '../../components/AppIcon'
 import ImageCropper from '../../components/ImageCropper'
 import { useUpdateProfile } from '../../api/profile'
 import { useEquipItem } from '../../api/shop'
@@ -142,6 +126,8 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
   const equip = useEquipItem()
   const { data: medications } = useMedications()
   const mode = useThemeStore((s) => s.mode)
+  const iconStyle = useIconStyle((s) => s.style)
+  const setIconStyle = useIconStyle((s) => s.setStyle)
   const [stepIndex, setStepIndex] = useState(0)
   const step: Step = STEPS[stepIndex]
 
@@ -571,6 +557,43 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
                         {item.name}
                         {theme === item.key && <Check size={15} className="text-[var(--accent)]" />}
                       </span>
+                    </button>
+                  ))}
+                </div>
+
+                <SectionLabel>{t('onboarding.look.iconsTitle')}</SectionLabel>
+                {/* troca na hora (o estilo fica salvo no aparelho) — dá pra mudar depois em Aparência */}
+                <div className="grid grid-cols-2 gap-2">
+                  {(['pixel', 'classic'] as const).map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      aria-pressed={iconStyle === value}
+                      onClick={() => {
+                        playSound('tap')
+                        setIconStyle(value)
+                      }}
+                      className={clsx(
+                        'flex min-h-16 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 text-sm font-bold transition active:scale-[0.98]',
+                        iconStyle === value ? 'border-[var(--accent)] bg-[var(--accent-soft)]' : 'border-[var(--border)] bg-[var(--surface)]',
+                      )}
+                    >
+                      <span className="flex items-center gap-2 text-[var(--accent)]">
+                        {value === 'pixel' ? (
+                          <>
+                            <PixelIcon name="home" size={20} />
+                            <PixelIcon name="chat" size={20} />
+                            <PixelIcon name="user" size={20} />
+                          </>
+                        ) : (
+                          <>
+                            <Home size={22} />
+                            <MessageCircle size={22} />
+                            <UserRound size={22} />
+                          </>
+                        )}
+                      </span>
+                      {value === 'pixel' ? t('onboarding.look.iconsPixel') : t('onboarding.look.iconsClassic')}
                     </button>
                   ))}
                 </div>

@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom'
-import { ChevronRight, Users } from 'lucide-react'
+import { ChevronRight, Users } from '../../components/icons'
 import type { ReactNode } from 'react'
 import { Card } from '../../components/ui'
 import Avatar from '../../components/Avatar'
 import AppIcon from '../../components/AppIcon'
-import PixelIcon from '../../components/PixelIcon'
+import { Coins, Gem, Star, Store } from '../../components/icons'
 import { useProfile } from '../../api/profile'
 import { useShop } from '../../api/shop'
 import { playSound } from '../../lib/sounds'
@@ -61,7 +61,7 @@ export default function AuroraHubScreen() {
           <p className="text-sm text-[var(--text-muted)]">O que vamos ver hoje?</p>
         </div>
         <Link to="/loja" className="flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--surface)] px-3 py-1.5 [box-shadow:var(--shadow)]">
-          <PixelIcon name="coin" size={16} />
+          <Coins size={16} className="text-amber-500" />
           <span className="font-pixel text-lg font-bold text-[var(--text)]">{shop?.balance ?? '–'}</span>
         </Link>
       </div>
@@ -76,20 +76,20 @@ export default function AuroraHubScreen() {
         />
         <HubCard
           to="/loja"
-          icon={<PixelIcon name="bag" size={26} />}
+          icon={<Store size={26} className="text-[var(--accent)]" />}
           background="var(--accent-soft)"
           title="Lojinha"
           description="Molduras, cards, temas e pacotes"
           badge={
             <span className="flex items-center gap-1 rounded-full bg-[var(--surface-2)] px-2 py-0.5">
-              <PixelIcon name="coin" size={12} />
+              <Coins size={12} className="text-amber-500" />
               <span className="font-pixel text-sm font-bold text-[var(--text)]">{shop?.balance ?? '–'}</span>
             </span>
           }
         />
         <HubCard
           to="/meus-itens"
-          icon={<PixelIcon name="sparkle" size={26} />}
+          icon={<Gem size={26} className="text-[var(--accent)]" />}
           background="var(--accent-soft)"
           title="Meus itens"
           description="Escolha o que usar no perfil, nos posts e no app"
@@ -101,7 +101,7 @@ export default function AuroraHubScreen() {
         />
         <HubCard
           to="/pontos"
-          icon={<PixelIcon name="star" size={24} />}
+          icon={<Star size={24} className="text-amber-500" />}
           background="var(--accent-soft)"
           title="Pontos"
           description="Seu Brilho, títulos e coleção"

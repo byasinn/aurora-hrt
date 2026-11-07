@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, MoreVertical, Ban, Lock, Link2 } from 'lucide-react'
+import { MoreVertical, Ban, Link2 } from 'lucide-react'
+import { ArrowLeft, Lock } from '../../components/icons'
 import Avatar from '../../components/Avatar'
 import PhotoWall, { type CollageStyle } from '../../components/PhotoWall'
 import VerifiedBadge from '../../components/VerifiedBadge'

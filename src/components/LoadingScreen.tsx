@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Sparkles, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
+import { Sparkles } from './icons'
 
 const MESSAGES = [
   'Ainda em versão beta — obrigada pela paciência.',

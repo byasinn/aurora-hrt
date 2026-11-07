@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { NavLink, Outlet, useLocation, matchPath } from 'react-router-dom'
-import { MessageCircle } from 'lucide-react'
+import { MessageCircle } from './icons'
 import clsx from 'clsx'
 import { useTranslation } from 'react-i18next'
 import { useProfile } from '../api/profile'
@@ -8,7 +8,7 @@ import { useMessages } from '../api/messages'
 import { useConversations } from '../api/dm'
 import { playSound } from '../lib/sounds'
 import Avatar from './Avatar'
-import AppIcon from './AppIcon'
+import AppIcon, { useIconStyle } from './AppIcon'
 import PixelIcon from './PixelIcon'
 import InsightMessageGenerator from './InsightMessageGenerator'
 import DesktopSidebar from './DesktopSidebar'
@@ -46,6 +46,7 @@ export default function Layout() {
   const { t } = useTranslation()
   const navItems = useMainNavItems()
   const { data: profile } = useProfile()
+  const iconStyle = useIconStyle((s) => s.style)
   const location = useLocation()
 
   // Com o documento rolando, a posição ficaria da tela anterior ao navegar — volta pro topo.
@@ -106,10 +107,14 @@ export default function Layout() {
                   )}
                   style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent-2))' }}
                 >
-                  {/* borboleta do Aurora em pixel art, nas cores do tema de quem usa */}
-                  <span className="flex h-full w-full items-center justify-center rounded-full bg-[var(--surface)]">
-                    <PixelIcon name="butterfly" size={30} />
-                  </span>
+                  {/* 8-bit: borboleta em pixel art nas cores do tema · Clean: o ícone do app, como era antes */}
+                  {iconStyle === 'pixel' ? (
+                    <span className="flex h-full w-full items-center justify-center rounded-full bg-[var(--surface)]">
+                      <PixelIcon name="butterfly" size={30} />
+                    </span>
+                  ) : (
+                    <img src="/icons/icon-192.png" alt="" className="h-full w-full rounded-full border-2 border-[var(--surface)] object-cover" />
+                  )}
                 </span>
                 <span className={hubActive ? 'text-[var(--text)]' : 'text-[var(--text-muted)]'}>Aurora</span>
               </NavLink>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronLeft, Check } from 'lucide-react'
+import { ChevronLeft, Check } from '../../components/icons'
 import clsx from 'clsx'
 import { Card, ScreenTitle } from '../../components/ui'
 import Switch from '../../components/Switch'

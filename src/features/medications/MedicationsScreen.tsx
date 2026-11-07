@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Plus, Pencil, Trash2, ChevronDown, Clock } from 'lucide-react'
+import { Clock } from 'lucide-react'
+import { Plus, Pencil, Trash2, ChevronDown } from '../../components/icons'
 import clsx from 'clsx'
 import { Card, EmptyState, ScreenTitle } from '../../components/ui'
 import { useMedications, useDeleteMedication } from '../../api/medications'

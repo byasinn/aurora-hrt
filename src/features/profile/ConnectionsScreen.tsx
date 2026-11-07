@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ChevronLeft, Search } from 'lucide-react'
+import { ChevronLeft, Search } from '../../components/icons'
 import { Button, EmptyState } from '../../components/ui'
 import Avatar from '../../components/Avatar'
 import { useConnections, useFollow, useUnfollow, useRemoveFollower } from '../../api/social'

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, Pill, Syringe, Bandage, Droplet, Sparkles, Trash2, Undo2, PartyPopper } from 'lucide-react'
+import { Syringe, Bandage, Undo2, PartyPopper } from 'lucide-react'
+import { Check, Pill, Droplet, Sparkles, Trash2 } from '../../components/icons'
 import { useLogDose, useUpdateDoseLog } from '../../api/doses'
 import { useDeleteMedication } from '../../api/medications'
 import { formatTime } from '../../lib/dateUtils'

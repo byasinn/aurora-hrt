@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, ExternalLink, Sparkles } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
+import { ArrowLeft, Sparkles } from '../../components/icons'
 import { Card, EmptyState } from '../../components/ui'
 import { getCollectibleIcon } from '../../lib/collectibleIcons'
 import { timeAgo } from '../../lib/dateUtils'

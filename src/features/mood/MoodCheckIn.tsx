@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
-import { Pencil, ChevronDown, BatteryLow, Zap, Snowflake, Flame } from 'lucide-react'
+import { BatteryLow, Zap, Snowflake } from 'lucide-react'
+import { Pencil, ChevronDown, Flame } from '../../components/icons'
 import type { LucideIcon } from 'lucide-react'
 import { Button, Card, ScreenTitle } from '../../components/ui'
 import { useTags, useCreateTag } from '../../api/tags'

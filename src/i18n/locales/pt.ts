@@ -177,6 +177,9 @@ export default {
       themeTitle: "Tema",
       frame: "Usar a moldura Brilho",
       frameHint: "Presente de boas-vindas — grátis",
+      iconsTitle: "Visual",
+      iconsPixel: "8-bit",
+      iconsClassic: "Clean",
     },
     done: {
       ready: "Tudo pronto",

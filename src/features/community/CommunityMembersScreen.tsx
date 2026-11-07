@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft } from '../../components/icons'
 import { Card, EmptyState, ScreenTitle } from '../../components/ui'
 import Avatar from '../../components/Avatar'
 import VerifiedBadge from '../../components/VerifiedBadge'

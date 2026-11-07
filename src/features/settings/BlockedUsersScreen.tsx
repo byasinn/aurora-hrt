@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft } from '../../components/icons'
 import { Card, Button, EmptyState, ScreenTitle } from '../../components/ui'
 import Avatar from '../../components/Avatar'
 import { useBlockedUsers, useUnblockUser } from '../../api/blocks'

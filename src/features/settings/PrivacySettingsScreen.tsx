@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { ChevronRight, Ban } from 'lucide-react'
+import { Ban } from 'lucide-react'
+import { ChevronRight } from '../../components/icons'
 import { Card } from '../../components/ui'
 import Switch from '../../components/Switch'
 import { useProfile, useUpdateProfile } from '../../api/profile'

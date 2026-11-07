@@ -174,6 +174,9 @@ export default {
       themeTitle: "Theme",
       frame: "Use the Glow frame",
       frameHint: "A welcome gift — free",
+      iconsTitle: "Look",
+      iconsPixel: "8-bit",
+      iconsClassic: "Clean",
     },
     done: {
       ready: "All set",

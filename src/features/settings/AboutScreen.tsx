@@ -1,4 +1,4 @@
-import { Sparkles } from 'lucide-react'
+import { Sparkles } from '../../components/icons'
 import { Card, Button } from '../../components/ui'
 import { useUpdateProfile } from '../../api/profile'
 import { useLatestAnnouncement } from '../../api/announcements'

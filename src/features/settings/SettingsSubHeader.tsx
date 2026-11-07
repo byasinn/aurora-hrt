@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft } from '../../components/icons'
 import { ScreenTitle } from '../../components/ui'
 
 export default function SettingsSubHeader({ title }: { title: string }) {
