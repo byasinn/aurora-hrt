@@ -150,6 +150,9 @@ app.all('/api/profile', async (c) => {
         }
       }
 
+      // só vieram campos protegidos (ou nada): não tem o que gravar — um UPDATE sem SET quebraria
+      if (Object.keys(updates).length === 0) return jsonResponse(current)
+
       try {
         const [row] = await db
           .update(profile)
