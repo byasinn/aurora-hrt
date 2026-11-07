@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { NavLink, Outlet, useLocation, matchPath } from 'react-router-dom'
 import { MessageCircle } from 'lucide-react'
 import clsx from 'clsx'
@@ -8,8 +8,9 @@ import { useMessages } from '../api/messages'
 import { useConversations } from '../api/dm'
 import { playSound } from '../lib/sounds'
 import Avatar from './Avatar'
+import AppIcon from './AppIcon'
+import PixelIcon from './PixelIcon'
 import InsightMessageGenerator from './InsightMessageGenerator'
-import NavDrawer from './NavDrawer'
 import DesktopSidebar from './DesktopSidebar'
 import { useMainNavItems } from './navItems'
 import AnnouncementModal from './AnnouncementModal'
@@ -46,7 +47,6 @@ export default function Layout() {
   const navItems = useMainNavItems()
   const { data: profile } = useProfile()
   const location = useLocation()
-  const [drawerOpen, setDrawerOpen] = useState(false)
 
   // Com o documento rolando, a posição ficaria da tela anterior ao navegar — volta pro topo.
   useEffect(() => {
@@ -68,15 +68,9 @@ export default function Layout() {
       <div className="flex min-h-app w-full max-w-md flex-col lg:max-w-2xl lg:px-8">
         <InsightMessageGenerator />
         <AnnouncementModal />
-        <header className="relative flex items-center justify-center pb-2 pt-[max(0.75rem,env(safe-area-inset-top))] lg:hidden">
-          <button
-            onClick={() => setDrawerOpen(true)}
-            aria-label={t('nav.profile')}
-            // um pouco abaixo do topo: moldura com enfeite em cima (laço, morcego, coroa) não corta na borda da tela
-            className="absolute left-2 top-[max(0.75rem,env(safe-area-inset-top))] flex h-11 w-11 items-center justify-center rounded-full"
-          >
-            <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} frame={profile?.equippedAvatarFrame} size={32} />
-          </button>
+        {/* Sem foto de perfil aqui: ela ficava por cima do primeiro card. O perfil fica no "Meu espaço"
+            da barra de baixo, e o que a gaveta do avatar tinha está no Meu espaço e na central do Aurora. */}
+        <header className="flex items-center justify-center pb-2 pt-[max(0.75rem,env(safe-area-inset-top))] lg:hidden">
           <span className="font-logo flag-gradient-text text-lg uppercase tracking-wide">Aurora</span>
         </header>
         {/* Quem rola é o documento, não o <main>. Com overflow-y-auto aqui (sem altura travada) o <main>
@@ -85,16 +79,15 @@ export default function Layout() {
         <main className="flex-1 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:px-0 lg:pb-8 lg:pt-8">
           <Outlet />
         </main>
-        <NavDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} profile={profile} />
         <nav className="fixed bottom-0 left-1/2 z-10 w-full max-w-md -translate-x-1/2 rounded-t-3xl border-t border-[var(--border)] bg-[var(--surface)]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
           <ul className="flex items-stretch justify-around px-1">
             {navItems
               .filter((item) => item.to !== '/comunidades')
-              .map(({ to, label, Icon }) => {
+              .map(({ to, label, Icon, pixel }) => {
                 const active = to === '/' ? location.pathname === '/' : location.pathname.startsWith(to)
                 return (
                   <TabItem key={to} to={to} label={label} active={active}>
-                    <Icon size={22} />
+                    <AppIcon icon={Icon} pixel={pixel} size={22} />
                   </TabItem>
                 )
               })}
@@ -113,13 +106,16 @@ export default function Layout() {
                   )}
                   style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent-2))' }}
                 >
-                  <img src="/icons/icon-192.png" alt="" className="h-full w-full rounded-full border-2 border-[var(--surface)] object-cover" />
+                  {/* borboleta do Aurora em pixel art, nas cores do tema de quem usa */}
+                  <span className="flex h-full w-full items-center justify-center rounded-full bg-[var(--surface)]">
+                    <PixelIcon name="butterfly" size={30} />
+                  </span>
                 </span>
                 <span className={hubActive ? 'text-[var(--text)]' : 'text-[var(--text-muted)]'}>Aurora</span>
               </NavLink>
             </li>
             <TabItem to="/inbox" label={t('nav.messages')} active={inboxActive}>
-              <MessageCircle size={22} />
+              <AppIcon icon={MessageCircle} pixel="chat" size={22} />
               {unread > 0 && (
                 <span className="absolute right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
                   {unread}
@@ -127,7 +123,14 @@ export default function Layout() {
               )}
             </TabItem>
             <TabItem to="/profile" label={t('nav.mySpace')} active={spaceActive}>
-              <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} frame={profile?.equippedAvatarFrame} size={24} />
+              <Avatar
+                src={profile?.avatarUrl}
+                icon={profile?.avatarIcon}
+                name={profile?.displayName}
+                frame={profile?.equippedAvatarFrame}
+                size={26}
+                showOrnaments
+              />
             </TabItem>
           </ul>
         </nav>

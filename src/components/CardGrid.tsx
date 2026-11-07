@@ -29,7 +29,8 @@ export default function CardGrid<T>({
         return (
           <div
             key={keyFor(item, i)}
-            style={{ flexBasis: `calc(${widthPercent}% - ${(gap * (itemsInRow - 1)) / itemsInRow}px)` }}
+            // minWidth 0: sem isso um texto comprido (ex.: "Comunidades") alarga o item e quebra a linha
+            style={{ flexBasis: `calc(${widthPercent}% - ${(gap * (itemsInRow - 1)) / itemsInRow}px)`, minWidth: 0 }}
           >
             {renderItem(item, i)}
           </div>

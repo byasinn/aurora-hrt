@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Plus, Heart, ListChecks, History } from 'lucide-react'
 import { EmptyState } from '../../components/ui'
+import AppIcon from '../../components/AppIcon'
+import type { PixelIconName } from '../../components/PixelIcon'
 import { useToday } from '../../api/doses'
 import { useProfile } from '../../api/profile'
 import { useMedications } from '../../api/medications'
@@ -43,6 +45,7 @@ function AddDoseButton({ prominent, onClick }: { prominent: boolean; onClick: ()
 function BigLinkButton({
   to,
   icon: Icon,
+  pixel,
   label,
   variant,
   state,
@@ -50,6 +53,7 @@ function BigLinkButton({
 }: {
   to: string
   icon: typeof Heart
+  pixel?: PixelIconName
   label: string
   variant: 'accent' | 'accent2' | 'outline'
   state?: unknown
@@ -59,7 +63,7 @@ function BigLinkButton({
     return (
       <Link to={to} state={state} className="flex-1">
         <div className="flex min-h-13 items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--border)] text-[15px] text-[var(--text-muted)]">
-          <Icon size={18} />
+          <AppIcon icon={Icon} pixel={pixel} size={18} />
           <span className="font-bold">{label}</span>
         </div>
       </Link>
@@ -78,7 +82,7 @@ function BigLinkButton({
             : ({ background: 'var(--accent-2)', '--press-shadow': 'color-mix(in srgb, var(--accent-2) 55%, #000)' } as React.CSSProperties)
         }
       >
-        <Icon size={big ? 28 : 22} />
+        <AppIcon icon={Icon} pixel={pixel} size={big ? 28 : 22} />
         <span className={big ? 'text-lg font-extrabold' : 'text-[15px] font-bold'}>{label}</span>
       </div>
     </Link>
@@ -183,10 +187,10 @@ export default function TodayScreen() {
       )}
 
       <div className="mt-5">
-        <BigLinkButton to="/dia" icon={Heart} label={t('today.registerDay')} variant="accent" big />
+        <BigLinkButton to="/dia" icon={Heart} pixel="health" label={t('today.registerDay')} variant="accent" big />
       </div>
       <div className="mt-2">
-        <BigLinkButton to="/routines" icon={ListChecks} label={t('today.createRoutine')} variant="outline" state={{ create: true }} />
+        <BigLinkButton to="/routines" icon={ListChecks} pixel="checklist" label={t('today.createRoutine')} variant="outline" state={{ create: true }} />
       </div>
     </div>
   )

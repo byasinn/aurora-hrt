@@ -3,6 +3,7 @@ import { MessageCircle, User } from 'lucide-react'
 import clsx from 'clsx'
 import { useTranslation } from 'react-i18next'
 import Avatar from './Avatar'
+import AppIcon from './AppIcon'
 import { useMainNavItems, useSecondaryNavItems, type NavItem } from './navItems'
 import { playSound } from '../lib/sounds'
 import type { Profile } from '../../shared/types'
@@ -19,7 +20,7 @@ function SidebarLink({
   /** troca o ícone padrão (ex.: avatar no Meu espaço) */
   icon?: React.ReactNode
 }) {
-  const { to, label, Icon, match } = item
+  const { to, label, Icon, pixel, match } = item
   const location = useLocation()
   const extraActive = active ?? (match ? !!matchPath(match, location.pathname) : false)
   return (
@@ -38,7 +39,7 @@ function SidebarLink({
     >
       {({ isActive }) => (
         <>
-          {icon ?? <Icon size={22} className={isActive || extraActive ? 'text-[var(--accent)]' : undefined} />}
+          {icon ?? <AppIcon icon={Icon} pixel={pixel} size={22} className={isActive || extraActive ? 'text-[var(--accent)]' : undefined} />}
           <span className="flex-1">{label}</span>
           {!!badge && (
             <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[11px] font-bold text-white">
@@ -68,7 +69,7 @@ export default function DesktopSidebar({ profile, unread }: { profile: Profile |
         {main.map((item) => (
           <SidebarLink key={item.to} item={item} />
         ))}
-        <SidebarLink item={{ to: '/inbox', label: t('nav.messages'), Icon: MessageCircle }} active={inboxActive} badge={unread} />
+        <SidebarLink item={{ to: '/inbox', label: t('nav.messages'), Icon: MessageCircle, pixel: 'chat' }} active={inboxActive} badge={unread} />
         <SidebarLink
           item={{ to: '/profile', label: t('nav.mySpace'), Icon: User }}
           active={spaceActive}

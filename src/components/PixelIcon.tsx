@@ -21,6 +21,9 @@ const PALETTE: Record<string, string> = {
   v: '#9c59d1', // roxo bandeira NB
   n: '#fcf434', // amarelo bandeira NB
   m: '#9f1239', // vinho
+  // ícones de interface: contorno 'd' + preenchimento 'e' na cor do texto (translúcido), então seguem
+  // a cor de ativo/inativo como os ícones de linha
+  e: 'currentColor',
 }
 
 const ICONS = {
@@ -162,6 +165,191 @@ const ICONS = {
     '....w',
     '....r',
   ],
+  home: [
+    '.....d.....',
+    '....ddd....',
+    '...ddedd...',
+    '..ddeeedd..',
+    '.ddeeeeedd.',
+    'ddeeeeeeedd',
+    '.deeeeeeed.',
+    '.deeddeeed.',
+    '.deeddeeed.',
+    '.ddddddddd.',
+  ],
+  picture: [
+    'ddddddddddd',
+    'deeeeeeaaed',
+    'deeeeeeaaed',
+    'deeedeeeeed',
+    'deedddeeded',
+    'deddddddddd',
+    'ddddddddddd',
+  ],
+  users: [
+    '..dd....dd..',
+    '.deed..deed.',
+    '.deed..deed.',
+    '..dd....dd..',
+    '.dddd..dddd.',
+    'deeeeddeeeed',
+    'deeeeddeeeed',
+    'dddddddddddd',
+  ],
+  chat: [
+    '.ddddddddd.',
+    'deeeeeeeeed',
+    'deeaeaeaeed',
+    'deeeeeeeeed',
+    '.ddddddddd.',
+    '.dd........',
+    '.d.........',
+  ],
+  user: [
+    '...ddd...',
+    '..deeed..',
+    '..deeed..',
+    '...ddd...',
+    '.ddddddd.',
+    'deeeeeeed',
+    'deeeeeeed',
+    'ddddddddd',
+  ],
+  health: [
+    '.dd...dd.',
+    'deed.deed',
+    'deeedeeed',
+    'deeeaeeed',
+    '.deaaaed.',
+    '..deaed..',
+    '...ded...',
+    '....d....',
+  ],
+  checklist: [
+    'ddd.ddddddd',
+    'dad........',
+    'ddd.ddddd..',
+    '...........',
+    'ddd.ddddddd',
+    'dad........',
+    'ddd.ddddd..',
+  ],
+  calendar: [
+    '..d.....d..',
+    'ddddddddddd',
+    'daaaaaaaaad',
+    'ddddddddddd',
+    'deeeeeeeeed',
+    'dedeedeeded',
+    'deeeeeeeeed',
+    'dedeedeeded',
+    'deeeeeeeeed',
+    'ddddddddddd',
+  ],
+  dumbbell: [
+    '.dd......dd.',
+    'deed....deed',
+    'deeddddddeed',
+    'deeddddddeed',
+    'deed....deed',
+    '.dd......dd.',
+  ],
+  gear: [
+    '...ddd...',
+    '.dddeddd.',
+    '.deeeeed.',
+    'ddee.eedd',
+    'dde...edd',
+    'ddee.eedd',
+    '.deeeeed.',
+    '.dddeddd.',
+    '...ddd...',
+  ],
+  bell: [
+    '....d....',
+    '..ddddd..',
+    '.deeeeed.',
+    '.deeeeed.',
+    '.deeeeed.',
+    'ddeeeeedd',
+    'ddddddddd',
+    '....d....',
+  ],
+  lock: [
+    '..ddddd..',
+    '.dd...dd.',
+    '.d.....d.',
+    'ddddddddd',
+    'deeeeeeed',
+    'deeedeeed',
+    'deeedeeed',
+    'deeeeeeed',
+    'ddddddddd',
+  ],
+  shield: [
+    'ddddddddd',
+    'deeeeeeed',
+    'deeeaeeed',
+    'deeaaaeed',
+    'deeeaeeed',
+    '.deeeeed.',
+    '..deeed..',
+    '...ded...',
+    '....d....',
+  ],
+  palette: [
+    '..dddddd..',
+    '.deeeeeed.',
+    'dereeeqeed',
+    'deeeeeeeed',
+    'degeeeeedd',
+    'deeeeecd..',
+    '.deeeed...',
+    '..dddd....',
+  ],
+  globe: [
+    '..ddddd..',
+    '.deedeed.',
+    'deeedeeed',
+    'ddddddddd',
+    'deeedeeed',
+    'deeedeeed',
+    '.deedeed.',
+    '..ddddd..',
+  ],
+  info: [
+    '..ddddd..',
+    '.deeeeed.',
+    'deeedeeed',
+    'deeeeeeed',
+    'deeedeeed',
+    'deeedeeed',
+    '.deedeed.',
+    '..ddddd..',
+  ],
+  file: [
+    'dddddd..',
+    'deeeedd.',
+    'deeeeddd',
+    'dedddded',
+    'deeeeeed',
+    'dedddded',
+    'deeeeeed',
+    'deddeeed',
+    'deeeeeed',
+    'dddddddd',
+  ],
+  butterfly: [
+    '.aa.....bb.',
+    'aaaa...bbbb',
+    'aawaa.bbwbb',
+    'aaaaawbbbbb',
+    '.aaaawbbbb.',
+    '...aawbb...',
+    '..aaawbbb..',
+    '.aaaawbbbb.',
+    '.aa..w..bb.',
+  ],
   pill: [
     '.aaaabbbb.',
     'aawaabbbbb',
@@ -192,14 +380,14 @@ export default function PixelIcon({
   const h = rows.length
   const w = rows[0].length
   // junta pixels vizinhos da mesma cor numa linha só — bem menos <rect> no DOM
-  const rects: { x: number; y: number; len: number; fill: string }[] = []
+  const rects: { x: number; y: number; len: number; fill: string; soft?: boolean }[] = []
   rows.forEach((row, y) => {
     let x = 0
     while (x < w) {
       const ch = row[x]
       let len = 1
       while (x + len < w && row[x + len] === ch) len++
-      if (ch !== '.') rects.push({ x, y, len, fill: palette?.[ch] ?? PALETTE[ch] })
+      if (ch !== '.') rects.push({ x, y, len, fill: palette?.[ch] ?? PALETTE[ch], soft: ch === 'e' })
       x += len
     }
   })
@@ -216,7 +404,7 @@ export default function PixelIcon({
     >
       {title && <title>{title}</title>}
       {rects.map((r) => (
-        <rect key={`${r.x}-${r.y}`} x={r.x} y={r.y} width={r.len} height={1} fill={r.fill} />
+        <rect key={`${r.x}-${r.y}`} x={r.x} y={r.y} width={r.len} height={1} fill={r.fill} fillOpacity={r.soft ? 0.22 : undefined} />
       ))}
     </svg>
   )

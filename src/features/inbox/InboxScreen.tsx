@@ -139,7 +139,7 @@ function ConversationsTab() {
 }
 
 export default function InboxScreen() {
-  const [tab, setTab] = useState<Tab>('notifications')
+  const [tab, setTab] = useState<Tab>('conversations')
   const { data: messages } = useMessages()
   const { data: threads } = useConversations()
   const { data: requests } = useFollowRequests()
@@ -153,25 +153,9 @@ export default function InboxScreen() {
 
       <div className="grid grid-cols-3 gap-2">
         <button
-          onClick={() => setTab('notifications')}
-          className={clsx(
-            'flex items-center justify-center gap-1.5 rounded-2xl border py-2.5 text-sm transition',
-            tab === 'notifications'
-              ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
-              : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)]',
-          )}
-        >
-          <Bell size={15} /> Notificações
-          {unreadNotifications > 0 && (
-            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white">
-              {unreadNotifications}
-            </span>
-          )}
-        </button>
-        <button
           onClick={() => setTab('conversations')}
           className={clsx(
-            'flex items-center justify-center gap-1.5 rounded-2xl border py-2.5 text-sm transition',
+            'flex min-h-11 items-center justify-center gap-1.5 rounded-2xl border text-sm font-bold transition',
             tab === 'conversations'
               ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
               : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)]',
@@ -185,9 +169,25 @@ export default function InboxScreen() {
           )}
         </button>
         <button
+          onClick={() => setTab('notifications')}
+          className={clsx(
+            'flex min-h-11 items-center justify-center gap-1.5 rounded-2xl border text-sm font-bold transition',
+            tab === 'notifications'
+              ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
+              : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)]',
+          )}
+        >
+          <Bell size={15} /> Notificações
+          {unreadNotifications > 0 && (
+            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white">
+              {unreadNotifications}
+            </span>
+          )}
+        </button>
+        <button
           onClick={() => setTab('requests')}
           className={clsx(
-            'flex items-center justify-center gap-1.5 rounded-2xl border py-2.5 text-sm transition',
+            'flex min-h-11 items-center justify-center gap-1.5 rounded-2xl border text-sm font-bold transition',
             tab === 'requests'
               ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
               : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)]',

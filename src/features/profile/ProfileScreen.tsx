@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Settings, ChevronRight, Sparkles, HeartPulse, Calendar, ListChecks, Users, Dumbbell } from 'lucide-react'
+import AppIcon from '../../components/AppIcon'
+import type { PixelIconName } from '../../components/PixelIcon'
 import { Card } from '../../components/ui'
 import Avatar from '../../components/Avatar'
 import CardGrid from '../../components/CardGrid'
@@ -15,17 +17,17 @@ import { computeWeeklySummary } from '../../lib/insights'
 import { todayStr } from '../../lib/dateUtils'
 
 const BASE_QUICK_LINKS = [
-  { to: '/saude', label: 'Saúde', icon: HeartPulse },
-  { to: '/routines', label: 'Rotinas', icon: ListChecks },
-  { to: '/calendar', label: 'Histórico', icon: Calendar },
-  { to: '/comunidades', label: 'Comunidades', icon: Users },
-  { to: '/pontos', label: 'Pontos', icon: Sparkles },
+  { to: '/saude', label: 'Saúde', icon: HeartPulse, pixel: 'health' },
+  { to: '/routines', label: 'Rotinas', icon: ListChecks, pixel: 'checklist' },
+  { to: '/calendar', label: 'Histórico', icon: Calendar, pixel: 'calendar' },
+  { to: '/comunidades', label: 'Comunidades', icon: Users, pixel: 'users' },
+  { to: '/pontos', label: 'Pontos', icon: Sparkles, pixel: 'star' },
 ]
 
 export default function ProfileScreen() {
   const { data: profile } = useProfile()
-  let quickLinks = BASE_QUICK_LINKS as { to: string; label: string; icon: typeof HeartPulse }[]
-  if (profile?.workoutsEnabled) quickLinks = [...quickLinks, { to: '/treinos', label: 'Treinos', icon: Dumbbell }]
+  let quickLinks = BASE_QUICK_LINKS as { to: string; label: string; icon: typeof HeartPulse; pixel?: PixelIconName }[]
+  if (profile?.workoutsEnabled) quickLinks = [...quickLinks, { to: '/treinos', label: 'Treinos', icon: Dumbbell, pixel: 'dumbbell' }]
   const pointsStats = usePointsStats()
   const sfwTitle = currentTitle(pointsStats.brilho)
   const SfwTitleIcon = getCollectibleIcon(sfwTitle.icon)
@@ -94,11 +96,11 @@ export default function ProfileScreen() {
         items={quickLinks}
         maxPerRow={3}
         keyFor={(item) => item.to}
-        renderItem={({ to, label, icon: Icon }) => (
+        renderItem={({ to, label, icon: Icon, pixel }) => (
           <Link to={to}>
-            <Card className="flex flex-col items-center gap-1 py-3 text-center">
-              <Icon size={20} className="text-[var(--accent)]" />
-              <span className="text-[11px] font-medium text-[var(--text)]">{label}</span>
+            <Card className="flex flex-col items-center gap-1.5 py-3.5 text-center">
+              <AppIcon icon={Icon} pixel={pixel} size={24} className="text-[var(--accent)]" />
+              <span className="w-full truncate px-1 text-[13px] font-bold text-[var(--text)]">{label}</span>
             </Card>
           </Link>
         )}

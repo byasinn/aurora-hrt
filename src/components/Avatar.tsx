@@ -22,6 +22,7 @@ export default function Avatar({
   size = 36,
   ring = true,
   frame,
+  showOrnaments,
   className,
 }: {
   src?: string | null
@@ -31,6 +32,8 @@ export default function Avatar({
   ring?: boolean
   /** moldura da lojinha (key de shared/shopCatalog.ts) — substitui o anel padrão */
   frame?: string | null
+  /** força os enfeites mesmo em avatar pequeno (ex.: aba "Meu espaço" da barra de baixo) */
+  showOrnaments?: boolean
   className?: string
 }) {
   const initial = name?.trim()?.[0]?.toUpperCase()
@@ -67,7 +70,7 @@ export default function Avatar({
   // de um sem moldura, senão ele desce/desalinha nas linhas do feed, comentários e perfil. O anel
   // transborda pra fora (margem negativa), como os enfeites.
   const ringOverflow = pad + 1.5
-  const decorated = size >= MIN_ORNAMENT_SIZE
+  const decorated = showOrnaments ?? size >= MIN_ORNAMENT_SIZE
   const ornaments =
     decorated &&
     visual.ornaments?.map((o, i) => (

@@ -1,10 +1,13 @@
 import { Home, Image, Users, User, Sparkles, Store, Gem, ListChecks, Calendar, Settings } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import type { PixelIconName } from './PixelIcon'
 
 export interface NavItem {
   to: string
   label: string
   Icon: typeof Home
+  /** versão pixel art do ícone (src/components/AppIcon.tsx) */
+  pixel?: PixelIconName
   /** padrão extra de rota que também marca o item como ativo */
   match?: string
 }
@@ -13,9 +16,9 @@ export interface NavItem {
 export function useMainNavItems(): NavItem[] {
   const { t } = useTranslation()
   return [
-    { to: '/', label: t('nav.home'), Icon: Home },
-    { to: '/feed', label: t('nav.explore'), Icon: Image },
-    { to: '/comunidades', label: t('nav.communities'), Icon: Users, match: '/comunidade*' },
+    { to: '/', label: t('nav.home'), Icon: Home, pixel: 'home' },
+    { to: '/feed', label: t('nav.explore'), Icon: Image, pixel: 'picture' },
+    { to: '/comunidades', label: t('nav.communities'), Icon: Users, pixel: 'users', match: '/comunidade*' },
   ]
 }
 
@@ -23,12 +26,12 @@ export function useMainNavItems(): NavItem[] {
 export function useSecondaryNavItems(): NavItem[] {
   const { t } = useTranslation()
   return [
-    { to: '/perfil', label: t('nav.profile'), Icon: User },
-    { to: '/pontos', label: t('nav.points'), Icon: Sparkles },
-    { to: '/loja', label: t('nav.shop'), Icon: Store },
-    { to: '/meus-itens', label: t('nav.myItems'), Icon: Gem },
-    { to: '/routines', label: t('nav.routines'), Icon: ListChecks },
-    { to: '/calendar', label: t('nav.history'), Icon: Calendar },
-    { to: '/settings', label: t('nav.settings'), Icon: Settings },
+    { to: '/perfil', label: t('nav.profile'), Icon: User, pixel: 'user' },
+    { to: '/pontos', label: t('nav.points'), Icon: Sparkles, pixel: 'star' },
+    { to: '/loja', label: t('nav.shop'), Icon: Store, pixel: 'bag' },
+    { to: '/meus-itens', label: t('nav.myItems'), Icon: Gem, pixel: 'sparkle' },
+    { to: '/routines', label: t('nav.routines'), Icon: ListChecks, pixel: 'checklist' },
+    { to: '/calendar', label: t('nav.history'), Icon: Calendar, pixel: 'calendar' },
+    { to: '/settings', label: t('nav.settings'), Icon: Settings, pixel: 'gear' },
   ]
 }

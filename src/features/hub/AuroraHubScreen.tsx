@@ -3,6 +3,7 @@ import { ChevronRight, Users } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Card } from '../../components/ui'
 import Avatar from '../../components/Avatar'
+import AppIcon from '../../components/AppIcon'
 import PixelIcon from '../../components/PixelIcon'
 import { useProfile } from '../../api/profile'
 import { useShop } from '../../api/shop'
@@ -68,7 +69,7 @@ export default function AuroraHubScreen() {
       <div className="grid grid-cols-2 gap-3">
         <HubCard
           to="/comunidades"
-          icon={<Users size={24} className="text-white" />}
+          icon={<AppIcon icon={Users} pixel="users" size={24} className="text-white" />}
           background="linear-gradient(135deg, var(--accent), var(--accent-2))"
           title="Comunidades"
           description="Grupos pra conversar sobre o que importa"
