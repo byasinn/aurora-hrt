@@ -3,7 +3,8 @@ import { Button, Card } from '../../components/ui'
 import Switch from '../../components/Switch'
 import { useProfile, useUpdateProfile } from '../../api/profile'
 import { todayStr } from '../../lib/dateUtils'
-import { PRONOUN_PRESETS } from '../../lib/pronouns'
+import { useTranslation } from 'react-i18next'
+import { PRONOUN_PRESETS, pronounPresetsFor } from '../../lib/pronouns'
 import SettingsSubHeader from './SettingsSubHeader'
 
 const CONTENT_OPTIONS: { value: string; label: string }[] = [
@@ -15,6 +16,8 @@ const CONTENT_OPTIONS: { value: string; label: string }[] = [
 export default function ProfileSettingsScreen() {
   const { data: profile } = useProfile()
   const updateProfile = useUpdateProfile()
+  const { i18n } = useTranslation()
+  const presets = pronounPresetsFor(i18n.resolvedLanguage).map((p) => p.value)
 
   const [displayName, setDisplayName] = useState('')
   const [pronouns, setPronouns] = useState('')
@@ -49,7 +52,7 @@ export default function ProfileSettingsScreen() {
         <div>
           <label className="mb-1 block text-xs text-[var(--text-muted)]">Pronomes</label>
           <div className="flex flex-wrap gap-2">
-            {PRONOUN_PRESETS.map((preset) => (
+            {presets.map((preset) => (
               <button
                 key={preset}
                 type="button"
