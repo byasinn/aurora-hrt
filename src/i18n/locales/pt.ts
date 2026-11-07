@@ -18,6 +18,7 @@ export default {
     profile: 'Perfil',
     points: 'Pontos',
     shop: 'Lojinha',
+    myItems: 'Meus itens',
     routines: 'Rotinas',
     history: 'Histórico',
     settings: 'Configurações',

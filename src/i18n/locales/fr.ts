@@ -15,6 +15,7 @@ export default {
     profile: 'Profil',
     points: 'Points',
     shop: 'Boutique',
+    myItems: 'Mes objets',
     routines: 'Routines',
     history: 'Historique',
     settings: 'Paramètres',

@@ -63,6 +63,10 @@ export default function Avatar({
   if (!visual) return inner
 
   const pad = Math.max(2, Math.round(size * (visual.thickness ?? 0.09)))
+  // A moldura não pode ocupar espaço: o avatar com moldura tem que ter exatamente o mesmo tamanho
+  // de um sem moldura, senão ele desce/desalinha nas linhas do feed, comentários e perfil. O anel
+  // transborda pra fora (margem negativa), como os enfeites.
+  const ringOverflow = pad + 1.5
   const decorated = size >= MIN_ORNAMENT_SIZE
   const ornaments =
     decorated &&
@@ -76,7 +80,8 @@ export default function Avatar({
     return (
       <span
         className="pixel-frame relative inline-flex shrink-0"
-        style={{ '--pf': visual.ring, '--pf-size': `${pad}px`, margin: pad } as CSSProperties}
+        // pixel-frame desenha a borda com box-shadow, que já fica fora da caixa — sem margem nenhuma
+        style={{ '--pf': visual.ring, '--pf-size': `${pad}px` } as CSSProperties}
       >
         {inner}
         {ornaments}
@@ -85,7 +90,7 @@ export default function Avatar({
   }
 
   return (
-    <span className="relative inline-flex shrink-0">
+    <span className="relative inline-flex shrink-0" style={{ margin: -ringOverflow }}>
       {decorated && visual.ears && (
         <svg
           aria-hidden

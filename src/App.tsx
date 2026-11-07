@@ -34,6 +34,8 @@ import ColecaoScreen from './features/points/ColecaoScreen'
 import MeasurementsScreen from './features/measurements/MeasurementsScreen'
 import LabsScreen from './features/labs/LabsScreen'
 import ShopScreen from './features/shop/ShopScreen'
+import MyItemsScreen from './features/shop/MyItemsScreen'
+import AuroraHubScreen from './features/hub/AuroraHubScreen'
 import FeedScreen from './features/feed/FeedScreen'
 import SettingsScreen from './features/settings/SettingsScreen'
 import AccountSettingsScreen from './features/settings/AccountSettingsScreen'
@@ -110,7 +112,9 @@ function RootGate() {
         <Route path="pontos/colecao" element={<ColecaoScreen />} />
         <Route path="measurements" element={<MeasurementsScreen />} />
         <Route path="labs" element={<LabsScreen />} />
+        <Route path="aurora" element={<AuroraHubScreen />} />
         <Route path="loja" element={<ShopScreen />} />
+        <Route path="meus-itens" element={<MyItemsScreen />} />
         {/* Dicas saiu — a Lojinha entrou no lugar; link antigo salvo cai lá */}
         <Route path="tips" element={<Navigate to="/loja" replace />} />
         <Route path="feed" element={<FeedScreen />} />

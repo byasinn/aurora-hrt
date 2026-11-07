@@ -9,9 +9,7 @@ import FeedItemCard from '../../components/FeedItemCard'
 import PostComments from '../../components/PostComments'
 import CommunityPostComments from '../../components/CommunityPostComments'
 import PostComposer from '../../components/PostComposer'
-import DailyNewsCard from '../../components/DailyNewsCard'
 import FollowSuggestions from '../../components/FollowSuggestions'
-import ExploreIntroBanner from '../../components/ExploreIntroBanner'
 import { useDeletePost, useRepost } from '../../api/posts'
 import { useMe } from '../../api/auth'
 import { useFeed, useLikePost, useUnlikePost, useUserSearch } from '../../api/social'
@@ -154,10 +152,6 @@ export default function FeedScreen() {
           </motion.span>
         </button>
       </div>
-
-      <ExploreIntroBanner />
-
-      <DailyNewsCard />
 
       <AnimatePresence>
         {hasNew && (

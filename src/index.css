@@ -102,10 +102,11 @@
 }
 :root[data-skin='gotico'] {
   --skin-tint: #7f1d1d;
-  /* lua grande no canto, que fica parada no fundo */
+  /* lua minguante no canto, parada no fundo: o círculo de cima é da cor do próprio fundo (var(--bg),
+     já tingido pelo tema) — com cor fixa ele aparecia como uma bola escura em cima de tudo */
   --bg-pattern:
-    radial-gradient(circle at 88% 8%, #0e1015 0 46px, transparent 47px),
-    radial-gradient(circle at 85% 10%, rgba(253, 230, 138, 0.16) 0 48px, transparent 49px);
+    radial-gradient(circle at 90% 6%, var(--bg) 0 34px, transparent 35px),
+    radial-gradient(circle at 86% 8%, rgba(253, 230, 138, 0.14) 0 36px, transparent 37px);
 }
 :root[data-skin='retro'] {
   --skin-tint: #29adff;

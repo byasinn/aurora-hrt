@@ -54,6 +54,9 @@ export default function Layout() {
   }, [location.pathname])
   const spaceActive = location.pathname === '/profile' || location.pathname === '/perfil'
   const inboxActive = location.pathname === '/inbox' || location.pathname.startsWith('/conversas')
+  const hubActive =
+    ['/aurora', '/loja', '/meus-itens', '/pontos'].some((p) => location.pathname.startsWith(p)) ||
+    !!matchPath('/comunidade*', location.pathname)
 
   const { data: messages } = useMessages()
   const { data: threads } = useConversations()
@@ -69,7 +72,8 @@ export default function Layout() {
           <button
             onClick={() => setDrawerOpen(true)}
             aria-label={t('nav.profile')}
-            className="absolute left-2 top-[max(0.25rem,calc(env(safe-area-inset-top)-0.5rem))] flex h-11 w-11 items-center justify-center rounded-full"
+            // um pouco abaixo do topo: moldura com enfeite em cima (laço, morcego, coroa) não corta na borda da tela
+            className="absolute left-2 top-[max(0.75rem,env(safe-area-inset-top))] flex h-11 w-11 items-center justify-center rounded-full"
           >
             <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} frame={profile?.equippedAvatarFrame} size={32} />
           </button>
@@ -84,16 +88,36 @@ export default function Layout() {
         <NavDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} profile={profile} />
         <nav className="fixed bottom-0 left-1/2 z-10 w-full max-w-md -translate-x-1/2 rounded-t-3xl border-t border-[var(--border)] bg-[var(--surface)]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
           <ul className="flex items-stretch justify-around px-1">
-            {navItems.map(({ to, label, Icon, match }) => {
-              const active =
-                (to === '/' ? location.pathname === '/' : location.pathname.startsWith(to)) ||
-                (match ? !!matchPath(match, location.pathname) : false)
-              return (
-                <TabItem key={to} to={to} label={label} active={active}>
-                  <Icon size={22} />
-                </TabItem>
-              )
-            })}
+            {navItems
+              .filter((item) => item.to !== '/comunidades')
+              .map(({ to, label, Icon }) => {
+                const active = to === '/' ? location.pathname === '/' : location.pathname.startsWith(to)
+                return (
+                  <TabItem key={to} to={to} label={label} active={active}>
+                    <Icon size={22} />
+                  </TabItem>
+                )
+              })}
+            <li className="flex-1">
+              {/* botão grande do meio: central do Aurora (Comunidades, Lojinha, Meus itens, Pontos) */}
+              <NavLink
+                to="/aurora"
+                onClick={() => playSound('pop')}
+                aria-label="Aurora"
+                className="flex min-h-16 flex-col items-center justify-end gap-1 pb-1.5 text-[11px] font-bold"
+              >
+                <span
+                  className={clsx(
+                    '-mt-7 flex h-16 w-16 items-center justify-center rounded-full p-[3px] transition active:scale-95 [box-shadow:var(--shadow)]',
+                    hubActive && 'scale-105',
+                  )}
+                  style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent-2))' }}
+                >
+                  <img src="/icons/icon-192.png" alt="" className="h-full w-full rounded-full border-2 border-[var(--surface)] object-cover" />
+                </span>
+                <span className={hubActive ? 'text-[var(--text)]' : 'text-[var(--text-muted)]'}>Aurora</span>
+              </NavLink>
+            </li>
             <TabItem to="/inbox" label={t('nav.messages')} active={inboxActive}>
               <MessageCircle size={22} />
               {unread > 0 && (

@@ -19,14 +19,6 @@ export function useTopicPosts(topicPageId: number | null) {
 
 /** Uma notícia só, sorteada (mas estável o dia inteiro) — a página "Notícias" virou só isso depois
  * do feedback de que várias páginas de tópico com post atrás de post ficou ruim de usar. */
-export function useDailyTopicPost() {
-  return useQuery({
-    queryKey: ['topic-posts-daily'],
-    queryFn: () => api.get<TopicPost | null>('/topic-posts/daily'),
-    staleTime: 60 * 60_000,
-  })
-}
-
 export function useFollowTopic() {
   const qc = useQueryClient()
   return useMutation({
