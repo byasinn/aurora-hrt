@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ApiError } from '../../lib/apiClient'
+import AuroraLogo from '../../components/AuroraLogo'
 import { useVerifyEmail } from '../../api/auth'
 
 export default function VerifyEmailScreen() {
@@ -29,7 +30,9 @@ export default function VerifyEmailScreen() {
   return (
     <div className="flex min-h-app items-center justify-center px-6">
       <div className="w-full max-w-xs rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 text-center shadow-xl">
-        <h1 className="font-logo mb-3 text-2xl uppercase tracking-wide text-[var(--text)]">Aurora</h1>
+        <h1 className="mb-3 flex justify-center">
+          <AuroraLogo height={30} />
+        </h1>
         {verify.isPending && <p className="text-sm text-[var(--text-muted)]">Confirmando seu email…</p>}
         {done && (
           <>

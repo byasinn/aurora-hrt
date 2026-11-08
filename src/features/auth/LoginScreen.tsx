@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import AuroraLogo from '../../components/AuroraLogo'
 import { ApiError } from '../../lib/apiClient'
 import { useLogin, useRequestPasswordReset, useResendVerification, useSignup } from '../../api/auth'
 
@@ -100,7 +101,9 @@ export default function LoginScreen({ authError }: { authError?: string | null }
   return (
     <div className="flex min-h-app items-center justify-center px-6">
       <div className="w-full max-w-xs rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-xl">
-        <h1 className="font-logo mb-1 text-2xl uppercase tracking-wide text-[var(--text)]">{t('common.appName')}</h1>
+        <h1 className="mb-1 flex justify-center">
+          <AuroraLogo height={30} />
+        </h1>
         <p className="mb-4 text-sm text-[var(--text-muted)]">
           {mode === 'login' && t('auth.loginSubtitle')}
           {mode === 'signup' && t('auth.signupSubtitle')}

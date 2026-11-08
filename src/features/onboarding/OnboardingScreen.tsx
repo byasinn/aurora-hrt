@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import AuroraLogo from '../../components/AuroraLogo'
 import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
 import { BellRing, CircleHelp, Flower2, UserRound, type LucideIcon } from 'lucide-react'
@@ -260,7 +261,9 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
                   <PixelIcon name="heart" size={40} palette={{ a: '#f5a9b8' }} />
                   <PixelIcon name="sparkle" size={22} palette={{ a: '#5bcefa', b: '#f5a9b8' }} />
                 </div>
-                <p className="font-logo flag-gradient-text text-3xl uppercase tracking-wide">{t('common.appName')}</p>
+                <h1 className="flex justify-center">
+                  <AuroraLogo height={40} />
+                </h1>
                 <h1 className="mt-3 text-2xl font-extrabold">{t('onboarding.welcome.title')}</h1>
                 <p className="mt-1 text-[15px] text-[var(--text-muted)]">{t('onboarding.welcome.subtitle')}</p>
 

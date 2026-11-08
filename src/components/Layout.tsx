@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { NavLink, Outlet, useLocation, matchPath } from 'react-router-dom'
+import AuroraLogo from './AuroraLogo'
 import { MessageCircle } from './icons'
 import clsx from 'clsx'
 import { useTranslation } from 'react-i18next'
@@ -72,7 +73,7 @@ export default function Layout() {
         {/* Sem foto de perfil aqui: ela ficava por cima do primeiro card. O perfil fica no "Meu espaço"
             da barra de baixo, e o que a gaveta do avatar tinha está no Meu espaço e na central do Aurora. */}
         <header className="flex items-center justify-center pb-2 pt-[max(0.75rem,env(safe-area-inset-top))] lg:hidden">
-          <span className="font-logo flag-gradient-text text-lg uppercase tracking-wide">Aurora</span>
+          <AuroraLogo height={22} />
         </header>
         {/* Quem rola é o documento, não o <main>. Com overflow-y-auto aqui (sem altura travada) o <main>
             virava um scroll container que nunca rolava, e o overscroll-contain bloqueava a rolagem de

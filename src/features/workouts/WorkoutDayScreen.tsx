@@ -1,7 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { Undo2, PlayCircle } from 'lucide-react'
-import { ArrowLeft, Check, Plus, Trophy, Pencil } from '../../components/icons'
+import { ArrowLeft, Check, Plus, Trophy, Pencil, Undo2, PlayCircle } from '../../components/icons'
 import { Button, Card, EmptyState } from '../../components/ui'
 import RestTimer from '../../components/RestTimer'
 import PinterestEmbed from '../../components/PinterestEmbed'

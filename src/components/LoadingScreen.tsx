@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
+import AuroraLogo from './AuroraLogo'
 import { Sparkles } from './icons'
 
 const MESSAGES = [
@@ -19,9 +20,9 @@ export default function LoadingScreen() {
 
   return (
     <div className="flex min-h-app flex-col items-center justify-center gap-4 px-6 text-center">
-      <span className="font-logo flag-gradient-text flex items-center gap-2 text-3xl uppercase tracking-wide">
+      <span className="flex items-center gap-2">
         <Sparkles size={26} className="text-[var(--accent)]" />
-        Aurora
+        <AuroraLogo height={36} />
       </span>
       <Loader2 size={28} className="animate-spin text-[var(--accent)]" />
       <p className="max-w-xs text-sm text-[var(--text-muted)]">{MESSAGES[index]}</p>

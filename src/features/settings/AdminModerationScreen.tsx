@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Ban } from 'lucide-react'
-import { ChevronLeft, Flag, Trash2 } from '../../components/icons'
+import { ChevronLeft, Flag, Trash2, Ban } from '../../components/icons'
 import clsx from 'clsx'
 import { Card, Button, EmptyState, ScreenTitle } from '../../components/ui'
 import { useReports, useUpdateReportStatus } from '../../api/reports'

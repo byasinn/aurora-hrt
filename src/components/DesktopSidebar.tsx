@@ -1,5 +1,6 @@
 import { NavLink, matchPath, useLocation } from 'react-router-dom'
 import { MessageCircle, User } from './icons'
+import AuroraLogo from './AuroraLogo'
 import clsx from 'clsx'
 import { useTranslation } from 'react-i18next'
 import Avatar from './Avatar'
@@ -63,7 +64,7 @@ export default function DesktopSidebar({ profile, unread }: { profile: Profile |
 
   return (
     <aside className="sticky top-0 hidden h-app w-64 shrink-0 flex-col gap-6 overflow-y-auto py-8 pl-6 pr-2 lg:flex">
-      <span className="font-logo flag-gradient-text px-3 text-2xl uppercase tracking-wide">Aurora</span>
+      <AuroraLogo height={30} className="mx-3" />
 
       <nav className="space-y-1">
         {main.map((item) => (

@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { CheckCircle2 } from 'lucide-react'
-import { ChevronRight, Flame, History, Pencil, Plus, Trash2, Trophy } from '../../components/icons'
+import { ChevronRight, CheckCircle2, Flame, History, Pencil, Plus, Trash2, Trophy } from '../../components/icons'
 import { Button, Card, EmptyState, ScreenTitle } from '../../components/ui'
 import Switch from '../../components/Switch'
 import IconOrEmoji from '../../components/IconOrEmoji'

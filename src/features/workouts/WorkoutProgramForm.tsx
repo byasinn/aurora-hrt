@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { BookOpen, Link2 } from 'lucide-react'
-import { Plus, Trash2 } from '../../components/icons'
+import { Plus, Trash2, BookOpen, Link2 } from '../../components/icons'
 import { Button, Card } from '../../components/ui'
 import { useCreateWorkoutProgram, useUpdateWorkoutProgram } from '../../api/workouts'
 import { ROUTINE_ICON_OPTIONS, DEFAULT_ROUTINE_ICON_KEY } from '../../lib/routineIcons'

@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
-import { FlaskConical } from 'lucide-react'
-import { Pill, Ruler, Store } from '../../components/icons'
+import { Pill, Ruler, Store, FlaskConical } from '../../components/icons'
 import { Card, ScreenTitle } from '../../components/ui'
 
 const LINKS = [

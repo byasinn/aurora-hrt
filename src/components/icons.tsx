@@ -1,38 +1,9 @@
-import { forwardRef } from 'react'
 import * as Lucide from 'lucide-react'
-import type { LucideIcon, LucideProps } from 'lucide-react'
-import PixelIcon, { type PixelIconName } from './PixelIcon'
-import { useIconStyle } from './AppIcon'
+import { pixelize } from '../lib/pixelize'
 
 // Ícones com o mesmo nome dos do lucide-react, que viram pixel art no visual 8-bit e voltam ao de
 // linha no Clean. As telas importam daqui em vez de 'lucide-react' — trocar o visual não precisa
 // mexer em tela nenhuma. Ícone que não está aqui continua vindo direto do lucide.
-
-interface PixelOptions {
-  /** versão pra quando o ícone vem preenchido (fill diferente de "none"), ex.: coração curtido */
-  filled?: { name: PixelIconName; palette?: Record<string, string> }
-}
-
-function pixelize(LineIcon: LucideIcon, pixel: PixelIconName, options: PixelOptions = {}): LucideIcon {
-  const Icon = forwardRef<SVGSVGElement, LucideProps>((props, ref) => {
-    const style = useIconStyle((s) => s.style)
-    if (style !== 'pixel') return <LineIcon ref={ref} {...props} />
-    const size = Number(props.size ?? 24)
-    const isFilled = options.filled && props.fill != null && props.fill !== 'none'
-    // pixel art tem traço mais grosso que o de linha — um tiquinho menor fica com o mesmo peso visual
-    return (
-      <PixelIcon
-        name={isFilled ? options.filled!.name : pixel}
-        palette={isFilled ? options.filled!.palette : undefined}
-        size={Math.round(size * 0.9)}
-        className={props.className}
-      />
-    )
-  })
-  Icon.displayName = `Pixel(${pixel})`
-  // mesma "cara" de tipo do lucide, pra continuar valendo onde o código espera um LucideIcon
-  return Icon as unknown as LucideIcon
-}
 
 export const Plus = pixelize(Lucide.Plus, 'plus')
 export const Minus = pixelize(Lucide.Minus, 'minus')
@@ -82,3 +53,12 @@ export const Image = pixelize(Lucide.Image, 'picture')
 export const Star = pixelize(Lucide.Star, 'star')
 export const Gem = pixelize(Lucide.Gem, 'sparkle')
 export const Coins = pixelize(Lucide.Coins, 'coin')
+export const CheckCircle2 = pixelize(Lucide.CheckCircle2, 'checkCircle')
+export const Play = pixelize(Lucide.Play, 'play')
+export const Pause = pixelize(Lucide.Pause, 'pause')
+export const PlayCircle = pixelize(Lucide.PlayCircle, 'playCircle')
+export const Undo2 = pixelize(Lucide.Undo2, 'undo')
+export const BookOpen = pixelize(Lucide.BookOpen, 'book')
+export const Link2 = pixelize(Lucide.Link2, 'link')
+export const FlaskConical = pixelize(Lucide.FlaskConical, 'flask')
+export const Ban = pixelize(Lucide.Ban, 'ban')

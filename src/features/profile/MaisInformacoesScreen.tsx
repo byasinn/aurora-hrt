@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Link2 } from 'lucide-react'
-import { ChevronLeft, ChevronRight, Pill } from '../../components/icons'
+import { ChevronLeft, ChevronRight, Pill, Link2 } from '../../components/icons'
 import { Card, ScreenTitle } from '../../components/ui'
 
 const INFO_LINKS = [

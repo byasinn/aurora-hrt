@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
+import AuroraLogo from '../../components/AuroraLogo'
 import { useMe } from '../../api/auth'
 import { isFaceIdEnabled, authenticateFaceId } from '../../lib/faceId'
 import LoadingScreen from '../../components/LoadingScreen'
@@ -46,7 +47,9 @@ export default function AuthGate({ children }: { children: ReactNode }) {
       <div className="flex min-h-app items-center justify-center px-6">
         <div className="w-full max-w-xs rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 text-center shadow-xl">
           <p className="mb-3 text-4xl">🔒</p>
-          <h1 className="font-logo mb-1 text-2xl uppercase tracking-wide text-[var(--text)]">Aurora</h1>
+          <h1 className="mb-1 flex justify-center">
+          <AuroraLogo height={30} />
+        </h1>
           <p className="mb-4 text-sm text-[var(--text-muted)]">Desbloqueie com Face ID / Touch ID.</p>
           {faceIdError && <p className="mb-3 text-sm text-red-400">{faceIdError}</p>}
           <button

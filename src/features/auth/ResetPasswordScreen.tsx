@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { ApiError } from '../../lib/apiClient'
+import AuroraLogo from '../../components/AuroraLogo'
 import { useResetPassword } from '../../api/auth'
 
 export default function ResetPasswordScreen() {
@@ -33,7 +34,9 @@ export default function ResetPasswordScreen() {
     return (
       <div className="flex min-h-app items-center justify-center px-6">
         <div className="w-full max-w-xs rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 text-center shadow-xl">
-          <h1 className="font-logo mb-3 text-2xl uppercase tracking-wide text-[var(--text)]">Aurora</h1>
+          <h1 className="mb-3 flex justify-center">
+          <AuroraLogo height={30} />
+        </h1>
           <p className="mb-3 text-sm text-emerald-400">Senha alterada! Você já está logado.</p>
           <a href="/" className="text-sm text-[var(--accent)] underline">
             Ir para o app
@@ -49,7 +52,9 @@ export default function ResetPasswordScreen() {
         onSubmit={handleSubmit}
         className="w-full max-w-xs rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-xl"
       >
-        <h1 className="font-logo mb-1 text-2xl uppercase tracking-wide text-[var(--text)]">Aurora</h1>
+        <h1 className="mb-1 flex justify-center">
+          <AuroraLogo height={30} />
+        </h1>
         <p className="mb-4 text-sm text-[var(--text-muted)]">Escolha uma nova senha.</p>
         <input
           type="password"

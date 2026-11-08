@@ -22,6 +22,7 @@ export default function RoutinesScreen() {
         <ScreenTitle>Rotinas</ScreenTitle>
         <button
           onClick={() => setFormState(formState === 'closed' ? 'create' : 'closed')}
+          aria-label="Nova rotina"
           className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-contrast)]"
         >
           <Plus size={18} />
