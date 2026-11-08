@@ -3,9 +3,8 @@ import { persist } from 'zustand/middleware'
 import type { LucideIcon } from 'lucide-react'
 import PixelIcon, { type PixelIconName } from './PixelIcon'
 
-// Estilo dos ícones das telas principais: pixel art (8-bit) ou os de linha clássicos. Fica numa
-// chave em Aparência pra dar pra voltar ao clássico se o pixel não agradar — por isso cada uso
-// passa as duas versões em vez de trocar o ícone de vez.
+// Visual do app: Clean (padrão, ícones de linha) ou 8-bit (opcional: pixel art e fonte de jogo).
+// Escolhe no onboarding ou em Aparência — por isso cada uso passa as duas versões do ícone.
 
 export type IconStyle = 'pixel' | 'classic'
 
@@ -17,7 +16,7 @@ interface IconStyleState {
 export const useIconStyle = create<IconStyleState>()(
   persist(
     (set) => ({
-      style: 'pixel',
+      style: 'classic',
       setStyle: (style) => set({ style }),
     }),
     { name: 'transapp.iconStyle' },

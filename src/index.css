@@ -162,16 +162,50 @@ select {
 /* ---- Toques de pixel art -------------------------------------------------------------------
    O app é limpo; o pixel aparece só em detalhes (Brilho, conquistas, lojinha, molduras). */
 
+/* Fonte pixel do 8-bit: Jersey 20 — de todas as pixel que testamos é a que não confunde C com O
+   nem 8 com S em tamanho pequeno. Ela é mais "baixinha" que a Nunito; o font-size-adjust iguala a
+   altura das letras, então o mesmo text-sm fica do mesmo tamanho nos dois visuais. Sem negrito
+   falso (font-synthesis): a fonte só tem um peso e o negrito sintético borra os pixels. */
 .font-pixel {
-  font-family: 'Pixelify Sans', ui-monospace, monospace;
+  font-family: 'Jersey 20', ui-monospace, monospace;
+  font-size-adjust: 0.52;
+  font-synthesis-weight: none;
   letter-spacing: 0.02em;
 }
 
-/* 8-bit: títulos na fonte pixel. Texto corrido (posts, descrições) segue na Nunito pra ler bem. */
-:root:not([data-visual='clean']) :is(h1, h2, h3) {
-  font-family: 'Pixelify Sans', 'Nunito', system-ui, sans-serif;
-  font-weight: 700;
+/* Logo no 8-bit: letreiro de jogo (Press Start 2P), degradê em faixas e sombra dura de pixel */
+.aurora-logo-pixel {
+  font-family: 'Press Start 2P', system-ui, sans-serif;
+  font-weight: 400;
+  font-size-adjust: none;
+  line-height: 1;
+  letter-spacing: 0;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--accent) 45%, #ffffff) 0 40%,
+    var(--accent) 40% 70%,
+    var(--accent-2) 70% 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0.1em 0.1em 0 color-mix(in srgb, var(--accent) 30%, #1b1030));
+}
+
+/* 8-bit: a interface toda na fonte pixel. O que as pessoas escrevem (posts, comentários, conversas,
+   bio) e os campos de digitar ficam na Nunito (.user-text) — texto longo em fonte pixel cansa. */
+:root[data-visual='8bit'] body {
+  font-family: 'Jersey 20', 'Nunito', system-ui, sans-serif;
+  font-size-adjust: 0.52;
+  font-synthesis-weight: none;
   letter-spacing: 0.01em;
+}
+
+:root[data-visual='8bit'] :is(input, textarea, select, .user-text) {
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-size-adjust: none;
+  font-synthesis-weight: auto;
+  letter-spacing: normal;
 }
 
 :root[data-visual='clean'] .font-pixel {

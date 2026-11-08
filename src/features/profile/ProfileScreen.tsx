@@ -17,17 +17,17 @@ import { computeWeeklySummary } from '../../lib/insights'
 import { todayStr } from '../../lib/dateUtils'
 
 const BASE_QUICK_LINKS = [
-  { to: '/saude', label: 'Saúde', icon: HeartPulse, pixel: 'health' },
-  { to: '/routines', label: 'Rotinas', icon: ListChecks, pixel: 'checklist' },
-  { to: '/calendar', label: 'Histórico', icon: Calendar, pixel: 'calendar' },
-  { to: '/comunidades', label: 'Comunidades', icon: Users, pixel: 'users' },
+  { to: '/saude', label: 'Saúde', icon: HeartPulse, pixel: 'healthColor' },
+  { to: '/routines', label: 'Rotinas', icon: ListChecks, pixel: 'checklistColor' },
+  { to: '/calendar', label: 'Histórico', icon: Calendar, pixel: 'calendarColor' },
+  { to: '/comunidades', label: 'Comunidades', icon: Users, pixel: 'usersColor' },
   { to: '/pontos', label: 'Pontos', icon: Sparkles, pixel: 'star' },
 ]
 
 export default function ProfileScreen() {
   const { data: profile } = useProfile()
   let quickLinks = BASE_QUICK_LINKS as { to: string; label: string; icon: typeof HeartPulse; pixel?: PixelIconName }[]
-  if (profile?.workoutsEnabled) quickLinks = [...quickLinks, { to: '/treinos', label: 'Treinos', icon: Dumbbell, pixel: 'dumbbell' }]
+  if (profile?.workoutsEnabled) quickLinks = [...quickLinks, { to: '/treinos', label: 'Treinos', icon: Dumbbell, pixel: 'dumbbellColor' }]
   const pointsStats = usePointsStats()
   const sfwTitle = currentTitle(pointsStats.brilho)
   const SfwTitleIcon = getCollectibleIcon(sfwTitle.icon)
@@ -68,7 +68,7 @@ export default function ProfileScreen() {
                 className="ring-4 ring-[var(--surface)]"
               />
               <p className="mt-2 font-semibold text-[var(--text)]">{profile?.displayName || 'Sem nome ainda'}</p>
-              <p className="text-xs text-[var(--text-muted)]">
+              <p className="user-text text-xs text-[var(--text-muted)]">
                 {profile?.bio || profile?.pronouns || 'Toque para completar seu perfil'}
               </p>
               <div className="mt-2 flex items-center justify-between">

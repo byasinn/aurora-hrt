@@ -74,7 +74,7 @@ function CommentRow({
           </Link>{' '}
           <span className="text-[var(--text-muted)]">{timeAgo(comment.createdAt)}</span>
         </p>
-        <p className="text-sm text-[var(--text)]">{comment.text}</p>
+        <p className="user-text text-sm text-[var(--text)]">{comment.text}</p>
         <div className="mt-1 flex items-center gap-3">
           <button
             onClick={() => {

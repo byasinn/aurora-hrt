@@ -53,7 +53,7 @@ export default function ConversationScreen() {
             <div key={m.id} className={clsx('flex flex-col', isMine ? 'items-end' : 'items-start')}>
               <div
                 className={clsx(
-                  'max-w-[75%] rounded-2xl px-3 py-2 text-sm',
+                  'user-text max-w-[75%] rounded-2xl px-3 py-2 text-sm',
                   isMine
                     ? 'bg-[var(--accent)] text-[var(--accent-contrast)]'
                     : 'border border-[var(--border)] bg-[var(--surface)] text-[var(--text)]',

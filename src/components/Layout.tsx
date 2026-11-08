@@ -121,7 +121,7 @@ export default function Layout() {
               </NavLink>
             </li>
             <TabItem to="/inbox" label={t('nav.messages')} active={inboxActive}>
-              <AppIcon icon={MessageCircle} pixel="chat" size={22} />
+              <AppIcon icon={MessageCircle} pixel="chatColor" size={22} />
               {unread > 0 && (
                 <span className="absolute right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
                   {unread}

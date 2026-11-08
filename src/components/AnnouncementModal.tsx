@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Button, Card } from './ui'
 import { useLatestAnnouncement } from '../api/announcements'
 import { useAnnouncementReplay } from '../lib/announcementReplay'
+import VisualIntroModal from './VisualIntroModal'
 
 const STORAGE_KEY = 'aurora-last-seen-announcement'
 
@@ -11,7 +12,7 @@ const STORAGE_KEY = 'aurora-last-seen-announcement'
  * já foi vista, então basta criar um anúncio novo (painel de admin) pra avisar todo mundo de novo,
  * sem precisar mudar código nenhum. Não aparece de novo pro mesmo dispositivo até a próxima versão. */
 export default function AnnouncementModal() {
-  const { data: announcement } = useLatestAnnouncement(true)
+  const { data: announcement, isPending } = useLatestAnnouncement(true)
   const [dismissed, setDismissed] = useState(false)
   const replayVersion = useAnnouncementReplay((s) => s.replayVersion)
   const clearReplay = useAnnouncementReplay((s) => s.clear)
@@ -20,7 +21,9 @@ export default function AnnouncementModal() {
     setDismissed(false)
   }, [announcement?.id])
 
-  if (!announcement) return null
+  // o aviso do 8-bit espera o de versão nova: só aparece quando não tem anúncio (ou ele já foi fechado)
+  if (isPending) return null
+  if (!announcement) return <VisualIntroModal />
 
   let lastSeen: string | null = null
   try {
@@ -42,6 +45,7 @@ export default function AnnouncementModal() {
   }
 
   const open = replaying || (!alreadySeen && !dismissed)
+  if (!open && !replayVersion) return <VisualIntroModal />
 
   return (
     <AnimatePresence>

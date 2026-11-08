@@ -3,12 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 import AuroraLogo from '../../components/AuroraLogo'
 import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
-import { BellRing, CircleHelp, Flower2, UserRound, type LucideIcon } from 'lucide-react'
-import { Bell, Calendar, Camera, Check, Droplet, Dumbbell, Heart, Home, MessageCircle, Pill, Ruler, Sparkles, Store, Users } from '../../components/icons'
+import { BellRing, CircleHelp, Flower2, type LucideIcon } from 'lucide-react'
+import { Bell, Calendar, Camera, Check, Droplet, Dumbbell, Heart, MessageCircle, Pill, Ruler, Sparkles, Store, Users } from '../../components/icons'
 import { Button } from '../../components/ui'
 import Avatar from '../../components/Avatar'
 import PixelIcon from '../../components/PixelIcon'
-import { useIconStyle } from '../../components/AppIcon'
+import VisualStylePicker from '../../components/VisualStylePicker'
+import { markVisualIntroSeen } from '../../components/VisualIntroModal'
 import ImageCropper from '../../components/ImageCropper'
 import { useUpdateProfile } from '../../api/profile'
 import { useEquipItem } from '../../api/shop'
@@ -27,7 +28,7 @@ import type { TextStyle, ContentPreference, AppModule } from '../../../shared/ty
 // Sete passos curtos em vez de onze telas de uma pergunta só: perguntas que andam juntas ficam na
 // mesma tela, e o que faz o app servir desde o primeiro dia (lembrete de dose, tema, primeiros
 // passos) entra no caminho em vez de ficar escondido em Configurações.
-const STEPS = ['welcome', 'you', 'journey', 'medication', 'modules', 'look', 'done'] as const
+const STEPS = ['welcome', 'you', 'journey', 'medication', 'modules', 'look', 'visual', 'done'] as const
 type Step = (typeof STEPS)[number]
 
 type HrtAnswer = 'yes' | 'planning' | 'unsure'
@@ -127,8 +128,6 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
   const equip = useEquipItem()
   const { data: medications } = useMedications()
   const mode = useThemeStore((s) => s.mode)
-  const iconStyle = useIconStyle((s) => s.style)
-  const setIconStyle = useIconStyle((s) => s.setStyle)
   const [stepIndex, setStepIndex] = useState(0)
   const step: Step = STEPS[stepIndex]
 
@@ -217,6 +216,7 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
         useFrame ? equip.mutateAsync({ kind: 'avatarFrame', itemKey: 'frame-brilho' }) : Promise.resolve(),
       ])
       playSound('success')
+      markVisualIntroSeen() // quem já escolheu o visual aqui não precisa do aviso "chegou o 8-bit"
       onComplete()
     } finally {
       setSaving(false)
@@ -230,6 +230,7 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
     medication: true,
     modules: true,
     look: true,
+    visual: true,
     done: true,
   }
 
@@ -563,43 +564,13 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
                     </button>
                   ))}
                 </div>
+              </div>
+            )}
 
-                <SectionLabel>{t('onboarding.look.iconsTitle')}</SectionLabel>
-                {/* troca na hora (o estilo fica salvo no aparelho) — dá pra mudar depois em Aparência */}
-                <div className="grid grid-cols-2 gap-2">
-                  {(['pixel', 'classic'] as const).map((value) => (
-                    <button
-                      key={value}
-                      type="button"
-                      aria-pressed={iconStyle === value}
-                      onClick={() => {
-                        playSound('tap')
-                        setIconStyle(value)
-                      }}
-                      className={clsx(
-                        'flex min-h-16 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 text-sm font-bold transition active:scale-[0.98]',
-                        iconStyle === value ? 'border-[var(--accent)] bg-[var(--accent-soft)]' : 'border-[var(--border)] bg-[var(--surface)]',
-                      )}
-                    >
-                      <span className="flex items-center gap-2 text-[var(--accent)]">
-                        {value === 'pixel' ? (
-                          <>
-                            <PixelIcon name="home" size={20} />
-                            <PixelIcon name="chat" size={20} />
-                            <PixelIcon name="user" size={20} />
-                          </>
-                        ) : (
-                          <>
-                            <Home size={22} />
-                            <MessageCircle size={22} />
-                            <UserRound size={22} />
-                          </>
-                        )}
-                      </span>
-                      {value === 'pixel' ? t('onboarding.look.iconsPixel') : t('onboarding.look.iconsClassic')}
-                    </button>
-                  ))}
-                </div>
+            {step === 'visual' && (
+              <div>
+                <StepTitle title={t('visual.title')} subtitle={t('visual.subtitle')} />
+                <VisualStylePicker />
               </div>
             )}
 

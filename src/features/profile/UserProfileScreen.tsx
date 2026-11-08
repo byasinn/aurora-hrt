@@ -149,7 +149,7 @@ export default function UserProfileScreen() {
 
         {profile.bio && (
           <div className="mt-3">
-            <p className="text-sm text-[var(--text)]">{profile.bio}</p>
+            <p className="user-text text-sm text-[var(--text)]">{profile.bio}</p>
           </div>
         )}
 

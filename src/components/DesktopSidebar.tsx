@@ -70,7 +70,7 @@ export default function DesktopSidebar({ profile, unread }: { profile: Profile |
         {main.map((item) => (
           <SidebarLink key={item.to} item={item} />
         ))}
-        <SidebarLink item={{ to: '/inbox', label: t('nav.messages'), Icon: MessageCircle, pixel: 'chat' }} active={inboxActive} badge={unread} />
+        <SidebarLink item={{ to: '/inbox', label: t('nav.messages'), Icon: MessageCircle, pixel: 'chatColor' }} active={inboxActive} badge={unread} />
         <SidebarLink
           item={{ to: '/profile', label: t('nav.mySpace'), Icon: User }}
           active={spaceActive}

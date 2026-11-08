@@ -69,8 +69,8 @@ export default function AuroraHubScreen() {
       <div className="grid grid-cols-2 gap-3">
         <HubCard
           to="/comunidades"
-          icon={<AppIcon icon={Users} pixel="users" size={24} className="text-white" />}
-          background="linear-gradient(135deg, var(--accent), var(--accent-2))"
+          icon={<AppIcon icon={Users} pixel="usersColor" size={26} className="text-[var(--accent)]" />}
+          background="var(--accent-soft)"
           title="Comunidades"
           description="Grupos pra conversar sobre o que importa"
         />

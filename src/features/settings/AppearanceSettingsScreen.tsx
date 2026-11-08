@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom'
 import { Smartphone, Volume2 } from 'lucide-react'
-import { Check, ChevronRight, Home, MessageCircle, Store, User } from '../../components/icons'
-import PixelIcon from '../../components/PixelIcon'
-import { useIconStyle } from '../../components/AppIcon'
+import { Check, ChevronRight, Store } from '../../components/icons'
+import { useTranslation } from 'react-i18next'
+import VisualStylePicker from '../../components/VisualStylePicker'
 import clsx from 'clsx'
 import { Card } from '../../components/ui'
 import { useThemeStore } from '../../lib/themeStore'
@@ -33,7 +33,7 @@ export default function AppearanceSettingsScreen() {
   const currentTheme = profile?.equippedTheme ?? DEFAULT_THEME[mode]
   const updateProfile = useUpdateProfile()
   const sounds = useSoundStore()
-  const iconStyle = useIconStyle()
+  const { t } = useTranslation()
 
   return (
     <div className="space-y-4">
@@ -75,49 +75,8 @@ export default function AppearanceSettingsScreen() {
       </Card>
 
       <Card className="space-y-3">
-        <div>
-          <p className="font-bold text-[var(--text)]">Visual</p>
-          <p className="text-xs text-[var(--text-muted)]">8-bit tem ícones e detalhes em pixel art; Clean é tudo como era antes</p>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          {(
-            [
-              ['pixel', '8-bit'],
-              ['classic', 'Clean'],
-            ] as const
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              aria-pressed={iconStyle.style === value}
-              onClick={() => {
-                playSound('tap')
-                iconStyle.setStyle(value)
-              }}
-              className={clsx(
-                'flex min-h-16 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 text-sm font-bold transition',
-                iconStyle.style === value ? 'border-[var(--accent)] bg-[var(--accent-soft)]' : 'border-[var(--border)]',
-              )}
-            >
-              <span className="flex items-center gap-2 text-[var(--accent)]">
-                {value === 'pixel' ? (
-                  <>
-                    <PixelIcon name="home" size={20} />
-                    <PixelIcon name="chat" size={20} />
-                    <PixelIcon name="user" size={20} />
-                  </>
-                ) : (
-                  <>
-                    <Home size={22} />
-                    <MessageCircle size={22} />
-                    <User size={22} />
-                  </>
-                )}
-              </span>
-              <span className="text-[var(--text)]">{label}</span>
-            </button>
-          ))}
-        </div>
+        <p className="font-bold text-[var(--text)]">{t('onboarding.look.iconsTitle')}</p>
+        <VisualStylePicker showHowToChange={false} />
       </Card>
 
       <Card className="flex items-center gap-3">

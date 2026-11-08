@@ -16,9 +16,9 @@ export interface NavItem {
 export function useMainNavItems(): NavItem[] {
   const { t } = useTranslation()
   return [
-    { to: '/', label: t('nav.home'), Icon: Home, pixel: 'home' },
-    { to: '/feed', label: t('nav.explore'), Icon: Image, pixel: 'picture' },
-    { to: '/comunidades', label: t('nav.communities'), Icon: Users, pixel: 'users', match: '/comunidade*' },
+    { to: '/', label: t('nav.home'), Icon: Home, pixel: 'homeColor' },
+    { to: '/feed', label: t('nav.explore'), Icon: Image, pixel: 'compass' },
+    { to: '/comunidades', label: t('nav.communities'), Icon: Users, pixel: 'usersColor', match: '/comunidade*' },
   ]
 }
 
@@ -30,8 +30,8 @@ export function useSecondaryNavItems(): NavItem[] {
     { to: '/pontos', label: t('nav.points'), Icon: Sparkles, pixel: 'star' },
     { to: '/loja', label: t('nav.shop'), Icon: Store, pixel: 'bag' },
     { to: '/meus-itens', label: t('nav.myItems'), Icon: Gem, pixel: 'sparkle' },
-    { to: '/routines', label: t('nav.routines'), Icon: ListChecks, pixel: 'checklist' },
-    { to: '/calendar', label: t('nav.history'), Icon: Calendar, pixel: 'calendar' },
-    { to: '/settings', label: t('nav.settings'), Icon: Settings, pixel: 'gear' },
+    { to: '/routines', label: t('nav.routines'), Icon: ListChecks, pixel: 'checklistColor' },
+    { to: '/calendar', label: t('nav.history'), Icon: Calendar, pixel: 'calendarColor' },
+    { to: '/settings', label: t('nav.settings'), Icon: Settings, pixel: 'gearColor' },
   ]
 }
