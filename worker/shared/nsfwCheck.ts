@@ -3,6 +3,8 @@ import type { Env } from '../env'
 export interface NsfwCheckResult {
   flagged: boolean
   reason?: string
+  /** resposta crua da Sightengine (probabilidades), guardada na quarentena pra admin ver o porquê */
+  scores?: Record<string, unknown>
 }
 
 /**
@@ -42,7 +44,7 @@ export async function checkNsfw(env: Env, imageBytes: ArrayBuffer, contentType: 
     // "none" é a probabilidade de a imagem NÃO ter nudez — abaixo de 0.8 já é motivo pra barrar.
     // (fica logado acima pra confirmar o formato real da resposta na prática e ajustar se precisar)
     if (typeof none === 'number' && none < 0.8) {
-      return { flagged: true, reason: 'conteúdo adulto detectado' }
+      return { flagged: true, reason: 'conteúdo adulto detectado', scores: data.nudity }
     }
     return { flagged: false }
   } catch (err) {

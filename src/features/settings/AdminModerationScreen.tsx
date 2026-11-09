@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { ChevronLeft, Flag, Trash2, Ban } from '../../components/icons'
+import { Flag, Trash2, Ban } from '../../components/icons'
 import clsx from 'clsx'
 import { Card, Button, EmptyState, ScreenTitle } from '../../components/ui'
 import { useReports, useUpdateReportStatus } from '../../api/reports'
@@ -20,6 +19,10 @@ const ACTION_LABELS: Record<string, string> = {
   delete_community_post: 'Apagou post de comunidade',
   delete_comment: 'Apagou comentário',
   delete_community_comment: 'Apagou comentário de comunidade',
+  ban_user: 'Baniu conta',
+  unban_user: 'Desbaniu conta',
+  approve_image: 'Liberou imagem barrada',
+  delete_quarantined_image: 'Apagou imagem barrada',
 }
 
 type Tab = 'reports' | 'log' | 'banned'
@@ -29,8 +32,8 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'banned', label: 'Banidos' },
 ]
 
-export default function AdminModerationScreen() {
-  const [tab, setTab] = useState<Tab>('reports')
+export default function AdminModerationScreen({ initialTab = 'reports' }: { initialTab?: Tab }) {
+  const [tab, setTab] = useState<Tab>(initialTab)
   const { data: reports, isLoading: reportsLoading } = useReports(tab === 'reports')
   const {
     data: logPages,
@@ -49,9 +52,6 @@ export default function AdminModerationScreen() {
 
   return (
     <div className="space-y-4">
-      <Link to="/settings/admin" className="flex items-center gap-1 text-sm text-[var(--text-muted)]">
-        <ChevronLeft size={16} /> Administração
-      </Link>
       <ScreenTitle>Moderação</ScreenTitle>
 
       <div className="flex gap-2">

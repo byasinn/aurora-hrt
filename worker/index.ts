@@ -8,6 +8,7 @@ import { isRateLimited, isRateLimitedInMemory, clientIp } from './shared/rateLim
 
 import achievements from './routes/achievements'
 import adminBootstrap from './routes/admin-bootstrap'
+import adminPanel from './routes/admin-panel'
 import adminUsers from './routes/admin-users'
 import announcements from './routes/announcements'
 import adminMigrateImages from './routes/admin-migrate-images'
@@ -157,6 +158,7 @@ const routes = [
   achievements,
   announcements,
   adminBootstrap,
+  adminPanel,
   adminUsers,
   adminMigrateImages,
   adminWipeImages,

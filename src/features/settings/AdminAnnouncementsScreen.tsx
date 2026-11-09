@@ -1,7 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { Megaphone } from 'lucide-react'
-import { ChevronLeft } from '../../components/icons'
 import { Card, Button } from '../../components/ui'
 import { useLatestAnnouncement, useCreateAnnouncement } from '../../api/announcements'
 import { toastError } from '../../lib/toast'
@@ -31,9 +29,6 @@ export default function AdminAnnouncementsScreen() {
 
   return (
     <div className="space-y-4">
-      <Link to="/settings/admin" className="flex items-center gap-1 text-sm text-[var(--text-muted)]">
-        <ChevronLeft size={16} /> Administração
-      </Link>
       <div className="flex items-center gap-2">
         <Megaphone size={20} className="text-[var(--accent)]" />
         <h1 className="text-xl font-semibold text-[var(--text)]">Avisos de versão</h1>

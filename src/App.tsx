@@ -46,7 +46,11 @@ import NotificationsSettingsScreen from './features/settings/NotificationsSettin
 import CustomizeScreen from './features/hub/CustomizeScreen'
 import LanguageSettingsScreen from './features/settings/LanguageSettingsScreen'
 import DataLegalScreen from './features/settings/DataLegalScreen'
-import AdminSettingsScreen from './features/settings/AdminSettingsScreen'
+import AdminLayout from './features/admin/AdminLayout'
+import AdminOverview from './features/admin/AdminOverview'
+import AdminUsers from './features/admin/AdminUsers'
+import AdminQuarantine from './features/admin/AdminQuarantine'
+import AdminContent from './features/admin/AdminContent'
 import AdminModerationScreen from './features/settings/AdminModerationScreen'
 import AdminAnnouncementsScreen from './features/settings/AdminAnnouncementsScreen'
 import AdminTopicsScreen from './features/settings/AdminTopicsScreen'
@@ -102,6 +106,16 @@ function RootGate() {
 
   return (
     <Routes>
+      <Route path="admin" element={<AdminLayout />}>
+        <Route index element={<AdminOverview />} />
+        <Route path="usuarios" element={<AdminUsers />} />
+        <Route path="denuncias" element={<AdminModerationScreen />} />
+        <Route path="quarentena" element={<AdminQuarantine />} />
+        <Route path="conteudo" element={<AdminContent />} />
+        <Route path="registro" element={<AdminModerationScreen initialTab="log" />} />
+        <Route path="avisos" element={<AdminAnnouncementsScreen />} />
+        <Route path="topicos" element={<AdminTopicsScreen />} />
+      </Route>
       <Route element={<Layout />}>
         <Route index element={<TodayScreen />} />
         <Route path="medications" element={<MedicationsScreen />} />
@@ -135,10 +149,11 @@ function RootGate() {
         <Route path="personalizar" element={<CustomizeScreen />} />
         <Route path="settings/idioma" element={<LanguageSettingsScreen />} />
         <Route path="settings/dados" element={<DataLegalScreen />} />
-        <Route path="settings/admin" element={<AdminSettingsScreen />} />
-        <Route path="settings/admin/moderacao" element={<AdminModerationScreen />} />
-        <Route path="settings/admin/avisos" element={<AdminAnnouncementsScreen />} />
-        <Route path="settings/admin/topicos" element={<AdminTopicsScreen />} />
+        {/* admin mudou pro painel em /admin — links antigos caem lá */}
+        <Route path="settings/admin" element={<Navigate to="/admin" replace />} />
+        <Route path="settings/admin/moderacao" element={<Navigate to="/admin/denuncias" replace />} />
+        <Route path="settings/admin/avisos" element={<Navigate to="/admin/avisos" replace />} />
+        <Route path="settings/admin/topicos" element={<Navigate to="/admin/topicos" replace />} />
         <Route path="settings/sobre" element={<AboutScreen />} />
         <Route path="settings/bloqueios" element={<BlockedUsersScreen />} />
         <Route path="settings/instalar" element={<InstallGuideScreen />} />

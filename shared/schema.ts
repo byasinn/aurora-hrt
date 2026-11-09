@@ -785,6 +785,7 @@ export const quarantinedImages = pgTable(
     r2Key: text('r2_key').notNull(),
     contentType: text('content_type').notNull(),
     reason: text('reason').notNull(),
+    sha256: text('sha256').notNull(), // aprovada = a mesma imagem passa direto se a pessoa enviar de novo
     scores: jsonb('scores').notNull().default({}), // resposta da Sightengine, pra admin ver o porquê
     status: text('status').notNull().default('pending'), // 'pending' | 'approved' | 'deleted'
     releasedKey: text('released_key'), // chave da imagem liberada (fora da quarentena), se aprovada

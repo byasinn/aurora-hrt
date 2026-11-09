@@ -1,5 +1,7 @@
 import { Hono } from 'hono'
+import { and, eq } from 'drizzle-orm'
 import { getDb } from '../shared/db'
+import { quarantinedImages } from '../../shared/schema'
 import { jsonResponse, requireUser } from '../shared/auth'
 import { checkNsfw } from '../shared/nsfwCheck'
 import type { Env } from '../env'
@@ -26,9 +28,42 @@ app.post('/api/images', async (c) => {
   if (body.byteLength === 0) return jsonResponse({ error: 'arquivo vazio' }, { status: 400 })
   if (body.byteLength > MAX_UPLOAD_BYTES) return jsonResponse({ error: 'imagem muito grande' }, { status: 413 })
 
-  const nsfw = await checkNsfw(c.env, body, contentType)
-  if (nsfw.flagged) {
-    return jsonResponse({ error: 'Essa imagem parece conter conteúdo adulto/nudez e não pode ser usada aqui.' }, { status: 422 })
+  const ext = contentType === 'image/png' ? 'png' : contentType === 'image/webp' ? 'webp' : 'jpg'
+  const sha256 = [...new Uint8Array(await crypto.subtle.digest('SHA-256', body))].map((b) => b.toString(16).padStart(2, '0')).join('')
+
+  // admin já revisou essa mesma imagem (da mesma pessoa) e liberou: não passa de novo pela checagem
+  const [approved] = await db
+    .select({ id: quarantinedImages.id })
+    .from(quarantinedImages)
+    .where(and(eq(quarantinedImages.userId, user.id), eq(quarantinedImages.sha256, sha256), eq(quarantinedImages.status, 'approved')))
+    .limit(1)
+
+  if (!approved) {
+    const nsfw = await checkNsfw(c.env, body, contentType)
+    if (nsfw.flagged) {
+      // guarda à parte pra revisão no painel (falso positivo acontece) — quem enviou recebe a recusa na hora
+      const [already] = await db
+        .select({ id: quarantinedImages.id })
+        .from(quarantinedImages)
+        .where(and(eq(quarantinedImages.userId, user.id), eq(quarantinedImages.sha256, sha256)))
+        .limit(1)
+      if (!already) {
+        const r2Key = `quarantine/${user.id}/${crypto.randomUUID()}.${ext}`
+        await c.env.IMAGES.put(r2Key, body, { httpMetadata: { contentType } })
+        await db.insert(quarantinedImages).values({
+          userId: user.id,
+          r2Key,
+          contentType,
+          sha256,
+          reason: nsfw.reason ?? 'conteúdo adulto detectado',
+          scores: nsfw.scores ?? {},
+        })
+      }
+      return jsonResponse(
+        { error: 'Essa imagem parece conter conteúdo adulto/nudez e não pode ser usada aqui. Se achar que é engano, ela vai pra revisão da equipe.' },
+        { status: 422 },
+      )
+    }
   }
 
   const existing = await c.env.IMAGES.list({ prefix: `${user.id}/`, limit: MAX_IMAGES_PER_ACCOUNT })
@@ -39,7 +74,6 @@ app.post('/api/images', async (c) => {
     )
   }
 
-  const ext = contentType === 'image/png' ? 'png' : contentType === 'image/webp' ? 'webp' : 'jpg'
   const key = `${user.id}/${crypto.randomUUID()}.${ext}`
 
   await c.env.IMAGES.put(key, body, { httpMetadata: { contentType } })
@@ -75,6 +109,8 @@ app.get('/api/images/*', async (c) => {
   if (auth instanceof Response) return auth
 
   const key = c.req.path.replace(/^\/api\/images\//, '')
+  // imagem barrada só aparece no painel de admin (/api/admin/quarantine/:id/image)
+  if (key.startsWith('quarantine/')) return new Response('not found', { status: 404 })
   const object = await c.env.IMAGES.get(key)
   if (!object) return new Response('not found', { status: 404 })
 

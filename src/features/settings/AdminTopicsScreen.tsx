@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { Compass } from 'lucide-react'
-import { ChevronLeft, Plus, Trash2 } from '../../components/icons'
+import { Plus, Trash2 } from '../../components/icons'
 import { Card, Button } from '../../components/ui'
 import { toastError } from '../../lib/toast'
 import {
@@ -56,9 +55,6 @@ export default function AdminTopicsScreen() {
 
   return (
     <div className="space-y-4">
-      <Link to="/settings/admin" className="flex items-center gap-1 text-sm text-[var(--text-muted)]">
-        <ChevronLeft size={16} /> Administração
-      </Link>
       <div className="flex items-center gap-2">
         <Compass size={20} className="text-[var(--accent)]" />
         <h1 className="text-xl font-semibold text-[var(--text)]">Tópicos e fontes</h1>
