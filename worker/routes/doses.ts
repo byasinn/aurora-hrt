@@ -1,9 +1,11 @@
 import { Hono } from 'hono'
 import { and, eq, gte, lte } from 'drizzle-orm'
 import { getDb } from '../shared/db'
-import { doseLogs, medications } from '../../shared/schema'
+import { doseLogs, medications, profile } from '../../shared/schema'
 import { jsonResponse, requireUser } from '../shared/auth'
 import { stripOwnerFields } from '../shared/contentLimits'
+import { dateStrInTimezone } from '../../shared/scheduling'
+import { isLate } from '../../shared/points'
 import type { DoseLogInput } from '../../shared/types'
 import type { Env } from '../env'
 
@@ -14,6 +16,17 @@ function coerceDates<T extends Record<string, unknown>>(body: T): T {
     if (typeof value === 'string') (out as Record<string, unknown>)[key] = new Date(value)
   }
   return out
+}
+
+/** Dose marcada como tomada depois do dia dela (com a folga da madrugada) fica no histórico mas não
+ * vale Brilho — quem decide é o servidor, não o app. `requested` true (preenchimento de histórico ao
+ * cadastrar o remédio) continua true. */
+async function backfilledFor(db: ReturnType<typeof getDb>, userId: number, scheduledFor: Date, status: string | undefined, requested?: boolean | null) {
+  if (requested) return true
+  if (status !== 'taken') return false
+  const [prof] = await db.select({ timezone: profile.timezone }).from(profile).where(eq(profile.userId, userId)).limit(1)
+  const tz = prof?.timezone ?? 'America/Sao_Paulo'
+  return isLate(dateStrInTimezone(scheduledFor, tz), new Date(), tz)
 }
 
 const app = new Hono<{ Bindings: Env }>()
@@ -49,11 +62,12 @@ app.post('/api/doses/respond', async (c) => {
       .where(and(eq(doseLogs.userId, user.id), eq(doseLogs.medicationId, med.id), eq(doseLogs.scheduledFor, scheduledFor)))
       .limit(1)
 
+    const backfilled = await backfilledFor(db, user.id, scheduledFor, body.status)
     const [row] = existing
-      ? await db.update(doseLogs).set({ status: body.status, takenAt }).where(eq(doseLogs.id, existing.id)).returning()
+      ? await db.update(doseLogs).set({ status: body.status, takenAt, backfilled }).where(eq(doseLogs.id, existing.id)).returning()
       : await db
           .insert(doseLogs)
-          .values({ userId: user.id, medicationId: med.id, scheduledFor, status: body.status, takenAt })
+          .values({ userId: user.id, medicationId: med.id, scheduledFor, status: body.status, takenAt, backfilled })
           .returning()
     return jsonResponse(row)
   } catch (err) {
@@ -96,9 +110,11 @@ app.all('/api/doses', async (c) => {
           .limit(1)
         if (!med) return jsonResponse({ error: 'medicamento não encontrado' }, { status: 404 })
       }
+      const scheduledFor = body.scheduledFor instanceof Date ? body.scheduledFor : new Date()
+      const backfilled = await backfilledFor(db, user.id, scheduledFor, body.status, body.backfilled)
       const [row] = await db
         .insert(doseLogs)
-        .values({ ...body, userId: user.id })
+        .values({ ...body, backfilled, userId: user.id })
         .returning()
       return jsonResponse(row, { status: 201 })
     }
@@ -114,9 +130,22 @@ app.all('/api/doses', async (c) => {
           .limit(1)
         if (!med) return jsonResponse({ error: 'medicamento não encontrado' }, { status: 404 })
       }
+      const patch = stripOwnerFields(body)
+      if (body.status !== undefined) {
+        const [current] = await db
+          .select({ scheduledFor: doseLogs.scheduledFor, backfilled: doseLogs.backfilled, status: doseLogs.status })
+          .from(doseLogs)
+          .where(and(eq(doseLogs.id, Number(id)), eq(doseLogs.userId, user.id)))
+          .limit(1)
+        // status igual (editou só nota/horário) mantém o que já era; mudou pra tomada agora, decide de novo
+        if (current && current.status === body.status) patch.backfilled = current.backfilled
+        else if (current) patch.backfilled = await backfilledFor(db, user.id, current.scheduledFor, body.status, current.backfilled && body.status === 'taken')
+      } else {
+        delete patch.backfilled
+      }
       const [row] = await db
         .update(doseLogs)
-        .set(stripOwnerFields(body))
+        .set(patch)
         .where(and(eq(doseLogs.id, Number(id)), eq(doseLogs.userId, user.id)))
         .returning()
       return jsonResponse(row)

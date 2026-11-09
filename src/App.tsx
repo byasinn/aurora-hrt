@@ -44,6 +44,7 @@ import PreferencesSettingsScreen from './features/settings/PreferencesSettingsSc
 import PrivacySettingsScreen from './features/settings/PrivacySettingsScreen'
 import NotificationsSettingsScreen from './features/settings/NotificationsSettingsScreen'
 import CustomizeScreen from './features/hub/CustomizeScreen'
+import MissionsScreen from './features/hub/MissionsScreen'
 import LanguageSettingsScreen from './features/settings/LanguageSettingsScreen'
 import DataLegalScreen from './features/settings/DataLegalScreen'
 import AdminLayout from './features/admin/AdminLayout'
@@ -147,6 +148,7 @@ function RootGate() {
         <Route path="settings/seguranca" element={<Navigate to="/settings/privacidade" replace />} />
         <Route path="settings/aparencia" element={<Navigate to="/personalizar" replace />} />
         <Route path="personalizar" element={<CustomizeScreen />} />
+        <Route path="missoes" element={<MissionsScreen />} />
         <Route path="settings/idioma" element={<LanguageSettingsScreen />} />
         <Route path="settings/dados" element={<DataLegalScreen />} />
         {/* admin mudou pro painel em /admin — links antigos caem lá */}

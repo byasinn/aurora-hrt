@@ -4,9 +4,10 @@ import type { ReactNode } from 'react'
 import { Card } from '../../components/ui'
 import Avatar from '../../components/Avatar'
 import AppIcon from '../../components/AppIcon'
-import { Coins, Gem, Star, Store } from '../../components/icons'
+import { Coins, Flame, Gem, Gift, Potion, Star, Store } from '../../components/icons'
 import { useProfile } from '../../api/profile'
 import { useShop } from '../../api/shop'
+import { useMissions } from '../../api/points'
 import { playSound } from '../../lib/sounds'
 import { SHOP_ITEMS, ownsItem } from '../../../shared/shopCatalog'
 
@@ -49,6 +50,10 @@ function HubCard({
 export default function AuroraHubScreen() {
   const { data: profile } = useProfile()
   const { data: shop } = useShop()
+  const { data: missions } = useMissions()
+  const readyCount =
+    (missions?.missions.filter((m) => !m.hidden && !m.claimed && m.progress >= m.target).length ?? 0) +
+    (missions?.chests.filter((c) => !c.openedAt).length ?? 0)
   const firstName = profile?.displayName?.trim().split(/\s+/)[0]
   const ownedCount = SHOP_ITEMS.filter((i) => i.kind !== 'bundle' && i.price > 0 && ownsItem(shop?.owned ?? [], i.key)).length
 
@@ -90,6 +95,29 @@ export default function AuroraHubScreen() {
             ))}
           </div>
         </div>
+      </Link>
+
+      <Link to="/missoes" onClick={() => playSound('tap')} className="block">
+        <Card className="btn-press-soft flex items-center gap-4 p-4 transition active:translate-y-0.5">
+          <span className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[var(--accent-soft)]">
+            <Gift size={36} />
+            {readyCount > 0 && (
+              <span className="absolute -right-1.5 -top-1.5 rounded-full bg-red-500 px-1.5 text-xs font-bold leading-5 text-white">{readyCount}</span>
+            )}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-lg font-extrabold leading-tight text-[var(--text)]">Missões</p>
+            <p className="text-sm text-[var(--text-muted)]">{readyCount > 0 ? 'Tem baú esperando por você!' : 'Missões, baús e poções'}</p>
+          </div>
+          <div className="flex shrink-0 flex-col items-end gap-1">
+            <span className="flex items-center gap-1 text-sm font-bold">
+              <Flame size={15} className="text-orange-500" /> {missions?.streak ?? '–'}
+            </span>
+            <span className="flex items-center gap-1 text-sm font-bold">
+              <Potion size={16} /> {missions?.potions ?? '–'}
+            </span>
+          </div>
+        </Card>
       </Link>
 
       <div className="grid grid-cols-2 gap-3">

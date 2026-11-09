@@ -64,6 +64,7 @@ import postLikes from './routes/post-likes'
 import posts from './routes/posts'
 import profile from './routes/profile'
 import pushSubscribe from './routes/push-subscribe'
+import rewards from './routes/rewards'
 import routineLogs from './routes/routine-logs'
 import routines from './routes/routines'
 import tags from './routes/tags'
@@ -213,6 +214,7 @@ const routes = [
   posts,
   profile,
   pushSubscribe,
+  rewards,
   routineLogs,
   routines,
   tags,

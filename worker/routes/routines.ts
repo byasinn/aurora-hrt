@@ -1,9 +1,10 @@
 import { Hono } from 'hono'
-import { and, eq } from 'drizzle-orm'
+import { and, count, eq } from 'drizzle-orm'
 import { getDb } from '../shared/db'
 import { routines } from '../../shared/schema'
 import { jsonResponse, requireUser } from '../shared/auth'
 import { stripOwnerFields } from '../shared/contentLimits'
+import { MAX_ROUTINES } from '../../shared/points'
 import type { RoutineInput } from '../../shared/types'
 import type { Env } from '../env'
 
@@ -31,6 +32,11 @@ app.all('/api/routines', async (c) => {
 
     if (req.method === 'POST') {
       const body = (await req.json()) as RoutineInput
+      // teto de rotinas: criar e apagar não dá Brilho, mas sem limite dava pra encher o dia de rotina boba
+      const [{ value: existing }] = await db.select({ value: count() }).from(routines).where(eq(routines.userId, user.id))
+      if (existing >= MAX_ROUTINES) {
+        return jsonResponse({ error: `você já tem ${MAX_ROUTINES} rotinas — apague uma pra criar outra` }, { status: 400 })
+      }
       const [row] = await db
         .insert(routines)
         .values({ ...body, userId: user.id })

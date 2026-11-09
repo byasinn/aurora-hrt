@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronRight, CheckCircle2, Flame, History, Pencil, Plus, Trash2, Trophy } from '../../components/icons'
+import { ChevronRight, CheckCircle2, Flame, History, Pencil, Plus, Trash2 } from '../../components/icons'
 import { Button, Card, EmptyState, ScreenTitle } from '../../components/ui'
 import Switch from '../../components/Switch'
 import IconOrEmoji from '../../components/IconOrEmoji'
@@ -14,6 +14,8 @@ import {
   useWorkoutLogs,
 } from '../../api/workouts'
 import { useWorkoutStats } from './useWorkoutStats'
+import { usePoints } from '../../api/points'
+import { POINTS } from '../../../shared/points'
 import WorkoutProgramForm from './WorkoutProgramForm'
 import type { WorkoutDay, WorkoutProgramDetail } from '../../../shared/types'
 
@@ -45,6 +47,9 @@ function WeeklyChart({ counts }: { counts: number[] }) {
 
 function DashboardCard() {
   const stats = useWorkoutStats()
+  const { data: points } = usePoints()
+  const goal = points?.week.workoutGoal ?? 0
+  const doneWeek = points?.week.workoutsDone ?? 0
   return (
     <Card className="space-y-3">
       <div className="flex items-center justify-between">
@@ -60,15 +65,15 @@ function DashboardCard() {
         <StatTile label="sessões" value={String(stats.sessionsCount)} />
         <StatTile label="sequência" value={`${stats.currentStreakDays}d`} />
         <StatTile label="essa semana" value={String(stats.thisWeekSessionsCount)} />
-        <StatTile label="volume total" value={`${Math.round(stats.totalVolume)}kg`} />
+        {goal > 0 && <StatTile label="meta da semana" value={`${doneWeek}/${goal}`} />}
       </div>
       <WeeklyChart counts={stats.weeklySessionCounts} />
-      {stats.prsByExercise.size > 0 && (
-        <div className="flex items-center gap-1.5 border-t border-[var(--border)] pt-2 text-xs text-[var(--text-muted)]">
-          <Trophy size={12} className="text-amber-500" />
-          {stats.prsByExercise.size} recorde{stats.prsByExercise.size === 1 ? '' : 's'} pessoa
-          {stats.prsByExercise.size === 1 ? 'l' : 'is'}
-        </div>
+      {goal > 0 && (
+        <p className="border-t border-[var(--border)] pt-2 text-xs text-[var(--text-muted)]">
+          {doneWeek >= goal
+            ? `Meta da semana batida: +${POINTS.workoutWeek} Brilho!`
+            : `Faça os ${goal} treinos planejados dessa semana (marcando no dia) e ganhe +${POINTS.workoutWeek} Brilho.`}
+        </p>
       )}
     </Card>
   )

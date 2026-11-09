@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Check, Plus, Trophy, Pencil, Undo2, PlayCircle } from '../../components/icons'
+import { ArrowLeft, Check, Plus, Pencil, Undo2, PlayCircle } from '../../components/icons'
 import { Button, Card, EmptyState } from '../../components/ui'
 import RestTimer from '../../components/RestTimer'
 import PinterestEmbed from '../../components/PinterestEmbed'
@@ -8,118 +8,49 @@ import IconOrEmoji from '../../components/IconOrEmoji'
 import { resolveProgramIcon } from '../../lib/workoutTemplates'
 import { weekdayLabel, todayStr } from '../../lib/dateUtils'
 import { useWorkoutPrograms, useWorkoutLogs, useLogWorkout, useUnlogWorkout } from '../../api/workouts'
-import { useWorkoutStats } from './useWorkoutStats'
 import type { WorkoutExercise, WorkoutExerciseLog, WorkoutSetEntry } from '../../../shared/types'
+import { playSound } from '../../lib/sounds'
 
 const DEFAULT_REST_SECONDS = 90
 
 type SetRow = WorkoutSetEntry
 interface ExerciseState {
   name: string
-  targetSets: number
-  targetReps: string
   sets: SetRow[]
 }
 
+const emptySet = (): SetRow => ({ weight: null, reps: null, done: false })
+
 function planToState(exercises: WorkoutExercise[]): ExerciseState[] {
-  return exercises.map((ex) => ({
-    name: ex.name,
-    targetSets: ex.sets,
-    targetReps: ex.reps,
-    sets: Array.from({ length: ex.sets }, () => ({ weight: null, reps: null, done: false })),
-  }))
+  return exercises.map((ex) => ({ name: ex.name, sets: Array.from({ length: Math.max(1, ex.sets) }, emptySet) }))
 }
 
 function logToState(exercises: WorkoutExercise[], setLogs: WorkoutExerciseLog[]): ExerciseState[] {
   const byName = new Map(setLogs.map((e) => [e.name, e.sets]))
-  return exercises.map((ex) => ({
-    name: ex.name,
-    targetSets: ex.sets,
-    targetReps: ex.reps,
-    sets: byName.get(ex.name) ?? Array.from({ length: ex.sets }, () => ({ weight: null, reps: null, done: false })),
-  }))
+  return exercises.map((ex) => ({ name: ex.name, sets: byName.get(ex.name) ?? Array.from({ length: Math.max(1, ex.sets) }, emptySet) }))
 }
 
-function SetRowEditor({
-  set,
-  index,
-  isPr,
-  onChange,
-}: {
-  set: SetRow
-  index: number
-  isPr: boolean
-  onChange: (next: SetRow) => void
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="w-4 shrink-0 text-xs text-[var(--text-muted)]">{index + 1}</span>
-      <input
-        type="number"
-        inputMode="decimal"
-        min={0}
-        placeholder="kg"
-        value={set.weight ?? ''}
-        onChange={(e) => onChange({ ...set, weight: e.target.value === '' ? null : Number(e.target.value) })}
-        className="w-16 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-2 py-1.5 text-center text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
-      />
-      <span className="text-xs text-[var(--text-muted)]">×</span>
-      <input
-        type="number"
-        inputMode="numeric"
-        min={0}
-        placeholder="reps"
-        value={set.reps ?? ''}
-        onChange={(e) => onChange({ ...set, reps: e.target.value === '' ? null : Number(e.target.value) })}
-        className="w-16 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-2 py-1.5 text-center text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
-      />
-      {isPr && set.done && <Trophy size={14} className="shrink-0 text-amber-500" />}
-      <div className="flex-1" />
-      <button
-        type="button"
-        onClick={() => onChange({ ...set, done: !set.done })}
-        className={
-          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition ' +
-          (set.done
-            ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]'
-            : 'border-[var(--border)] text-[var(--text-muted)]')
-        }
-      >
-        <Check size={14} />
-      </button>
-    </div>
-  )
-}
-
+// Sem kg e repetição: cada exercício é o nome + uma bolinha por série pra ir marcando.
 function ExerciseLogger({
   exercise,
-  prWeight,
   pinterestUrl,
   onChange,
 }: {
   exercise: ExerciseState
-  prWeight: number | undefined
   pinterestUrl?: string | null
   onChange: (next: ExerciseState) => void
 }) {
   const [videoOpen, setVideoOpen] = useState(false)
+  const allDone = exercise.sets.length > 0 && exercise.sets.every((s) => s.done)
 
-  function updateSet(i: number, next: SetRow) {
-    onChange({ ...exercise, sets: exercise.sets.map((s, idx) => (idx === i ? next : s)) })
-  }
-  function addSet() {
-    onChange({ ...exercise, sets: [...exercise.sets, { weight: null, reps: null, done: false }] })
+  function toggleSet(i: number) {
+    onChange({ ...exercise, sets: exercise.sets.map((s, idx) => (idx === i ? { ...s, done: !s.done } : s)) })
   }
 
   return (
-    <Card className="space-y-2.5">
+    <Card className={'space-y-2.5 ' + (allDone ? 'border-[var(--accent)]' : '')}>
       <div className="flex items-center gap-2">
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-[var(--text)]">{exercise.name}</p>
-          <p className="text-[11px] text-[var(--text-muted)]">
-            Meta: {exercise.targetSets}x {exercise.targetReps}
-          </p>
-        </div>
+        <p className="min-w-0 flex-1 text-sm font-semibold text-[var(--text)]">{exercise.name}</p>
         {pinterestUrl && (
           <button
             type="button"
@@ -134,24 +65,30 @@ function ExerciseLogger({
         )}
       </div>
       {videoOpen && pinterestUrl && <PinterestEmbed url={pinterestUrl} />}
-      <div className="space-y-1.5">
+      <div className="flex flex-wrap items-center gap-2">
         {exercise.sets.map((s, i) => (
-          <SetRowEditor
+          <button
             key={i}
-            set={s}
-            index={i}
-            isPr={prWeight != null && s.weight != null && s.weight > prWeight}
-            onChange={(next) => updateSet(i, next)}
-          />
+            type="button"
+            aria-label={`Série ${i + 1}${s.done ? ' (feita)' : ''}`}
+            onClick={() => toggleSet(i)}
+            className={
+              'flex h-10 w-10 items-center justify-center rounded-full border text-sm font-bold transition ' +
+              (s.done ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]' : 'border-[var(--border)] text-[var(--text-muted)]')
+            }
+          >
+            {s.done ? <Check size={15} /> : i + 1}
+          </button>
         ))}
+        <button
+          type="button"
+          aria-label="Adicionar série"
+          onClick={() => onChange({ ...exercise, sets: [...exercise.sets, emptySet()] })}
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-dashed border-[var(--border)] text-[var(--text-muted)]"
+        >
+          <Plus size={14} />
+        </button>
       </div>
-      <button
-        type="button"
-        onClick={addSet}
-        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-[var(--border)] py-1.5 text-sm text-[var(--text-muted)]"
-      >
-        <Plus size={12} /> Série
-      </button>
     </Card>
   )
 }
@@ -164,7 +101,6 @@ export default function WorkoutDayScreen() {
   const { data: logsToday } = useWorkoutLogs({ from: today, to: today })
   const logWorkout = useLogWorkout()
   const unlogWorkout = useUnlogWorkout()
-  const stats = useWorkoutStats()
 
   const program = programs?.find((p) => p.days.some((d) => d.id === dayId))
   const day = program?.days.find((d) => d.id === dayId)
@@ -176,6 +112,17 @@ export default function WorkoutDayScreen() {
     todayLog ? logToState(plan, (todayLog.setLogs as WorkoutExerciseLog[] | null) ?? []) : planToState(plan),
   )
   const [notes, setNotes] = useState(todayLog?.notes ?? '')
+  // abrindo direto (recarregar, link) os dados chegam depois do primeiro render — sem isso o estado
+  // nascia vazio e ficava "esse dia ainda não tem exercícios". Reinicia quando o treino ou o registro
+  // de hoje mudam (concluiu, desfez).
+  const loadedKey = `${day?.id ?? ''}:${todayLog?.id ?? ''}:${plan.length}`
+  const [stateKey, setStateKey] = useState(loadedKey)
+  if (stateKey !== loadedKey) {
+    setStateKey(loadedKey)
+    setExercises(todayLog ? logToState(plan, (todayLog.setLogs as WorkoutExerciseLog[] | null) ?? []) : planToState(plan))
+    setNotes(todayLog?.notes ?? '')
+    setEditing(!todayLog)
+  }
   const [restFor, setRestFor] = useState<string | null>(null)
   const sessionStartRef = useRef<number | null>(null)
 
@@ -190,9 +137,12 @@ export default function WorkoutDayScreen() {
   }
 
   async function handleFinish() {
-    const setLogs: WorkoutExerciseLog[] = exercises.map((e) => ({ name: e.name, sets: e.sets }))
+    // concluir o treino = todas as séries feitas
+    const setLogs: WorkoutExerciseLog[] = exercises.map((e) => ({ name: e.name, sets: e.sets.map((set) => ({ ...set, done: true })) }))
     const durationSeconds = sessionStartRef.current ? Math.round((Date.now() - sessionStartRef.current) / 1000) : null
     await logWorkout.mutateAsync({ workoutDayId: dayId, date: today, durationSeconds, notes: notes.trim() || null, setLogs })
+    setExercises((cur) => cur.map((e) => ({ ...e, sets: e.sets.map((set) => ({ ...set, done: true })) })))
+    playSound('success')
     setRestFor(null)
     setEditing(false)
   }
@@ -216,15 +166,6 @@ export default function WorkoutDayScreen() {
 
   const totalSets = exercises.reduce((sum, e) => sum + e.sets.length, 0)
   const doneSets = exercises.reduce((sum, e) => sum + e.sets.filter((s) => s.done).length, 0)
-  const sessionVolume = exercises.reduce(
-    (sum, e) => sum + e.sets.reduce((s, set) => s + (set.done && set.weight ? set.weight * (set.reps ?? 0) : 0), 0),
-    0,
-  )
-  const newPrCount = exercises.reduce((count, e) => {
-    const pr = stats.prsByExercise.get(e.name)?.maxWeight
-    return count + e.sets.filter((s) => s.done && s.weight != null && (pr == null || s.weight > pr)).length
-  }, 0)
-
   return (
     <div className="space-y-4">
       <Link to="/treinos" className="flex items-center gap-1 text-sm text-[var(--text-muted)]">
@@ -249,13 +190,7 @@ export default function WorkoutDayScreen() {
           </div>
           <div className="flex flex-wrap gap-4 text-xs text-[var(--text-muted)]">
             <span>{doneSets}/{totalSets} séries</span>
-            {sessionVolume > 0 && <span>{Math.round(sessionVolume)}kg de volume</span>}
-            {todayLog.durationSeconds != null && <span>{Math.round(todayLog.durationSeconds / 60)}min</span>}
-            {newPrCount > 0 && (
-              <span className="flex items-center gap-1 text-amber-500">
-                <Trophy size={12} /> {newPrCount} recorde{newPrCount === 1 ? '' : 's'}
-              </span>
-            )}
+            {todayLog.durationSeconds != null && todayLog.durationSeconds >= 60 && <span>{Math.round(todayLog.durationSeconds / 60)}min</span>}
           </div>
           {todayLog.notes && <p className="text-sm text-[var(--text)]">{todayLog.notes}</p>}
           <div className="flex gap-2">
@@ -274,7 +209,6 @@ export default function WorkoutDayScreen() {
               <ExerciseLogger
                 key={i}
                 exercise={ex}
-                prWeight={stats.prsByExercise.get(ex.name)?.maxWeight}
                 pinterestUrl={plan[i]?.pinterestUrl}
                 onChange={(next) => updateExercise(i, next)}
               />

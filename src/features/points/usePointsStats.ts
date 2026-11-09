@@ -1,13 +1,15 @@
-import { useDoseLogs } from '../../api/doses'
 import { useMoodEntries } from '../../api/moods'
+import { useDoseLogs } from '../../api/doses'
 import { useProfile } from '../../api/profile'
 import { useRoutines, useRoutineLogs } from '../../api/routines'
 import { useWorkoutLogs } from '../../api/workouts'
 import { useMySocialStats } from '../../api/social'
-import { currentStreak, transitionYearsBonus, type PointsStats } from '../../lib/collectiblesEngine'
+import { usePoints } from '../../api/points'
+import { currentStreak, type PointsStats } from '../../lib/collectiblesEngine'
 import { todayStr, daysBetween, localDateStr } from '../../lib/dateUtils'
-import type { WorkoutExerciseLog } from '../../../shared/types'
 
+/** Estatísticas pra conquistas/troféus (calculadas aqui, o servidor confere ao desbloquear). O Brilho
+ * vem pronto do servidor (/api/points) — as regras de semana completa, aposta e poção ficam só lá. */
 export function usePointsStats(): PointsStats {
   const { data: doseLogs = [] } = useDoseLogs()
   const { data: moods = [] } = useMoodEntries()
@@ -16,10 +18,11 @@ export function usePointsStats(): PointsStats {
   const { data: routineLogs = [] } = useRoutineLogs()
   const { data: workoutLogs = [] } = useWorkoutLogs()
   const { data: socialStats } = useMySocialStats()
+  const { data: points } = usePoints()
 
   const today = todayStr()
   // histórico preenchido retroativamente (backfilled) não conta — senão quem cadastra "tomo desde 2019"
-  // ganha milhares de pontos e um streak de anos no primeiro dia
+  // ganha um streak de anos no primeiro dia
   const realTakenLogs = doseLogs.filter((l) => l.status === 'taken' && !l.backfilled)
   const takenDates = new Set(realTakenLogs.map((l) => localDateStr(new Date(l.scheduledFor))))
   const moodDates = new Set(moods.map((m) => m.date))
@@ -32,49 +35,22 @@ export function usePointsStats(): PointsStats {
   }).length
 
   const workoutDates = new Set(workoutLogs.map((l) => l.date))
-  const exercisesWithWeight = new Set<string>()
-  let totalWorkoutVolume = 0
-  for (const log of workoutLogs) {
-    const setLogs = (log.setLogs as WorkoutExerciseLog[] | null) ?? []
-    for (const exercise of setLogs) {
-      for (const set of exercise.sets) {
-        if (!set.done || set.weight == null) continue
-        exercisesWithWeight.add(exercise.name)
-        totalWorkoutVolume += set.weight * (set.reps ?? 0)
-      }
-    }
-  }
-  const personalRecordsCount = exercisesWithWeight.size
-
   const postsCount = (socialStats?.postsCount ?? 0) + (socialStats?.communityPostsCount ?? 0)
   const commentsGivenCount = (socialStats?.commentsCount ?? 0) + (socialStats?.communityCommentsCount ?? 0)
-  const interactionsCount = postsCount + commentsGivenCount
-
-  const daysSinceTransitionStart = profile?.transitionStartDate ? daysBetween(profile.transitionStartDate, today) : null
-
-  const brilho =
-    postsCount * 10 +
-    commentsGivenCount * 3 +
-    sfwRoutineCompletions * 5 +
-    workoutLogs.length * 5 +
-    moods.length * 2 +
-    takenDates.size * 1 +
-    transitionYearsBonus(daysSinceTransitionStart)
 
   return {
-    brilho: Math.round(brilho),
+    brilho: points?.total ?? 0,
     postsCount,
     commentsGivenCount,
     totalMoodEntries: moods.length,
     totalDosesTaken: realTakenLogs.length,
     currentMoodStreakDays: currentStreak(moodDates, today),
     currentDoseStreakDays: currentStreak(takenDates, today),
-    daysSinceTransitionStart,
+    daysSinceTransitionStart: profile?.transitionStartDate ? daysBetween(profile.transitionStartDate, today) : null,
     sfwRoutineCompletions,
-    interactionsCount,
+    interactionsCount: postsCount + commentsGivenCount,
     workoutSessionsCount: workoutLogs.length,
     currentWorkoutStreakDays: currentStreak(workoutDates, today),
-    personalRecordsCount,
-    totalWorkoutVolume,
+    workoutGoalWeeks: points?.workoutGoalWeeks ?? 0,
   }
 }

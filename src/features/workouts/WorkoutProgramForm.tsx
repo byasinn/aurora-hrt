@@ -107,19 +107,18 @@ function ExerciseRow({
         >
           <Link2 size={12} />
         </button>
-        <input
-          type="number"
-          min={1}
-          value={exercise.sets}
-          onChange={(e) => onChange({ ...exercise, sets: Number(e.target.value) })}
-          className="w-12 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-1.5 py-1.5 text-center text-xs text-[var(--text)] outline-none focus:border-[var(--accent)]"
-        />
-        <input
-          value={exercise.reps}
-          onChange={(e) => onChange({ ...exercise, reps: e.target.value })}
-          placeholder="reps"
-          className="w-20 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-1.5 py-1.5 text-center text-xs text-[var(--text)] outline-none focus:border-[var(--accent)]"
-        />
+        {/* só quantas séries — repetição e carga ninguém controlava aqui */}
+        <label className="flex shrink-0 items-center gap-1 text-[11px] text-[var(--text-muted)]">
+          <input
+            type="number"
+            min={1}
+            max={20}
+            value={exercise.sets}
+            onChange={(e) => onChange({ ...exercise, sets: Math.max(1, Math.min(20, Number(e.target.value) || 1)) })}
+            className="w-11 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-1.5 py-1.5 text-center text-xs text-[var(--text)] outline-none focus:border-[var(--accent)]"
+          />
+          séries
+        </label>
         <button type="button" onClick={onRemove} className="shrink-0 text-[var(--text-muted)]">
           <Trash2 size={14} />
         </button>
@@ -168,7 +167,7 @@ function DayEditor({
   }
 
   function addExercise() {
-    onChange({ ...day, exercises: [...day.exercises, { name: '', sets: 3, reps: '12' }] })
+    onChange({ ...day, exercises: [...day.exercises, { name: '', sets: 3, reps: '' }] })
   }
 
   function removeExercise(i: number) {

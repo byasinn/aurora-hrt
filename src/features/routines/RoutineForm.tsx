@@ -4,6 +4,7 @@ import { useCreateRoutine, useUpdateRoutine } from '../../api/routines'
 import { ROUTINE_ICON_OPTIONS, DEFAULT_ROUTINE_ICON_KEY } from '../../lib/routineIcons'
 import { weekdayLabel } from '../../lib/dateUtils'
 import type { Routine, RoutineType } from '../../../shared/types'
+import { toastError } from '../../lib/toast'
 
 const DEFAULT_SUGGESTIONS: {
   name: string
@@ -52,24 +53,29 @@ export default function RoutineForm({ routine, onDone }: { routine?: Routine; on
     const finalTarget = type === 'counter' ? targetCount : type === 'timer' ? targetMinutes * 60 : null
     const daysOfWeek = everyDay ? null : days
 
-    if (isEdit) {
-      await updateRoutine.mutateAsync({
-        id: routine.id,
-        name,
-        icon,
-        type,
-        targetCount: finalTarget,
-        daysOfWeek,
-      })
-    } else {
-      await createRoutine.mutateAsync({
-        name,
-        icon,
-        type,
-        targetCount: finalTarget,
-        daysOfWeek,
-        active: true,
-      })
+    try {
+      if (isEdit) {
+        await updateRoutine.mutateAsync({
+          id: routine.id,
+          name,
+          icon,
+          type,
+          targetCount: finalTarget,
+          daysOfWeek,
+        })
+      } else {
+        await createRoutine.mutateAsync({
+          name,
+          icon,
+          type,
+          targetCount: finalTarget,
+          daysOfWeek,
+          active: true,
+        })
+      }
+    } catch (err) {
+      toastError(err) // ex.: chegou no limite de rotinas
+      return
     }
     onDone()
   }

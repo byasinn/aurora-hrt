@@ -11,8 +11,8 @@ export interface PointsStats {
   interactionsCount: number
   workoutSessionsCount: number
   currentWorkoutStreakDays: number
-  personalRecordsCount: number
-  totalWorkoutVolume: number
+  /** semanas em que bateu a meta de treinos (substitui recorde de carga — o app não pede mais kg) */
+  workoutGoalWeeks: number
 }
 
 // Bônus de Brilho por ano completo de transição (a partir do "início da transição" do perfil). Não
@@ -99,11 +99,11 @@ export const ACHIEVEMENTS_SFW: CollectibleDef[] = [
     isMet: (s) => s.currentWorkoutStreakDays >= 7,
   },
   {
-    key: 'first_pr',
-    title: 'Recorde Pessoal',
-    description: 'Bateu seu primeiro recorde de carga.',
+    key: 'first_pr', // key antiga mantida pra não sumir de quem já desbloqueou
+    title: 'Semana Completa',
+    description: 'Fez todos os treinos planejados numa semana.',
     icon: 'trending_up',
-    isMet: (s) => s.personalRecordsCount >= 1,
+    isMet: (s) => s.workoutGoalWeeks >= 1,
   },
   {
     key: 'workouts_50',

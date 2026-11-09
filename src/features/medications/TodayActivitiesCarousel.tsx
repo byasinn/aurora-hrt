@@ -3,7 +3,9 @@ import { ChevronRight, CheckCircle2 } from '../../components/icons'
 import RoutineRow from '../routines/RoutineRow'
 import IconOrEmoji from '../../components/IconOrEmoji'
 import { resolveProgramIcon } from '../../lib/workoutTemplates'
-import { useLogWorkout } from '../../api/workouts'
+import { useLogWorkout, useUnlogWorkout } from '../../api/workouts'
+import { playSound } from '../../lib/sounds'
+import type { WorkoutExercise } from '../../../shared/types'
 import { todayStr } from '../../lib/dateUtils'
 import type { Routine, WorkoutProgramDetail, WorkoutDay } from '../../../shared/types'
 
@@ -16,7 +18,27 @@ export interface WorkoutTodayItem {
 
 function WorkoutBigCard({ program, day, done }: { program: WorkoutProgramDetail; day: WorkoutDay; done: boolean }) {
   const logWorkout = useLogWorkout()
-  const exercises = (day.exercises as unknown[] | null) ?? []
+  const unlogWorkout = useUnlogWorkout()
+  const exercises = (day.exercises as WorkoutExercise[] | null) ?? []
+  const busy = logWorkout.isPending || unlogWorkout.isPending
+
+  // o OK marca o treino inteiro (todas as séries feitas); tocar de novo desmarca
+  function toggle() {
+    const date = todayStr()
+    if (done) {
+      unlogWorkout.mutate({ workoutDayId: day.id, date })
+      return
+    }
+    playSound('success')
+    logWorkout.mutate({
+      workoutDayId: day.id,
+      date,
+      setLogs: exercises.map((ex) => ({
+        name: ex.name,
+        sets: Array.from({ length: Math.max(1, ex.sets) }, () => ({ weight: null, reps: null, done: true })),
+      })),
+    })
+  }
 
   return (
     <div
@@ -39,8 +61,9 @@ function WorkoutBigCard({ program, day, done }: { program: WorkoutProgramDetail;
           Ver treino <ChevronRight size={12} />
         </Link>
         <button
-          onClick={() => !done && logWorkout.mutate({ workoutDayId: day.id, date: todayStr() })}
-          disabled={done || logWorkout.isPending}
+          onClick={toggle}
+          disabled={busy}
+          aria-label={done ? 'Desmarcar treino' : 'Marcar treino como feito'}
           className={
             'flex h-12 w-12 items-center justify-center rounded-full border transition ' +
             (done

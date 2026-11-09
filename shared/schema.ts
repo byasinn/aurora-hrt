@@ -115,6 +115,16 @@ export const profile = pgTable(
   dailyTipsEnabled: boolean('daily_tips_enabled').notNull().default(false),
   // quais notificações a pessoa quer: { doseReminders, doseFollowup, insights, ... } — chave ausente = ligada
   notificationPrefs: jsonb('notification_prefs').notNull().default({}),
+  // Brilho v2 (pontos por semana completa, ver shared/points.ts): tudo que veio antes dessa data fica
+  // congelado em legacyBrilho, calculado uma vez pela fórmula antiga — ninguém perde ponto na troca
+  pointsV2Since: date('points_v2_since'),
+  legacyBrilho: integer('legacy_brilho').notNull().default(0),
+  // semanas (segunda, YYYY-MM-DD) em que as rotinas estão "apostadas": só pagam no fim da semana,
+  // +50%, e só as rotinas feitas em todos os dias
+  routineBetWeeks: jsonb('routine_bet_weeks').notNull().default([]).$type<string[]>(),
+  routineBetAuto: boolean('routine_bet_auto').notNull().default(false),
+  // último dia que a pessoa já respondeu no "e ontem, fez?" — não pergunta de novo
+  lastDayReviewed: date('last_day_reviewed'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [uniqueIndex('profile_username_idx').on(table.username)],
@@ -372,6 +382,8 @@ export const workoutLogs = pgTable(
     notes: text('notes'),
     setLogs: jsonb('set_logs').notNull().default([]), // { name, sets: { weight, reps, done }[] }[] — desempenho real
     completedAt: timestamp('completed_at', { withTimezone: true }).notNull().defaultNow(),
+    // quando foi marcado pela primeira vez (completedAt muda a cada edição) — marcado depois do dia não vale Brilho
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [uniqueIndex('workout_logs_day_date').on(table.workoutDayId, table.date)],
 )
@@ -809,4 +821,55 @@ export const adminNotes = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index('admin_notes_user_idx').on(table.userId)],
+)
+
+// Um registro por dia em que a pessoa abriu o app — é o streak de "entrou hoje" (popup de pontos).
+export const dailyVisits = pgTable(
+  'daily_visits',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    date: date('date').notNull(),
+    streak: integer('streak').notNull(),
+    points: integer('points').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex('daily_visits_user_date').on(table.userId, table.date)],
+)
+
+// Baús ganhos em missões e streaks. Conteúdo sorteado no servidor só ao abrir; `source` é único por
+// pessoa (ex.: 'm:first_routine', 'streak7:2026-11-09', 'w:2026-11-09:daylog'), então não dá pra
+// ganhar o mesmo baú duas vezes.
+export const chests = pgTable(
+  'chests',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    source: text('source').notNull(),
+    rarity: text('rarity').notNull(), // 'common' | 'rare'
+    // { brilho: number, potions: number, itemKey: string | null } — preenchido ao abrir
+    contents: jsonb('contents'),
+    openedAt: timestamp('opened_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex('chests_user_source').on(table.userId, table.source)],
+)
+
+// Dias "salvos" com uma Poção do tempo: o que foi marcado depois nesse dia passa a valer Brilho e o
+// dia conta pro streak. Poções disponíveis = poções ganhas em baús − linhas aqui.
+export const rescuedDays = pgTable(
+  'rescued_days',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    date: date('date').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex('rescued_days_user_date').on(table.userId, table.date)],
 )

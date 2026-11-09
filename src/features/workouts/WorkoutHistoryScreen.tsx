@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Trophy } from '../../components/icons'
+import { ArrowLeft } from '../../components/icons'
 import { Card, EmptyState, ScreenTitle } from '../../components/ui'
 import IconOrEmoji from '../../components/IconOrEmoji'
 import { formatDateBR } from '../../lib/dateUtils'
@@ -59,13 +59,6 @@ export default function WorkoutHistoryScreen() {
           )
         })}
       </div>
-
-      {sorted.length > 0 && (
-        <p className="flex items-center justify-center gap-1.5 pt-2 text-xs text-[var(--text-muted)]">
-          <Trophy size={12} className="text-amber-500" />
-          Continue treinando pra bater mais recordes.
-        </p>
-      )}
     </div>
   )
 }

@@ -6,6 +6,7 @@ import PixelIcon from './PixelIcon'
 import { VisualPreview } from './VisualStylePicker'
 import { useIconStyle } from './AppIcon'
 import { playSound } from '../lib/sounds'
+import DailyFlow from './DailyFlow'
 
 // Aviso único "chegou o visual 8-bit" pra quem já usava o app. Quem passa pelo onboarding novo já
 // escolhe o visual lá, então o onboarding marca como visto. Fica no aparelho (localStorage).
@@ -51,6 +52,9 @@ export default function VisualIntroModal() {
     markVisualIntroSeen()
     setOpen(false)
   }
+
+  // depois desse aviso (ou se já foi visto) vem o streak do dia e o "e ontem?"
+  if (!open) return <DailyFlow />
 
   return (
     <AnimatePresence>
