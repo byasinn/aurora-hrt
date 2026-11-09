@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/apiClient'
-import type { PublicUser } from '../../shared/types'
+import type { MeUser, PublicUser } from '../../shared/types'
 
 export function useMe(enabled: boolean) {
   return useQuery({
     queryKey: ['auth-me'],
-    queryFn: () => api.get<PublicUser>('/auth-me'),
+    queryFn: () => api.get<MeUser>('/auth-me'),
     retry: false,
     enabled,
   })
@@ -75,5 +75,28 @@ export function useDeleteAccount() {
       qc.setQueryData(['auth-me'], undefined)
       qc.clear()
     },
+  })
+}
+
+export function useChangePassword() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { currentPassword?: string; newPassword: string }) => api.post<{ ok: true }>('/auth-change-password', input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['auth-me'] }),
+  })
+}
+
+export function useChangeEmail() {
+  return useMutation({
+    mutationFn: (input: { newEmail: string; password?: string }) =>
+      api.post<{ ok: true; message: string }>('/auth-change-email', input),
+  })
+}
+
+export function useConfirmEmailChange() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { token: string }) => api.post<{ ok: true; email: string }>('/auth-confirm-email-change', input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['auth-me'] }),
   })
 }

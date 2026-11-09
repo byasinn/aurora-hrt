@@ -15,6 +15,17 @@ export interface PointsStats {
   totalWorkoutVolume: number
 }
 
+// Bônus de Brilho por ano completo de transição (a partir do "início da transição" do perfil). Não
+// cria pontos retroativos de atividade — é um presente fixo por aniversário, com teto pra ninguém
+// "ganhar" mudando a data pra décadas atrás.
+export const TRANSITION_BONUS_PER_YEAR = 25
+export const TRANSITION_BONUS_MAX_YEARS = 10
+
+export function transitionYearsBonus(daysSinceTransitionStart: number | null): number {
+  if (daysSinceTransitionStart == null || daysSinceTransitionStart < 365) return 0
+  return Math.min(Math.floor(daysSinceTransitionStart / 365), TRANSITION_BONUS_MAX_YEARS) * TRANSITION_BONUS_PER_YEAR
+}
+
 export interface CollectibleDef {
   key: string
   title: string

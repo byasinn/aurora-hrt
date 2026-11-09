@@ -128,6 +128,9 @@ export default function UserProfileScreen() {
             @{profile.username}
             {profile.pronouns && ` · ${profile.pronouns}`}
           </p>
+          {(profile.gender || profile.location) && (
+            <p className="text-xs text-[var(--text-muted)]">{[profile.gender, profile.location && `📍 ${profile.location}`].filter(Boolean).join(' · ')}</p>
+          )}
         </div>
 
         {specialTitleDef && (

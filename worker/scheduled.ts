@@ -7,6 +7,7 @@ import {
   DOSE_FOLLOWUP_AFTER_MINUTES,
   DOSE_MISSED_AFTER_HOURS,
 } from '../shared/scheduling'
+import { wantsNotification } from '../shared/genders'
 import { sendPushToSubscriptions, deleteExpiredSubscriptions, type PushPayload } from './shared/push'
 import type { Env } from './env'
 
@@ -57,7 +58,7 @@ export async function runScheduledReminders(env: Env): Promise<void> {
       .from(medications)
       .where(and(inArray(medications.userId, activeUserIds), eq(medications.active, true))),
     db
-      .select({ userId: profile.userId, timezone: profile.timezone })
+      .select({ userId: profile.userId, timezone: profile.timezone, notificationPrefs: profile.notificationPrefs })
       .from(profile)
       .where(inArray(profile.userId, activeUserIds)),
     db.select().from(pushSubscriptions).where(inArray(pushSubscriptions.userId, activeUserIds)),
@@ -79,6 +80,7 @@ export async function runScheduledReminders(env: Env): Promise<void> {
   const loggedSlots = new Set(logs.map((l) => slotKey(l.medicationId, l.scheduledFor)))
 
   const timezoneByUser = new Map(profiles.map((p) => [p.userId, p.timezone]))
+  const prefsByUser = new Map(profiles.map((p) => [p.userId, p.notificationPrefs]))
   const medsByUser = new Map<number, Medication[]>()
   for (const med of meds) {
     if (med.userId == null) continue
@@ -101,12 +103,14 @@ export async function runScheduledReminders(env: Env): Promise<void> {
         const elapsed = now.getTime() - scheduledFor.getTime()
         const dose = `${medication.name} — ${medication.doseAmount}${medication.doseUnit}`
 
-        if (medication.remindersEnabled && elapsed >= 0 && elapsed < WINDOW_MS) {
+        // o lembrete do remédio liga/desliga por remédio; as preferências de notificação valem pra todos
+        const prefs = prefsByUser.get(userId)
+        if (medication.remindersEnabled && wantsNotification(prefs, 'doseReminders') && elapsed >= 0 && elapsed < WINDOW_MS) {
           pushes.push({
             userId,
             payload: { title: 'Hora do medicamento', body: dose, url: '/', tag: `dose-${medication.id}` },
           })
-        } else if (medication.remindersEnabled && elapsed >= FOLLOWUP_AFTER_MS && elapsed < FOLLOWUP_AFTER_MS + WINDOW_MS) {
+        } else if (medication.remindersEnabled && wantsNotification(prefs, 'doseFollowup') && elapsed >= FOLLOWUP_AFTER_MS && elapsed < FOLLOWUP_AFTER_MS + WINDOW_MS) {
           pushes.push({
             userId,
             payload: {

@@ -21,6 +21,8 @@ export const users = pgTable('users', {
   emailVerified: boolean('email_verified').notNull().default(false),
   isAdmin: boolean('is_admin').notNull().default(false),
   banned: boolean('banned').notNull().default(false),
+  banReason: text('ban_reason'), // motivo anotado pelo admin ao banir (só o painel vê)
+  bannedAt: timestamp('banned_at', { withTimezone: true }),
   failedLoginAttempts: integer('failed_login_attempts').notNull().default(0),
   lockedUntil: timestamp('locked_until', { withTimezone: true }),
   termsAcceptedAt: timestamp('terms_accepted_at', { withTimezone: true }),
@@ -43,7 +45,8 @@ export const emailTokens = pgTable('email_tokens', {
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   token: text('token').notNull().unique(),
-  type: text('type').notNull(), // 'verify_email' | 'reset_password'
+  type: text('type').notNull(), // 'verify_email' | 'reset_password' | 'change_email'
+  newEmail: text('new_email'), // só no 'change_email': o endereço novo, que só vale depois de confirmado
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
@@ -104,6 +107,14 @@ export const profile = pgTable(
   averageCycleLength: integer('average_cycle_length').notNull().default(28),
   averagePeriodLength: integer('average_period_length').notNull().default(5),
   intimateTrackingEnabled: boolean('intimate_tracking_enabled').notNull().default(false),
+  gender: text('gender'), // key de shared/genders.ts ou texto livre ("custom:...")
+  country: text('country'),
+  city: text('city'),
+  showLocation: boolean('show_location').notNull().default(false), // país/cidade no perfil público
+  // dica do dia na Home — desligada até a pessoa ligar e ver o aviso de que as dicas são geradas por IA
+  dailyTipsEnabled: boolean('daily_tips_enabled').notNull().default(false),
+  // quais notificações a pessoa quer: { doseReminders, doseFollowup, insights, ... } — chave ausente = ligada
+  notificationPrefs: jsonb('notification_prefs').notNull().default({}),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [uniqueIndex('profile_username_idx').on(table.username)],
@@ -761,4 +772,40 @@ export const shopPurchases = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [uniqueIndex('shop_purchases_user_item_idx').on(table.userId, table.itemKey)],
+)
+
+// Imagens barradas pela checagem automática de nudez (Sightengine). Em vez de só recusar, a imagem
+// fica guardada à parte no R2 (prefixo quarantine/) pra admin revisar: liberar (falso positivo) ou
+// apagar de vez. Quem enviou continua recebendo a recusa na hora.
+export const quarantinedImages = pgTable(
+  'quarantined_images',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
+    r2Key: text('r2_key').notNull(),
+    contentType: text('content_type').notNull(),
+    reason: text('reason').notNull(),
+    scores: jsonb('scores').notNull().default({}), // resposta da Sightengine, pra admin ver o porquê
+    status: text('status').notNull().default('pending'), // 'pending' | 'approved' | 'deleted'
+    releasedKey: text('released_key'), // chave da imagem liberada (fora da quarentena), se aprovada
+    reviewedBy: integer('reviewed_by').references(() => users.id, { onDelete: 'set null' }),
+    reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('quarantined_images_status_idx').on(table.status, table.createdAt)],
+)
+
+// Anotações internas de admin sobre uma conta (avisos dados, contexto de denúncias) — só o painel vê.
+export const adminNotes = pgTable(
+  'admin_notes',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    authorId: integer('author_id').references(() => users.id, { onDelete: 'set null' }),
+    body: text('body').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('admin_notes_user_idx').on(table.userId)],
 )

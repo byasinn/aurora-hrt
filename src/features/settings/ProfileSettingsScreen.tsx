@@ -1,17 +1,87 @@
 import { useEffect, useState } from 'react'
-import { Button, Card } from '../../components/ui'
-import Switch from '../../components/Switch'
-import { useProfile, useUpdateProfile } from '../../api/profile'
-import { todayStr } from '../../lib/dateUtils'
+import clsx from 'clsx'
 import { useTranslation } from 'react-i18next'
+import { Button, Card } from '../../components/ui'
+import { Check } from '../../components/icons'
+import { useProfile, useUpdateProfile } from '../../api/profile'
+import { ApiError } from '../../lib/apiClient'
+import { toastError } from '../../lib/toast'
+import { todayStr, daysBetween } from '../../lib/dateUtils'
 import { PRONOUN_PRESETS, pronounPresetsFor } from '../../lib/pronouns'
+import { TRANSITION_BONUS_MAX_YEARS, TRANSITION_BONUS_PER_YEAR, transitionYearsBonus } from '../../lib/collectiblesEngine'
+import { GENDER_OPTIONS, MAX_CUSTOM_GENDER, customGender, genderLabel, isCustomGender } from '../../../shared/genders'
 import SettingsSubHeader from './SettingsSubHeader'
 
-const CONTENT_OPTIONS: { value: string; label: string }[] = [
-  { value: 'feminine', label: 'Feminino' },
-  { value: 'masculine', label: 'Masculino' },
-  { value: 'combined', label: 'Combinado' },
-]
+const inputClass =
+  'w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5 text-[var(--text)] outline-none focus:border-[var(--accent)]'
+
+function Label({ children }: { children: React.ReactNode }) {
+  return <p className="mb-1.5 text-xs font-bold text-[var(--text-muted)]">{children}</p>
+}
+
+function Chip({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={selected}
+      className={clsx(
+        'min-h-9 rounded-full border px-3 text-sm transition',
+        selected ? 'border-[var(--accent)] bg-[var(--accent)] font-bold text-[var(--accent-contrast)]' : 'border-[var(--border)] text-[var(--text-muted)]',
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
+function UsernameCard() {
+  const { data: profile } = useProfile()
+  const updateProfile = useUpdateProfile()
+  const [username, setUsername] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    if (profile) setUsername(profile.username ?? '')
+  }, [profile])
+
+  async function handleSave() {
+    setError(null)
+    setSaved(false)
+    const normalized = username.trim().toLowerCase()
+    if (normalized === profile?.username) return
+    try {
+      await updateProfile.mutateAsync({ username: normalized })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Não foi possível salvar.')
+    }
+  }
+
+  return (
+    <Card className="space-y-2">
+      <Label>Nome de usuário</Label>
+      <div className="flex gap-2">
+        <div className="flex flex-1 items-center rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3">
+          <span className="text-[var(--text-muted)]">@</span>
+          <input
+            value={username}
+            onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+            maxLength={20}
+            className="w-full bg-transparent px-1 py-2.5 text-[var(--text)] outline-none"
+          />
+        </div>
+        <Button onClick={handleSave} disabled={updateProfile.isPending || !username.trim() || username === profile?.username} className="shrink-0">
+          {saved ? <Check size={16} /> : 'Salvar'}
+        </Button>
+      </div>
+      {error && <p className="text-xs text-red-400">{error}</p>}
+      <p className="text-xs text-[var(--text-muted)]">3-20 caracteres: letras minúsculas, números e _. Até 3 trocas por mês.</p>
+    </Card>
+  )
+}
 
 export default function ProfileSettingsScreen() {
   const { data: profile } = useProfile()
@@ -22,145 +92,117 @@ export default function ProfileSettingsScreen() {
   const [displayName, setDisplayName] = useState('')
   const [pronouns, setPronouns] = useState('')
   const [customPronouns, setCustomPronouns] = useState(false)
+  const [gender, setGender] = useState<string | null>(null)
+  const [customGenderText, setCustomGenderText] = useState('')
   const [transitionStartDate, setTransitionStartDate] = useState('')
+  const [saved, setSaved] = useState(false)
 
   useEffect(() => {
     if (!profile) return
     setDisplayName(profile.displayName)
     setPronouns(profile.pronouns)
     setCustomPronouns(!!profile.pronouns && !PRONOUN_PRESETS.includes(profile.pronouns))
+    setGender(profile.gender ?? null)
+    setCustomGenderText(isCustomGender(profile.gender) ? (genderLabel(profile.gender) ?? '') : '')
     setTransitionStartDate(profile.transitionStartDate ?? '')
   }, [profile])
 
-  function savePreferences() {
-    updateProfile.mutate({ displayName, pronouns, transitionStartDate: transitionStartDate || null })
+  const customSelected = gender === 'custom' || isCustomGender(gender)
+  const days = transitionStartDate ? daysBetween(transitionStartDate, todayStr()) : null
+  const bonus = transitionYearsBonus(days)
+
+  async function save() {
+    const genderValue = customSelected ? (customGenderText.trim() ? customGender(customGenderText) : null) : gender
+    try {
+      await updateProfile.mutateAsync({ displayName, pronouns, gender: genderValue, transitionStartDate: transitionStartDate || null })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (err) {
+      toastError(err, 'Não foi possível salvar.')
+    }
   }
 
   return (
     <div className="space-y-4">
-      <SettingsSubHeader title="Perfil e preferências" />
+      <SettingsSubHeader title="Perfil" />
 
-      <Card className="space-y-3">
+      <Card className="space-y-4">
         <div>
-          <label className="mb-1 block text-xs text-[var(--text-muted)]">Nome</label>
-          <input
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-[var(--text)] outline-none focus:border-[var(--accent)]"
-          />
+          <Label>Nome de exibição</Label>
+          <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} className={inputClass} />
+          <p className="mt-1 text-xs text-[var(--text-muted)]">Até 3 trocas por mês.</p>
         </div>
+
         <div>
-          <label className="mb-1 block text-xs text-[var(--text-muted)]">Pronomes</label>
+          <Label>Pronomes</Label>
           <div className="flex flex-wrap gap-2">
             {presets.map((preset) => (
-              <button
+              <Chip
                 key={preset}
-                type="button"
+                selected={!customPronouns && pronouns === preset}
                 onClick={() => {
                   setPronouns(preset)
                   setCustomPronouns(false)
                 }}
-                className={
-                  'rounded-full border px-3 py-1.5 text-sm transition ' +
-                  (!customPronouns && pronouns === preset
-                    ? 'border-[var(--accent)] bg-[var(--surface-2)] text-[var(--text)]'
-                    : 'border-[var(--border)] text-[var(--text-muted)]')
-                }
               >
                 {preset}
-              </button>
+              </Chip>
             ))}
-            <button
-              type="button"
+            <Chip
+              selected={customPronouns}
               onClick={() => {
                 setCustomPronouns(true)
                 if (PRONOUN_PRESETS.includes(pronouns)) setPronouns('')
               }}
-              className={
-                'rounded-full border px-3 py-1.5 text-sm transition ' +
-                (customPronouns
-                  ? 'border-[var(--accent)] bg-[var(--surface-2)] text-[var(--text)]'
-                  : 'border-[var(--border)] text-[var(--text-muted)]')
-              }
             >
               Outro
-            </button>
+            </Chip>
           </div>
           {customPronouns && (
+            <input autoFocus value={pronouns} onChange={(e) => setPronouns(e.target.value)} placeholder="Escreva seus pronomes…" className={clsx(inputClass, 'mt-2')} />
+          )}
+        </div>
+
+        <div>
+          <Label>Gênero</Label>
+          <div className="flex flex-wrap gap-2">
+            {GENDER_OPTIONS.map((g) => (
+              <Chip key={g.key} selected={gender === g.key} onClick={() => setGender(gender === g.key ? null : g.key)}>
+                {g.label}
+              </Chip>
+            ))}
+            <Chip selected={customSelected} onClick={() => setGender(customSelected ? null : 'custom')}>
+              Outro
+            </Chip>
+          </div>
+          {customSelected && (
             <input
               autoFocus
-              value={pronouns}
-              onChange={(e) => setPronouns(e.target.value)}
-              placeholder="Escreva seus pronomes…"
-              className="mt-2 w-full rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-[var(--text)] outline-none focus:border-[var(--accent)]"
+              value={customGenderText}
+              maxLength={MAX_CUSTOM_GENDER}
+              onChange={(e) => setCustomGenderText(e.target.value)}
+              placeholder="Como você descreve seu gênero?"
+              className={clsx(inputClass, 'mt-2')}
             />
           )}
         </div>
-        <div>
-          <label className="mb-1 block text-xs text-[var(--text-muted)]">Início da transição</label>
-          <input
-            type="date"
-            value={transitionStartDate}
-            max={todayStr()}
-            onChange={(e) => setTransitionStartDate(e.target.value)}
-            className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-[var(--text)] outline-none focus:border-[var(--accent)]"
-          />
-        </div>
 
         <div>
-          <p className="mb-2 text-xs text-[var(--text-muted)]">Conteúdo de medidas</p>
-          <div className="flex gap-2">
-            {CONTENT_OPTIONS.map((opt) => (
-              <Button
-                key={opt.value}
-                variant={profile?.contentPreference === opt.value ? 'primary' : 'secondary'}
-                className="flex-1"
-                onClick={() => updateProfile.mutate({ contentPreference: opt.value })}
-              >
-                {opt.label}
-              </Button>
-            ))}
-          </div>
+          <Label>Início da transição</Label>
+          <input type="date" value={transitionStartDate} max={todayStr()} onChange={(e) => setTransitionStartDate(e.target.value)} className={inputClass} />
+          <p className="mt-1.5 text-xs text-[var(--text-muted)]">
+            Não cria pontos de atividade pra trás — mas cada ano completo de transição vale +{TRANSITION_BONUS_PER_YEAR} de Brilho (até{' '}
+            {TRANSITION_BONUS_MAX_YEARS} anos).
+            {bonus > 0 && <strong className="text-[var(--accent)]"> Seu bônus agora: +{bonus} ✨</strong>}
+          </p>
         </div>
 
-        <Button className="w-full" onClick={savePreferences} disabled={updateProfile.isPending}>
-          Salvar
+        <Button className="w-full" onClick={save} disabled={updateProfile.isPending}>
+          {saved ? 'Salvo!' : updateProfile.isPending ? 'Salvando…' : 'Salvar'}
         </Button>
       </Card>
 
-      <Card className="space-y-2">
-        <div className="flex items-center justify-between gap-3 py-1">
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-[var(--text)]">Treinos</p>
-            <p className="text-xs text-[var(--text-muted)]">Ativa o botão de Treinos no Meu espaço e na Home.</p>
-          </div>
-          <Switch checked={profile?.workoutsEnabled ?? false} onChange={(v) => updateProfile.mutate({ workoutsEnabled: v })} />
-        </div>
-        <div className="flex items-center justify-between gap-3 py-1">
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-[var(--text)]">Ciclo menstrual</p>
-            <p className="text-xs text-[var(--text-muted)]">
-              Acompanhamento opcional de período, sintomas e previsões, direto no Histórico.
-            </p>
-          </div>
-          <Switch
-            checked={profile?.cycleTrackingEnabled ?? false}
-            onChange={(v) => updateProfile.mutate({ cycleTrackingEnabled: v })}
-          />
-        </div>
-        <div className="flex items-center justify-between gap-3 py-1">
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-[var(--text)]">Atividade íntima</p>
-            <p className="text-xs text-[var(--text-muted)]">
-              Registro privado de atividade sexual por dia, direto no Histórico. Independente do ciclo.
-            </p>
-          </div>
-          <Switch
-            checked={profile?.intimateTrackingEnabled ?? false}
-            onChange={(v) => updateProfile.mutate({ intimateTrackingEnabled: v })}
-          />
-        </div>
-      </Card>
+      <UsernameCard />
     </div>
   )
 }

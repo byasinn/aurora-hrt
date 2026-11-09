@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useUnlockedAchievements, useUnlockAchievement } from '../../api/achievements'
 import { useUnlockedTrophies, useUnlockTrophy } from '../../api/trophies'
 import { useUnlockedTitles, useUnlockTitle } from '../../api/titles'
+import { wantsNotification } from '../../../shared/genders'
 import { useCreateMessage } from '../../api/messages'
 import { useMe } from '../../api/auth'
 import { useProfile } from '../../api/profile'
@@ -21,13 +22,15 @@ export function useSyncCollectibles() {
   const { data: unlockedTit = [] } = useUnlockedTitles()
   const unlockTit = useUnlockTitle()
   const createMessage = useCreateMessage()
+  // desbloqueia sempre; o recado na caixa de entrada respeita Notificações → Conquistas e títulos
+  const notify = wantsNotification(profile?.notificationPrefs, 'achievements')
 
   useEffect(() => {
     const achKeys = new Set(unlockedAch.map((a) => a.achievementKey))
     for (const a of ACHIEVEMENTS_SFW) {
       if (!achKeys.has(a.key) && a.isMet(stats)) {
         unlockAch.mutate(a.key)
-        createMessage.mutate({ icon: a.icon, title: 'Nova conquista!', body: `${a.title} — ${a.description}` })
+        if (notify) createMessage.mutate({ icon: a.icon, title: 'Nova conquista!', body: `${a.title} — ${a.description}` })
       }
     }
 
@@ -35,7 +38,7 @@ export function useSyncCollectibles() {
     for (const t of TROPHIES_SFW) {
       if (!troKeys.has(t.key) && t.isMet(stats)) {
         unlockTro.mutate(t.key)
-        createMessage.mutate({ icon: t.icon, title: 'Novo troféu!', body: `${t.title} — ${t.description}` })
+        if (notify) createMessage.mutate({ icon: t.icon, title: 'Novo troféu!', body: `${t.title} — ${t.description}` })
       }
     }
 
@@ -43,7 +46,7 @@ export function useSyncCollectibles() {
     for (const t of SFW_TITLES) {
       if (!titKeys.has(t.key) && stats.brilho >= t.threshold) {
         unlockTit.mutate({ key: t.key, track: 'sfw' })
-        createMessage.mutate({ icon: t.icon, title: 'Novo título!', body: `Você desbloqueou "${titleName(t, profile?.textStyle)}"` })
+        if (notify) createMessage.mutate({ icon: t.icon, title: 'Novo título!', body: `Você desbloqueou "${titleName(t, profile?.textStyle)}"` })
       }
     }
 

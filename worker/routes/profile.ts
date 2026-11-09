@@ -8,6 +8,7 @@ import { validateUsernameFormat, generateUniqueUsername } from '../shared/userna
 import { deleteR2Images } from '../shared/images'
 import { computeServerPointsStats } from '../shared/pointsStats'
 import { SFW_TITLES } from '../../src/lib/titles'
+import { validateGender, validateMeasurementFocus, validateNotificationPrefs } from '../../shared/genders'
 import type { ProfileInput } from '../../shared/types'
 import type { Env } from '../env'
 
@@ -95,6 +96,24 @@ app.all('/api/profile', async (c) => {
       if (cycleLengthError) return jsonResponse({ error: cycleLengthError }, { status: 400 })
       const periodLengthError = validateIntRange(body.averagePeriodLength, 1, 15, 'averagePeriodLength')
       if (periodLengthError) return jsonResponse({ error: periodLengthError }, { status: 400 })
+      const genderError = validateGender(body.gender)
+      if (genderError) return jsonResponse({ error: genderError }, { status: 400 })
+      const focusError = validateMeasurementFocus(body.contentPreference)
+      if (focusError) return jsonResponse({ error: focusError }, { status: 400 })
+      const notifError = validateNotificationPrefs(body.notificationPrefs)
+      if (notifError) return jsonResponse({ error: notifError }, { status: 400 })
+      const countryError = validateText(body.country, 60)
+      if (countryError) return jsonResponse({ error: countryError }, { status: 400 })
+      const cityError = validateText(body.city, 60)
+      if (cityError) return jsonResponse({ error: cityError }, { status: 400 })
+      if (body.transitionStartDate != null) {
+        const d = new Date(String(body.transitionStartDate))
+        // nada no futuro e nada antes de 1950 — o bônus de anos de transição sai dessa data
+        if (Number.isNaN(d.getTime()) || d.getTime() > Date.now() || d.getFullYear() < 1950) {
+          return jsonResponse({ error: 'data de início da transição inválida' }, { status: 400 })
+        }
+      }
+      if (body.gender === '') body.gender = null
 
       const changingName = typeof body.displayName === 'string' && body.displayName.trim() !== current.displayName
       const updates: ProfileInput & {

@@ -3,6 +3,8 @@ import { useDoseLogs } from '../api/doses'
 import { useMoodEntries } from '../api/moods'
 import { useMedications } from '../api/medications'
 import { useCreateMessage, useMessages } from '../api/messages'
+import { useProfile } from '../api/profile'
+import { wantsNotification } from '../../shared/genders'
 import { computeInsights } from '../lib/insights'
 import { localDateStr, todayStr } from '../lib/dateUtils'
 
@@ -18,8 +20,9 @@ function Generate() {
   const medicationsQuery = useMedications()
   const messagesQuery = useMessages()
   const createMessage = useCreateMessage()
+  const { data: profile } = useProfile()
 
-  const ready = doseLogsQuery.isSuccess && moodEntriesQuery.isSuccess && medicationsQuery.isSuccess && messagesQuery.isSuccess
+  const ready = profile != null && doseLogsQuery.isSuccess && moodEntriesQuery.isSuccess && medicationsQuery.isSuccess && messagesQuery.isSuccess
 
   useEffect(() => {
     if (!ready) return
@@ -30,6 +33,7 @@ function Generate() {
       (m) => m.title === 'Insight' && localDateStr(new Date(m.createdAt)) === today,
     )
     if (alreadySentToday) return
+    if (!wantsNotification(profile.notificationPrefs, 'insights')) return
 
     const insights = computeInsights({
       doseLogs: doseLogsQuery.data ?? [],

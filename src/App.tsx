@@ -40,9 +40,9 @@ import FeedScreen from './features/feed/FeedScreen'
 import SettingsScreen from './features/settings/SettingsScreen'
 import AccountSettingsScreen from './features/settings/AccountSettingsScreen'
 import ProfileSettingsScreen from './features/settings/ProfileSettingsScreen'
+import PreferencesSettingsScreen from './features/settings/PreferencesSettingsScreen'
 import PrivacySettingsScreen from './features/settings/PrivacySettingsScreen'
 import NotificationsSettingsScreen from './features/settings/NotificationsSettingsScreen'
-import SecuritySettingsScreen from './features/settings/SecuritySettingsScreen'
 import AppearanceSettingsScreen from './features/settings/AppearanceSettingsScreen'
 import LanguageSettingsScreen from './features/settings/LanguageSettingsScreen'
 import DataLegalScreen from './features/settings/DataLegalScreen'
@@ -129,7 +129,8 @@ function RootGate() {
         <Route path="settings/perfil" element={<ProfileSettingsScreen />} />
         <Route path="settings/privacidade" element={<PrivacySettingsScreen />} />
         <Route path="settings/notificacoes" element={<NotificationsSettingsScreen />} />
-        <Route path="settings/seguranca" element={<SecuritySettingsScreen />} />
+        <Route path="settings/preferencias" element={<PreferencesSettingsScreen />} />
+        <Route path="settings/seguranca" element={<Navigate to="/settings/privacidade" replace />} />
         <Route path="settings/aparencia" element={<AppearanceSettingsScreen />} />
         <Route path="settings/idioma" element={<LanguageSettingsScreen />} />
         <Route path="settings/dados" element={<DataLegalScreen />} />

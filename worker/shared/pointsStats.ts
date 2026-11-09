@@ -11,7 +11,7 @@ import {
   communityPostComments,
   profile,
 } from '../../shared/schema'
-import { currentStreak, type PointsStats } from '../../src/lib/collectiblesEngine'
+import { currentStreak, transitionYearsBonus, type PointsStats } from '../../src/lib/collectiblesEngine'
 import type { WorkoutExerciseLog } from '../../shared/types'
 import { dateStrInTimezone } from '../../shared/scheduling'
 import type { getDb } from './db'
@@ -83,15 +83,17 @@ export async function computeServerPointsStats(db: ReturnType<typeof getDb>, use
   const commentsGivenCount = (commentsCountRows[0]?.value ?? 0) + (communityCommentsCountRows[0]?.value ?? 0)
   const interactionsCount = postsCount + commentsGivenCount
 
+  const transitionStartDate = profileRows[0]?.transitionStartDate ?? null
+  const daysSinceTransitionStart = transitionStartDate ? daysBetween(transitionStartDate, today) : null
+
   const brilho =
     postsCount * 10 +
     commentsGivenCount * 3 +
     sfwRoutineCompletions * 5 +
     workoutLogRows.length * 5 +
     moodRows.length * 2 +
-    takenDates.size * 1
-
-  const transitionStartDate = profileRows[0]?.transitionStartDate ?? null
+    takenDates.size * 1 +
+    transitionYearsBonus(daysSinceTransitionStart)
 
   return {
     brilho: Math.round(brilho),
@@ -101,7 +103,7 @@ export async function computeServerPointsStats(db: ReturnType<typeof getDb>, use
     totalDosesTaken: realTakenLogs.length,
     currentMoodStreakDays: currentStreak(moodDates, today),
     currentDoseStreakDays: currentStreak(takenDates, today),
-    daysSinceTransitionStart: transitionStartDate ? daysBetween(transitionStartDate, today) : null,
+    daysSinceTransitionStart,
     sfwRoutineCompletions,
     interactionsCount,
     workoutSessionsCount: workoutLogRows.length,

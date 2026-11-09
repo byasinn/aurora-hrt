@@ -44,6 +44,8 @@ import type {
 
 export type User = typeof users.$inferSelect
 export type PublicUser = Pick<User, 'id' | 'email' | 'emailVerified' | 'isAdmin' | 'createdAt'>
+/** /api/auth-me — o usuário da sessão + se a conta tem senha (quem só entra com Google não tem) */
+export type MeUser = PublicUser & { hasPassword?: boolean }
 export type AdminUserSummary = Pick<User, 'id' | 'email' | 'emailVerified' | 'isAdmin' | 'banned' | 'createdAt'> & {
   isVerified: boolean
 }
@@ -334,6 +336,10 @@ export interface UserProfileDetail extends PublicUserSummary {
   trophies: string[] | null
   postsCollageStyle: string
   externalLinks: ExternalLink[]
+  /** texto do gênero (lista ou o que a pessoa escreveu) */
+  gender: string | null
+  /** "Cidade, País" — só vem se a pessoa escolheu mostrar */
+  location: string | null
 }
 
 export interface FeedPost extends Post {

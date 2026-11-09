@@ -197,7 +197,9 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
         displayName: displayName.trim(),
         pronouns: pronouns.trim(),
         textStyle,
-        contentPreference: contentPreference ?? 'combined',
+        // a pergunta de identidade vira o gênero do perfil; o foco das medidas começa em "todas"
+        contentPreference: 'combined',
+        gender: contentPreference === 'feminine' ? 'trans_woman' : contentPreference === 'masculine' ? 'trans_man' : null,
         isOnHrt: hrt == null ? null : hrt === 'yes',
         notOnMedsYet,
         appGoals: goals,

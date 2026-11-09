@@ -1,3 +1,4 @@
+import { genderLabel } from '../../shared/genders'
 import { Hono } from 'hono'
 import { and, count, eq } from 'drizzle-orm'
 import { getDb } from '../shared/db'
@@ -154,6 +155,9 @@ app.all('/api/users-profile', async (c) => {
       trophies: trophiesOut,
       postsCollageStyle: targetProfile.postsCollageStyle,
       externalLinks: (targetProfile.externalLinks as ExternalLink[] | null) ?? [],
+      gender: genderLabel(targetProfile.gender),
+      // só quando a pessoa liga "mostrar país e cidade" em Privacidade
+      location: targetProfile.showLocation ? [targetProfile.city, targetProfile.country].filter(Boolean).join(', ') || null : null,
     }
     return jsonResponse(result)
   } catch (err) {

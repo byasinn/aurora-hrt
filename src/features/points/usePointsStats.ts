@@ -4,7 +4,7 @@ import { useProfile } from '../../api/profile'
 import { useRoutines, useRoutineLogs } from '../../api/routines'
 import { useWorkoutLogs } from '../../api/workouts'
 import { useMySocialStats } from '../../api/social'
-import { currentStreak, type PointsStats } from '../../lib/collectiblesEngine'
+import { currentStreak, transitionYearsBonus, type PointsStats } from '../../lib/collectiblesEngine'
 import { todayStr, daysBetween, localDateStr } from '../../lib/dateUtils'
 import type { WorkoutExerciseLog } from '../../../shared/types'
 
@@ -50,13 +50,16 @@ export function usePointsStats(): PointsStats {
   const commentsGivenCount = (socialStats?.commentsCount ?? 0) + (socialStats?.communityCommentsCount ?? 0)
   const interactionsCount = postsCount + commentsGivenCount
 
+  const daysSinceTransitionStart = profile?.transitionStartDate ? daysBetween(profile.transitionStartDate, today) : null
+
   const brilho =
     postsCount * 10 +
     commentsGivenCount * 3 +
     sfwRoutineCompletions * 5 +
     workoutLogs.length * 5 +
     moods.length * 2 +
-    takenDates.size * 1
+    takenDates.size * 1 +
+    transitionYearsBonus(daysSinceTransitionStart)
 
   return {
     brilho: Math.round(brilho),
@@ -66,7 +69,7 @@ export function usePointsStats(): PointsStats {
     totalDosesTaken: realTakenLogs.length,
     currentMoodStreakDays: currentStreak(moodDates, today),
     currentDoseStreakDays: currentStreak(takenDates, today),
-    daysSinceTransitionStart: profile?.transitionStartDate ? daysBetween(profile.transitionStartDate, today) : null,
+    daysSinceTransitionStart,
     sfwRoutineCompletions,
     interactionsCount,
     workoutSessionsCount: workoutLogs.length,

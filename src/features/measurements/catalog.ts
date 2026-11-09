@@ -1,3 +1,4 @@
+import { normalizeMeasurementFocus } from '../../../shared/genders'
 import type { MeasurementType } from '../../../shared/types'
 
 export interface MeasurementDef {
@@ -6,7 +7,7 @@ export interface MeasurementDef {
   unit: string
   icon: string
   tutorial: string
-  category: 'common' | 'feminine' | 'masculine'
+  category: 'common' | 'lower' | 'upper' // foco das medidas em Preferências: inferiores, superiores ou todas
 }
 
 export const MEASUREMENT_CATALOG: MeasurementDef[] = [
@@ -44,7 +45,7 @@ export const MEASUREMENT_CATALOG: MeasurementDef[] = [
     icon: '👙',
     tutorial:
       'Passe a fita métrica ao redor da parte mais larga do busto, na horizontal e sem apertar. Meça sem sutiã ou com um sem bojo.',
-    category: 'feminine',
+    category: 'upper',
   },
   {
     key: 'hips',
@@ -52,7 +53,7 @@ export const MEASUREMENT_CATALOG: MeasurementDef[] = [
     unit: 'cm',
     icon: '📐',
     tutorial: 'Meça ao redor da parte mais larga do quadril e glúteos, com os pés juntos.',
-    category: 'feminine',
+    category: 'lower',
   },
   {
     key: 'thigh',
@@ -60,7 +61,7 @@ export const MEASUREMENT_CATALOG: MeasurementDef[] = [
     unit: 'cm',
     icon: '🦵',
     tutorial: 'Meça ao redor da parte mais grossa da coxa, logo abaixo do quadril.',
-    category: 'feminine',
+    category: 'lower',
   },
   {
     key: 'waist',
@@ -77,7 +78,7 @@ export const MEASUREMENT_CATALOG: MeasurementDef[] = [
     icon: '🫀',
     tutorial:
       'Passe a fita ao redor do tórax, logo abaixo dos mamilos, respirando normalmente (sem prender a respiração).',
-    category: 'masculine',
+    category: 'upper',
   },
   {
     key: 'shoulders',
@@ -85,7 +86,7 @@ export const MEASUREMENT_CATALOG: MeasurementDef[] = [
     unit: 'cm',
     icon: '📐',
     tutorial: 'Meça de uma ponta a outra do ombro (deltoides), com os braços relaxados ao lado do corpo.',
-    category: 'masculine',
+    category: 'upper',
   },
   {
     key: 'biceps',
@@ -93,15 +94,12 @@ export const MEASUREMENT_CATALOG: MeasurementDef[] = [
     unit: 'cm',
     icon: '💪',
     tutorial: 'Flexione o braço e meça ao redor da parte mais larga do bíceps contraído.',
-    category: 'masculine',
+    category: 'upper',
   },
 ]
 
 export function catalogForPreference(pref: string | undefined): MeasurementDef[] {
-  if (pref === 'masculine') {
-    return MEASUREMENT_CATALOG.filter((m) => m.category === 'common' || m.category === 'masculine')
-  }
-  if (pref === 'combined') return MEASUREMENT_CATALOG
-  // 'feminine' e padrão
-  return MEASUREMENT_CATALOG.filter((m) => m.category === 'common' || m.category === 'feminine')
+  const focus = normalizeMeasurementFocus(pref)
+  if (focus === 'combined') return MEASUREMENT_CATALOG
+  return MEASUREMENT_CATALOG.filter((m) => m.category === 'common' || m.category === focus)
 }

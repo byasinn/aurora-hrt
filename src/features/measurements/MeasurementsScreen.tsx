@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Button, Card, ScreenTitle } from '../../components/ui'
 import { useProfile } from '../../api/profile'
 import { useMeasurements, useCreateMeasurement, useDeleteMeasurement } from '../../api/measurements'
-import { catalogForPreference, type MeasurementDef } from './catalog'
+import { MEASUREMENT_CATALOG, catalogForPreference, type MeasurementDef } from './catalog'
 import { formatDateBR, todayStr } from '../../lib/dateUtils'
 
 function MeasurementCard({ def }: { def: MeasurementDef }) {
@@ -103,7 +103,11 @@ function MeasurementCard({ def }: { def: MeasurementDef }) {
 
 export default function MeasurementsScreen() {
   const { data: profile } = useProfile()
-  const fullCatalog = catalogForPreference(profile?.contentPreference)
+  const { data: allEntries } = useMeasurements()
+  // fora do foco escolhido, mas com registro: continua aparecendo pra ninguém "perder" o histórico
+  const tracked = new Set((allEntries ?? []).map((m) => m.type))
+  const focused = catalogForPreference(profile?.contentPreference)
+  const fullCatalog = MEASUREMENT_CATALOG.filter((def) => focused.includes(def) || tracked.has(def.key))
 
   return (
     <div className="space-y-4">

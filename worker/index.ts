@@ -19,6 +19,7 @@ import contentSources from './routes/content-sources'
 import topicPageFollows from './routes/topic-page-follows'
 import followSuggestions from './routes/follow-suggestions'
 import reports from './routes/reports'
+import authAccount from './routes/auth-account'
 import authDeleteAccount from './routes/auth-delete-account'
 import authGoogleCallback from './routes/auth-google-callback'
 import authGoogleStart from './routes/auth-google-start'
@@ -166,6 +167,7 @@ const routes = [
   topicPageFollows,
   followSuggestions,
   reports,
+  authAccount,
   authDeleteAccount,
   authGoogleCallback,
   authGoogleStart,

@@ -1,62 +1,132 @@
-import { useEffect, useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { LogOut, TriangleAlert } from 'lucide-react'
-import { Trash2, Check } from '../../components/icons'
+import { Trash2 } from '../../components/icons'
 import { Button, Card } from '../../components/ui'
 import { ApiError } from '../../lib/apiClient'
-import { useProfile, useUpdateProfile } from '../../api/profile'
-import { useMe, useLogout, useDeleteAccount } from '../../api/auth'
+import { useMe, useLogout, useDeleteAccount, useChangeEmail, useChangePassword } from '../../api/auth'
 import SettingsSubHeader from './SettingsSubHeader'
 
-function UsernameCard() {
-  const { data: profile } = useProfile()
-  const updateProfile = useUpdateProfile()
-  const [username, setUsername] = useState('')
+const inputClass =
+  'w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5 text-[var(--text)] outline-none focus:border-[var(--accent)]'
+
+function EmailCard() {
+  const { data: me } = useMe(true)
+  const changeEmail = useChangeEmail()
+  const [open, setOpen] = useState(false)
+  const [newEmail, setNewEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [saved, setSaved] = useState(false)
 
-  useEffect(() => {
-    if (profile) setUsername(profile.username ?? '')
-  }, [profile])
-
-  async function handleSave() {
+  async function submit(e: FormEvent) {
+    e.preventDefault()
     setError(null)
-    setSaved(false)
-    const normalized = username.trim().toLowerCase()
-    if (normalized === profile?.username) return
     try {
-      await updateProfile.mutateAsync({ username: normalized })
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
+      const res = await changeEmail.mutateAsync({ newEmail: newEmail.trim(), password: me?.hasPassword ? password : undefined })
+      setMessage(res.message)
+      setOpen(false)
+      setPassword('')
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Não foi possível salvar.')
+      setError(err instanceof ApiError ? err.message : 'Não foi possível pedir a troca.')
     }
   }
 
   return (
-    <Card className="space-y-2">
-      <label className="mb-1 block text-xs text-[var(--text-muted)]">Nome de usuário</label>
-      <div className="flex gap-2">
-        <div className="flex flex-1 items-center rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-3">
-          <span className="text-[var(--text-muted)]">@</span>
-          <input
-            value={username}
-            onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-            maxLength={20}
-            className="w-full bg-transparent px-1 py-2 text-[var(--text)] outline-none"
-          />
+    <Card className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs text-[var(--text-muted)]">Email</p>
+          <p className="truncate text-sm font-medium text-[var(--text)]">{me?.email}</p>
         </div>
-        <Button
-          onClick={handleSave}
-          disabled={updateProfile.isPending || !username.trim() || username === profile?.username}
-          className="shrink-0"
-        >
-          {saved ? <Check size={16} /> : 'Salvar'}
-        </Button>
+        {!open && (
+          <Button variant="secondary" onClick={() => setOpen(true)} className="shrink-0">
+            Trocar
+          </Button>
+        )}
       </div>
-      {error && <p className="text-xs text-red-400">{error}</p>}
-      <p className="text-[11px] text-[var(--text-muted)]">
-        3-20 caracteres, letras minúsculas, números e underscore. Até 3 trocas por mês.
-      </p>
+      {message && <p className="rounded-xl bg-[var(--accent-soft)] p-3 text-sm text-[var(--text)]">{message}</p>}
+      {open && (
+        <form onSubmit={submit} className="space-y-2">
+          <input type="email" required value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="Novo email" className={inputClass} autoComplete="email" />
+          {me?.hasPassword && (
+            <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Sua senha atual" className={inputClass} autoComplete="current-password" />
+          )}
+          <p className="text-xs text-[var(--text-muted)]">Mandamos um link pro email novo. Ele só passa a valer depois que você abrir o link.</p>
+          {error && <p className="text-sm text-red-400">{error}</p>}
+          <div className="flex gap-2">
+            <Button type="button" variant="secondary" className="flex-1" onClick={() => setOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type="submit" className="flex-1" disabled={changeEmail.isPending}>
+              {changeEmail.isPending ? 'Enviando…' : 'Enviar link'}
+            </Button>
+          </div>
+        </form>
+      )}
+    </Card>
+  )
+}
+
+function PasswordCard() {
+  const { data: me } = useMe(true)
+  const changePassword = useChangePassword()
+  const [open, setOpen] = useState(false)
+  const [current, setCurrent] = useState('')
+  const [next, setNext] = useState('')
+  const [confirmNext, setConfirmNext] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [done, setDone] = useState(false)
+  const hasPassword = me?.hasPassword ?? true
+
+  async function submit(e: FormEvent) {
+    e.preventDefault()
+    setError(null)
+    if (next.length < 8) return setError('A senha nova precisa ter pelo menos 8 caracteres.')
+    if (next !== confirmNext) return setError('As duas senhas novas não são iguais.')
+    try {
+      await changePassword.mutateAsync({ currentPassword: hasPassword ? current : undefined, newPassword: next })
+      setDone(true)
+      setOpen(false)
+      setCurrent('')
+      setNext('')
+      setConfirmNext('')
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Não foi possível trocar a senha.')
+    }
+  }
+
+  return (
+    <Card className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs text-[var(--text-muted)]">Senha</p>
+          <p className="text-sm font-medium text-[var(--text)]">{hasPassword ? '••••••••' : 'Você entra com o Google'}</p>
+        </div>
+        {!open && (
+          <Button variant="secondary" onClick={() => setOpen(true)} className="shrink-0">
+            {hasPassword ? 'Trocar' : 'Criar senha'}
+          </Button>
+        )}
+      </div>
+      {done && <p className="rounded-xl bg-[var(--accent-soft)] p-3 text-sm text-[var(--text)]">Senha salva. Os outros aparelhos foram desconectados.</p>}
+      {open && (
+        <form onSubmit={submit} className="space-y-2">
+          {hasPassword && (
+            <input type="password" required value={current} onChange={(e) => setCurrent(e.target.value)} placeholder="Senha atual" className={inputClass} autoComplete="current-password" />
+          )}
+          <input type="password" required value={next} onChange={(e) => setNext(e.target.value)} placeholder="Senha nova (8+ caracteres)" className={inputClass} autoComplete="new-password" />
+          <input type="password" required value={confirmNext} onChange={(e) => setConfirmNext(e.target.value)} placeholder="Repita a senha nova" className={inputClass} autoComplete="new-password" />
+          {error && <p className="text-sm text-red-400">{error}</p>}
+          <div className="flex gap-2">
+            <Button type="button" variant="secondary" className="flex-1" onClick={() => setOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type="submit" className="flex-1" disabled={changePassword.isPending}>
+              {changePassword.isPending ? 'Salvando…' : 'Salvar senha'}
+            </Button>
+          </div>
+        </form>
+      )}
     </Card>
   )
 }
@@ -113,19 +183,15 @@ function DeleteAccountCard() {
 }
 
 export default function AccountSettingsScreen() {
-  const { data: me } = useMe(true)
   const logout = useLogout()
 
   return (
     <div className="space-y-4">
       <SettingsSubHeader title="Conta" />
 
-      <Card className="space-y-2">
-        <label className="mb-1 block text-xs text-[var(--text-muted)]">Email</label>
-        <p className="text-sm text-[var(--text)]">{me?.email}</p>
-      </Card>
+      <EmailCard />
+      <PasswordCard />
 
-      <UsernameCard />
 
       <Card>
         <Button
