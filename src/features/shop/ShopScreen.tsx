@@ -10,6 +10,9 @@ import { SHOP_ITEMS, SHOP_KINDS, SHOP_KIND_LABEL, type ShopKind } from '../../..
 const TAB_KEY = 'transapp.shopTab'
 
 function readTab(): ShopKind {
+  // link direto pra uma aba (ex.: "+3 na Lojinha" do Personalizar app): /loja#tab=avatarFrame
+  const fromHash = window.location.hash.match(/^#tab=(\w+)$/)?.[1] as ShopKind | undefined
+  if (fromHash && SHOP_KINDS.includes(fromHash)) return fromHash
   try {
     const saved = localStorage.getItem(TAB_KEY) as ShopKind | null
     if (saved && SHOP_KINDS.includes(saved)) return saved

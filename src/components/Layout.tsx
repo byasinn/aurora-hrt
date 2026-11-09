@@ -57,7 +57,7 @@ export default function Layout() {
   const spaceActive = location.pathname === '/profile' || location.pathname === '/perfil'
   const inboxActive = location.pathname === '/inbox' || location.pathname.startsWith('/conversas')
   const hubActive =
-    ['/aurora', '/loja', '/meus-itens', '/pontos'].some((p) => location.pathname.startsWith(p)) ||
+    ['/aurora', '/personalizar', '/loja', '/meus-itens', '/pontos'].some((p) => location.pathname.startsWith(p)) ||
     !!matchPath('/comunidade*', location.pathname)
 
   const { data: messages } = useMessages()

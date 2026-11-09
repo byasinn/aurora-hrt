@@ -26,7 +26,9 @@ async function main() {
         '• Mensagens abrem direto nas conversas, e o seu perfil (com a moldura) fica no Meu espaço',
         '• Comprar não tira seus títulos — eles continuam contando todo o Brilho que você já ganhou',
         '• Sobre o Brilho: as doses que entravam sozinhas como "histórico" ao cadastrar um remédio (de antes de você usar o app) deixaram de contar pontos. Agora só conta o que você marca no dia. Por isso o número de algumas pessoas caiu — os títulos que você já tinha continuam seus',
-        '• Botões maiores, versão pra computador e sons fofos (dá pra desligar em Aparência)',
+        '• Personalizar app (no botão do Aurora): tema, visual Clean ou 8-bit, moldura, borda, calendário, ícone e sons, tudo num lugar',
+        '• Configurações reorganizadas: troque email e senha, escolha seu gênero, ligue a dica do dia e escolha quais notificações receber',
+        '• Botões maiores, versão pra computador e sons fofos',
         '• "Você tomou?" uma hora depois do horário da dose, com botões direto na notificação',
       ].join('\n'),
     })

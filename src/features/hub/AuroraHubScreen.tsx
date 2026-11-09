@@ -66,6 +66,32 @@ export default function AuroraHubScreen() {
         </Link>
       </div>
 
+      {/* de fora a fora e com outra cor de propósito: é a porta de entrada da personalização */}
+      <Link to="/personalizar" onClick={() => playSound('pop')} className="block">
+        <div
+          className="btn-press-soft relative overflow-hidden rounded-3xl p-5 text-white [box-shadow:var(--shadow)] transition active:translate-y-0.5"
+          style={{ background: 'linear-gradient(120deg, var(--accent-3), var(--accent-2) 55%, var(--accent))' }}
+        >
+          <div className="flex items-center gap-4">
+            <div className="shrink-0 rounded-full bg-white/20 p-1.5">
+              <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} frame={profile?.equippedAvatarFrame} size={52} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xl font-extrabold leading-tight">Personalizar app</p>
+              <p className="text-sm text-white/85">Tema, visual, moldura, borda, calendário e mais</p>
+            </div>
+            <ChevronRight size={22} className="shrink-0 text-white/90" />
+          </div>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {['Tema', 'Clean ou 8-bit', 'Moldura', 'Ícone e sons'].map((chip) => (
+              <span key={chip} className="rounded-full bg-white/20 px-2.5 py-1 text-xs font-bold">
+                {chip}
+              </span>
+            ))}
+          </div>
+        </div>
+      </Link>
+
       <div className="grid grid-cols-2 gap-3">
         <HubCard
           to="/comunidades"

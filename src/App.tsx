@@ -43,7 +43,7 @@ import ProfileSettingsScreen from './features/settings/ProfileSettingsScreen'
 import PreferencesSettingsScreen from './features/settings/PreferencesSettingsScreen'
 import PrivacySettingsScreen from './features/settings/PrivacySettingsScreen'
 import NotificationsSettingsScreen from './features/settings/NotificationsSettingsScreen'
-import AppearanceSettingsScreen from './features/settings/AppearanceSettingsScreen'
+import CustomizeScreen from './features/hub/CustomizeScreen'
 import LanguageSettingsScreen from './features/settings/LanguageSettingsScreen'
 import DataLegalScreen from './features/settings/DataLegalScreen'
 import AdminSettingsScreen from './features/settings/AdminSettingsScreen'
@@ -131,7 +131,8 @@ function RootGate() {
         <Route path="settings/notificacoes" element={<NotificationsSettingsScreen />} />
         <Route path="settings/preferencias" element={<PreferencesSettingsScreen />} />
         <Route path="settings/seguranca" element={<Navigate to="/settings/privacidade" replace />} />
-        <Route path="settings/aparencia" element={<AppearanceSettingsScreen />} />
+        <Route path="settings/aparencia" element={<Navigate to="/personalizar" replace />} />
+        <Route path="personalizar" element={<CustomizeScreen />} />
         <Route path="settings/idioma" element={<LanguageSettingsScreen />} />
         <Route path="settings/dados" element={<DataLegalScreen />} />
         <Route path="settings/admin" element={<AdminSettingsScreen />} />

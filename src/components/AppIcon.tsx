@@ -4,7 +4,7 @@ import type { LucideIcon } from 'lucide-react'
 import PixelIcon, { type PixelIconName } from './PixelIcon'
 
 // Visual do app: Clean (padrão, ícones de linha) ou 8-bit (opcional: pixel art e fonte de jogo).
-// Escolhe no onboarding ou em Aparência — por isso cada uso passa as duas versões do ícone.
+// Escolhe no onboarding ou em Personalizar app — por isso cada uso passa as duas versões do ícone.
 
 export type IconStyle = 'pixel' | 'classic'
 
