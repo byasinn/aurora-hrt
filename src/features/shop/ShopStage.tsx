@@ -95,7 +95,7 @@ export function useKeeperTalk({
     return () => clearInterval(id)
   }, [message, pool, enabled])
 
-  // texto aparecendo letra por letra, "blablá" a cada três letras
+  // texto aparecendo letra por letra, "blablá" a cada duas letras
   useEffect(() => {
     if (!enabled) {
       setShown(text.length)
@@ -107,7 +107,7 @@ export function useKeeperTalk({
       i++
       setShown(i)
       const ch = text[i - 1]
-      if (ch && /[a-zá-úçãõ]/i.test(ch) && i % 3 === 0) playVoice(keeper.voice)
+      if (ch && /[a-zá-úçãõ]/i.test(ch) && i % 2 === 0) playVoice(keeper.voice)
       if (i >= text.length) clearInterval(id)
     }, 32)
     return () => clearInterval(id)

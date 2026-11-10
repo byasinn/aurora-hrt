@@ -99,87 +99,54 @@ export function playSound(name: SoundName) {
 }
 
 // ---------- voz das vendedoras da lojinha ----------
-// Não é bipe: cada "sílaba" é um chiadinho de consoante + uma vogal de verdade (onda dente-de-serra
-// passando por dois filtros nos formantes de a/é/i/ó/u), com o tom variando um pouco — sai um
-// "blablá" embolado, tipo bichinho de joguinho falando. Três vozes: grave, média e aguda.
+// Fofinha, não robótica: cada "sílaba" é uma notinha redonda (triângulo + seno uma oitava acima,
+// passando por um filtro suave que muda de brilho como se fosse a vogal) com uma entonação que sobe
+// e desce — tipo bichinho de joguinho falando "uí-bá-pô". Três vozes, todas agudinhas.
 
 export type VoicePitch = 'low' | 'mid' | 'high'
 
-const VOICE_BASE: Record<VoicePitch, number> = { low: 150, mid: 225, high: 320 }
-// formantes F1/F2 aproximados de a, é, i, ó, u
-const VOWELS: [number, number][] = [
-  [780, 1250],
-  [520, 1900],
-  [320, 2300],
-  [520, 950],
-  [340, 780],
-]
-
-let noise: AudioBuffer | null = null
-function noiseBuffer(ac: AudioContext): AudioBuffer {
-  if (noise && noise.sampleRate === ac.sampleRate) return noise
-  noise = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.05), ac.sampleRate)
-  const data = noise.getChannelData(0)
-  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1
-  return noise
-}
+const VOICE_BASE: Record<VoicePitch, number> = { low: 340, mid: 430, high: 540 }
+// tons da "melodia" da fala (relativos à voz), pra não ficar monótono nem desafinado
+const STEPS = [1, 1.12, 1.25, 0.9, 1.06]
 
 function syllable(ac: AudioContext, base: number) {
   const t0 = ac.currentTime
+  const dur = 0.055 + Math.random() * 0.03
+  const f0 = base * STEPS[Math.floor(Math.random() * STEPS.length)]
+
   const out = ac.createGain()
-  out.gain.value = MASTER_VOLUME * 2.6
-  out.connect(ac.destination)
+  out.gain.setValueAtTime(0.0001, t0)
+  out.gain.exponentialRampToValueAtTime(MASTER_VOLUME * 0.9, t0 + 0.012)
+  out.gain.setValueAtTime(MASTER_VOLUME * 0.9, t0 + dur * 0.55)
+  out.gain.exponentialRampToValueAtTime(0.0001, t0 + dur)
 
-  // consoante (b/k/t...): chiadinho curto antes da vogal, nem sempre
-  let vowelAt = t0
-  if (Math.random() < 0.65) {
-    const src = ac.createBufferSource()
-    src.buffer = noiseBuffer(ac)
-    const bp = ac.createBiquadFilter()
-    bp.type = 'bandpass'
-    bp.frequency.value = 1500 + Math.random() * 2500
-    bp.Q.value = 1.4
-    const env = ac.createGain()
-    env.gain.setValueAtTime(0.0001, t0)
-    env.gain.exponentialRampToValueAtTime(0.18, t0 + 0.004)
-    env.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.02)
-    src.connect(bp).connect(env).connect(out)
-    src.start(t0)
-    src.stop(t0 + 0.03)
-    vowelAt = t0 + 0.012
-  }
+  // a "vogal": filtro passa-baixa mais aberto (á, é) ou mais fechado (ô, u)
+  const lp = ac.createBiquadFilter()
+  lp.type = 'lowpass'
+  lp.frequency.value = 1400 + Math.random() * 1600
+  lp.Q.value = 0.7
+  lp.connect(out).connect(ac.destination)
 
-  // vogal
-  const [f1, f2] = VOWELS[Math.floor(Math.random() * VOWELS.length)]
-  const dur = 0.06 + Math.random() * 0.03
-  const f0 = base * (0.9 + Math.random() * 0.28)
-  const osc = ac.createOscillator()
-  osc.type = 'sawtooth'
-  osc.frequency.setValueAtTime(f0, vowelAt)
-  osc.frequency.linearRampToValueAtTime(f0 * (0.92 + Math.random() * 0.2), vowelAt + dur)
-  const env = ac.createGain()
-  env.gain.setValueAtTime(0.0001, vowelAt)
-  env.gain.exponentialRampToValueAtTime(1, vowelAt + 0.01)
-  env.gain.setValueAtTime(1, vowelAt + dur * 0.6)
-  env.gain.exponentialRampToValueAtTime(0.0001, vowelAt + dur)
-  for (const [freq, q, g] of [
-    [f1, 7, 1],
-    [f2, 9, 0.55],
+  for (const [type, mult, gain] of [
+    ['triangle', 1, 1],
+    ['sine', 2, 0.35],
   ] as const) {
-    const bp = ac.createBiquadFilter()
-    bp.type = 'bandpass'
-    bp.frequency.value = freq
-    bp.Q.value = q
-    const gain = ac.createGain()
-    gain.gain.value = g
-    osc.connect(bp).connect(gain).connect(env)
+    const osc = ac.createOscillator()
+    osc.type = type
+    const f = f0 * mult
+    // entonação: sobe um pouquinho e desce no fim (fica fofo em vez de bipe reto)
+    osc.frequency.setValueAtTime(f * 0.94, t0)
+    osc.frequency.linearRampToValueAtTime(f * 1.08, t0 + dur * 0.4)
+    osc.frequency.linearRampToValueAtTime(f * 0.97, t0 + dur)
+    const g = ac.createGain()
+    g.gain.value = gain
+    osc.connect(g).connect(lp)
+    osc.start(t0)
+    osc.stop(t0 + dur + 0.02)
   }
-  env.connect(out)
-  osc.start(vowelAt)
-  osc.stop(vowelAt + dur + 0.02)
 }
 
-/** Uma sílaba de "blablá" na voz da vendedora (grave, média ou aguda). */
+/** Uma sílaba de "blablá" na voz da vendedora. */
 export function playVoice(pitch: VoicePitch) {
   if (!useSoundStore.getState().enabled) return
   try {
