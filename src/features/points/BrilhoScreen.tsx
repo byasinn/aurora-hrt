@@ -24,7 +24,7 @@ export default function BrilhoScreen() {
   const breakdown = [
     { label: 'Registro do dia', value: b?.dayLog },
     { label: 'Rotinas (por dia)', value: b?.routines },
-    { label: 'Rotinas apostadas', value: b?.routineBets },
+    { label: 'Rotinas na Semana Perfeita', value: b?.routinePerfectWeeks },
     { label: 'Remédios em dia (semanas)', value: b?.meds },
     { label: 'Metas de treino (semanas)', value: b?.workouts },
     { label: 'Curtidas, comentários e posts', value: b?.social },
@@ -39,7 +39,7 @@ export default function BrilhoScreen() {
     `Registro do dia: humor +${POINTS.dayLog.mood}, energia +${POINTS.dayLog.energy}, libido +${POINTS.dayLog.libido}, sintomas +${POINTS.dayLog.symptoms}, notas +${POINTS.dayLog.notes}`,
     `Remédios: +${POINTS.medWeek} por remédio a cada semana tomada certinho (aplicação quinzenal ou mensal vale as semanas que cobre)`,
     `Treinos: +${POINTS.workoutWeek} quando bate a meta de treinos da semana`,
-    `Rotinas: +${POINTS.routinePerDay} por rotina feita no dia (até ${POINTS.routinesCountedPerDay} por dia) — ou aposte a semana e ganhe +50% no domingo, se fizer todo dia`,
+    `Rotinas: +${POINTS.routinePerDay} por rotina feita no dia (até ${POINTS.routinesCountedPerDay} por dia) — ou, na Semana Perfeita, +50% no domingo se fizer todo dia`,
     `Curtir +${POINTS.like}, comentar +${POINTS.comment}, postar +${POINTS.post} — até ${POINTS.socialDailyCap} por dia`,
     `Abrir o app: +${POINTS.visit} por dia, e um baú raro a cada 7 dias seguidos`,
     'Marcou depois do dia? Fica no histórico, mas só vale Brilho com uma Poção do tempo',
@@ -91,14 +91,22 @@ export default function BrilhoScreen() {
               <div className="flex justify-between">
                 <span className="text-[var(--text-muted)]">Treinos</span>
                 <span>
-                  {w.workoutsDone}/{w.workoutGoal}
+                  {w.workouts}/{w.workoutGoal}
                 </span>
               </div>
             )}
             <div className="flex justify-between">
-              <span className="text-[var(--text-muted)]">Rotinas {w.betActive ? '(apostadas)' : ''}</span>
-              <span>{w.betActive ? `${w.betOnTrack.filter((r) => r.onTrack).length}/${w.betOnTrack.length} no caminho` : `+${w.routinePoints}`}</span>
+              <span className="text-[var(--text-muted)]">Rotinas por dia</span>
+              <span>+{w.routinePoints}</span>
             </div>
+            {w.perfectWeek.length > 0 && (
+              <div className="flex justify-between">
+                <span className="text-[var(--text-muted)]">Semana Perfeita</span>
+                <span>
+                  {w.perfectWeek.filter((r) => r.onTrack).length}/{w.perfectWeek.length} no caminho
+                </span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-[var(--text-muted)]">Social hoje</span>
               <span>

@@ -1,6 +1,6 @@
 import { NavLink, Navigate, Outlet, Link } from 'react-router-dom'
 import clsx from 'clsx'
-import { BarChart3, Users as UsersIcon, Flag, ImageOff, Newspaper, Megaphone, Compass, ArrowLeft, ScrollText } from 'lucide-react'
+import { BarChart3, Users as UsersIcon, Flag, ImageOff, Newspaper, Megaphone, Compass, ArrowLeft, ScrollText, Gift } from 'lucide-react'
 import { useMe } from '../../api/auth'
 import { useAdminStats } from '../../api/adminPanel'
 import LoadingScreen from '../../components/LoadingScreen'
@@ -15,6 +15,7 @@ const SECTIONS = [
   { to: '/admin/denuncias', label: 'Denúncias', icon: Flag, badge: 'reports' as const },
   { to: '/admin/quarentena', label: 'Imagens barradas', icon: ImageOff, badge: 'quarantine' as const },
   { to: '/admin/conteudo', label: 'Conteúdo recente', icon: Newspaper },
+  { to: '/admin/missoes', label: 'Missões', icon: Gift },
   { to: '/admin/registro', label: 'Registro', icon: ScrollText },
   { to: '/admin/avisos', label: 'Avisos de versão', icon: Megaphone },
   { to: '/admin/topicos', label: 'Tópicos e fontes', icon: Compass },

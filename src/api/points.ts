@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/apiClient'
-import type { ChestView, MissionState } from '../../shared/missions'
-import type { PointsBreakdown, WeekProgress } from '../../shared/points'
+import type { ChestView, MissionDefInput, MissionState, StreakDay } from '../../shared/missions'
+import type { PeriodCounts, PerfectWeekRoutine, PointsBreakdown, RoutineMode, WeekProgress } from '../../shared/points'
 
 export interface PointsSummary {
   total: number
@@ -13,9 +13,12 @@ export interface PointsSummary {
   visitStreak: number
   potions: number
   unopenedChests: number
+  restDaysLeft: number
   breakdown: PointsBreakdown
   activity: number
   week: WeekProgress
+  today: PeriodCounts
+  lastWeekDaily: PerfectWeekRoutine[]
   workoutGoalWeeks: number
 }
 
@@ -26,13 +29,19 @@ export interface VisitResult {
   chest: boolean
   brokenStreak?: number
   potions?: number
+  usedRestDay?: boolean
+  gotRestDay?: boolean
+  restDaysLeft?: number
 }
 
 export interface MissionsState {
   missions: MissionState[]
+  dailyUnlocked: boolean
   chests: ChestView[]
   potions: number
   streak: number
+  restDaysLeft: number
+  streakWeek: StreakDay[]
   rescued: string[]
   today: string
 }
@@ -54,13 +63,6 @@ export interface CheckinState {
   } | null
   doses: PendingDoseGroup[]
   potions: number
-}
-
-export interface RoutineBetState {
-  current: boolean
-  next: boolean
-  auto: boolean
-  canJoinCurrent?: boolean
 }
 
 /** Tudo que mexe em Brilho (registrar dia, rotina, dose, treino, curtir…) invalida isso — ver queryClient. */
@@ -132,17 +134,56 @@ export function useSubmitMissedDoses() {
   })
 }
 
-export function useRoutineBet() {
-  return useQuery({ queryKey: ['routine-bet'], queryFn: () => api.get<RoutineBetState>('/routine-bet') })
+export interface ChallengeState {
+  introSeen: boolean
+  almost: (PerfectWeekRoutine & { canStartNow: boolean })[]
 }
 
-export function useSetRoutineBet() {
+export function useChallenge(enabled = true) {
+  return useQuery({ queryKey: ['challenge'], queryFn: () => api.get<ChallengeState>('/challenge'), enabled, staleTime: 10 * 60_000 })
+}
+
+export function useChallengeSeen() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (body: { week: 'current' | 'next'; on: boolean } | { auto: boolean }) => api.post<RoutineBetState>('/routine-bet', body),
+    mutationFn: (kind: 'intro' | 'almost') => api.post('/challenge/seen', { kind }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['challenge'] }),
+  })
+}
+
+export function useSetRoutineMode() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: { routineIds: number[] | 'all'; mode: RoutineMode; when: 'now' | 'next' }) =>
+      api.post<{ routineId: number; from: string }[]>('/routine-mode', body),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['routine-bet'] })
-      qc.invalidateQueries({ queryKey: ['points'] })
+      qc.invalidateQueries({ queryKey: ['routines'] })
+      qc.invalidateQueries({ queryKey: ['challenge'] })
     },
+  })
+}
+
+// ---------- admin: missões ----------
+
+export type MissionRow = MissionDefInput & { id: number; createdAt: string }
+
+export function useAdminMissions() {
+  return useQuery({ queryKey: ['admin', 'missions'], queryFn: () => api.get<MissionRow[]>('/admin/missions') })
+}
+
+export function useSaveMission() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...body }: MissionDefInput & { id?: number }) =>
+      id ? api.put<MissionRow>(`/admin/missions/${id}`, body) : api.post<MissionRow>('/admin/missions', body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'missions'] }),
+  })
+}
+
+export function useDeleteMission() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => api.delete(`/admin/missions/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'missions'] }),
   })
 }

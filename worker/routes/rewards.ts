@@ -1,12 +1,14 @@
 import { Hono } from 'hono'
-import { and, count, eq, gte, inArray, isNull } from 'drizzle-orm'
+import { and, asc, count, eq, gte, inArray, isNull } from 'drizzle-orm'
 import { getDb } from '../shared/db'
 import {
   chests,
-  communityMembers,
   dailyVisits,
   doseLogs,
+  forumReplies,
+  forumTopics,
   medications,
+  missions,
   profile,
   rescuedDays,
   routineLogs,
@@ -16,17 +18,34 @@ import {
   workoutLogs,
   workoutPrograms,
 } from '../../shared/schema'
-import { jsonResponse, requireUser } from '../shared/auth'
+import { jsonResponse, requireAdmin, requireUser } from '../shared/auth'
 import { loadPointsContext, todayInTz, type PointsContext } from '../shared/pointsStats'
-import { BACKFILL_DAYS, POINTS, addDays, isLate, routineDueOn, routineIsDone, streakEndingAt, weekStartOf, weekdayOf } from '../../shared/points'
 import {
+  BACKFILL_DAYS,
+  POINTS,
+  addDays,
+  computeStreak,
+  isLate,
+  routineDueOn,
+  routineIsDone,
+  routineModeFor,
+  weekStartOf,
+  weekdayOf,
+  withRoutineMode,
+  type RoutineMode,
+} from '../../shared/points'
+import {
+  DEFAULT_MISSIONS,
+  MISSION_METRICS,
   STARTER_MISSIONS,
   STREAK_CHEST_EVERY,
-  WEEKLY_MISSIONS,
   type ChestContents,
   type ChestRarity,
   type ChestView,
+  type MissionDefInput,
+  type MissionMetric,
   type MissionState,
+  type StreakDay,
 } from '../../shared/missions'
 import { SHOP_ITEMS, ownsItem } from '../../shared/shopCatalog'
 import { dateStrInTimezone, isDueOnDate, scheduledInstantsFor } from '../../shared/scheduling'
@@ -65,17 +84,21 @@ async function visitDates(db: Db, userId: number): Promise<Set<string>> {
   return new Set([...visits.map((v) => v.date), ...rescued.map((r) => r.date)])
 }
 
-/** Já tem rotina feita nessa semana? Aí a aposta da semana atual não pode mais ser ligada. */
-async function hasRoutineDoneSince(db: Db, userId: number, weekStart: string): Promise<boolean> {
+/** Rotinas já feitas a partir de `weekStart` — mudar o modo delas só vale na semana seguinte. */
+async function routinesDoneSince(db: Db, userId: number, weekStart: string): Promise<Set<number>> {
   const [rows, logs] = await Promise.all([
     db.select().from(routines).where(eq(routines.userId, userId)),
     db.select().from(routineLogs).where(and(eq(routineLogs.userId, userId), gte(routineLogs.date, weekStart))),
   ])
   const byId = new Map(rows.map((r) => [r.id, r]))
-  return logs.some((l) => {
-    const r = byId.get(l.routineId)
-    return r ? routineIsDone(r, l.count) : false
-  })
+  return new Set(
+    logs
+      .filter((l) => {
+        const r = byId.get(l.routineId)
+        return r ? routineIsDone(r, l.count) : false
+      })
+      .map((l) => l.routineId),
+  )
 }
 
 // ---------- pontos ----------
@@ -100,37 +123,25 @@ app.post('/api/visit', async (c) => {
   try {
     const prof = await loadProfile(db, userId)
     if (!prof) return jsonResponse({ error: 'perfil não encontrado' }, { status: 404 })
-    const tz = prof.timezone ?? 'America/Sao_Paulo'
-    const today = todayInTz(tz)
+    const today = todayInTz(prof.timezone ?? 'America/Sao_Paulo')
     const dates = await visitDates(db, userId)
     const yesterday = addDays(today, -1)
 
-    // aposta automática: entra na semana nova se ainda não marcou rotina nenhuma nela
-    const week = weekStartOf(today)
-    const betWeeks = prof.routineBetWeeks ?? []
-    if (prof.routineBetAuto && !betWeeks.includes(week) && !(await hasRoutineDoneSince(db, userId, week))) {
-      await db
-        .update(profile)
-        .set({ routineBetWeeks: [...betWeeks, week] })
-        .where(eq(profile.userId, userId))
-    }
-
     if (dates.has(today)) {
-      const [row] = await db.select().from(dailyVisits).where(and(eq(dailyVisits.userId, userId), eq(dailyVisits.date, today))).limit(1)
-      return jsonResponse({ isNew: false, streak: row?.streak ?? streakEndingAt(dates, today), points: 0, chest: false })
+      return jsonResponse({ isNew: false, streak: computeStreak(dates, today).streak, points: 0, chest: false })
     }
-
+    const before = computeStreak(dates, today) // como estava antes de abrir hoje
     dates.add(today)
-    const streak = streakEndingAt(dates, today)
+    const after = computeStreak(dates, today)
     const [inserted] = await db
       .insert(dailyVisits)
-      .values({ userId, date: today, streak, points: POINTS.visit })
+      .values({ userId, date: today, streak: after.streak, points: POINTS.visit })
       .onConflictDoNothing()
       .returning()
-    if (!inserted) return jsonResponse({ isNew: false, streak, points: 0, chest: false })
+    if (!inserted) return jsonResponse({ isNew: false, streak: after.streak, points: 0, chest: false })
 
     let chest = false
-    if (streak % STREAK_CHEST_EVERY === 0) {
+    if (after.streak % STREAK_CHEST_EVERY === 0) {
       const [c2] = await db
         .insert(chests)
         .values({ userId, source: `streak${STREAK_CHEST_EVERY}:${today}`, rarity: 'rare' })
@@ -139,12 +150,23 @@ app.post('/api/visit', async (c) => {
       chest = !!c2
     }
 
-    // quebrou o streak por um dia só (ontem) — dá pra salvar com poção
+    // ontem ficou sem abrir: ou a folga cobriu (💤), ou o streak quebrou — aí dá pra salvar com poção
+    const yesterdayStatus = after.days.get(yesterday)
     let brokenStreak = 0
-    if (!dates.has(yesterday)) brokenStreak = streakEndingAt(dates, addDays(today, -2))
+    if (yesterdayStatus === 'missed') brokenStreak = computeStreak(dates, addDays(today, -2)).streak
     const potions = brokenStreak > 0 ? await potionsAvailable(db, userId) : 0
 
-    return jsonResponse({ isNew: true, streak, points: POINTS.visit, chest, brokenStreak, potions })
+    return jsonResponse({
+      isNew: true,
+      streak: after.streak,
+      points: POINTS.visit,
+      chest,
+      usedRestDay: yesterdayStatus === 'rest',
+      restDaysLeft: after.restDaysLeft,
+      gotRestDay: after.restDaysLeft > before.restDaysLeft,
+      brokenStreak,
+      potions,
+    })
   } catch (err) {
     console.error('visit error', err)
     return jsonResponse({ error: 'internal error' }, { status: 500 })
@@ -160,8 +182,7 @@ app.post('/api/potions/use', async (c) => {
   try {
     const { date } = (await c.req.json()) as { date?: string }
     const prof = await loadProfile(db, userId)
-    const tz = prof?.timezone ?? 'America/Sao_Paulo'
-    const today = todayInTz(tz)
+    const today = todayInTz(prof?.timezone ?? 'America/Sao_Paulo')
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date) || date >= today || date < addDays(today, -BACKFILL_DAYS)) {
       return jsonResponse({ error: `a poção só funciona nos últimos ${BACKFILL_DAYS} dias (antes de hoje)` }, { status: 400 })
     }
@@ -171,128 +192,248 @@ app.post('/api/potions/use', async (c) => {
 
     // o streak de hoje pode ter mudado (dia do buraco foi preenchido)
     const dates = await visitDates(db, userId)
+    const streak = computeStreak(dates, today).streak
     if (dates.has(today)) {
       await db
         .update(dailyVisits)
-        .set({ streak: streakEndingAt(dates, today) })
+        .set({ streak })
         .where(and(eq(dailyVisits.userId, userId), eq(dailyVisits.date, today)))
     }
-    return jsonResponse({ ok: true, potions: await potionsAvailable(db, userId), streak: streakEndingAt(dates, today) })
+    return jsonResponse({ ok: true, potions: await potionsAvailable(db, userId), streak })
   } catch (err) {
     console.error('potion error', err)
     return jsonResponse({ error: 'internal error' }, { status: 500 })
   }
 })
 
-// ---------- aposta das rotinas ----------
+// ---------- Semana Perfeita (modo de cada rotina) ----------
 
-app.post('/api/routine-bet', async (c) => {
+/** Muda o modo das rotinas. `when: 'now'` só vale pras que ainda não foram feitas nessa semana (as
+ * outras ficam pra segunda); `'next'` é sempre a partir da próxima segunda. */
+export async function setRoutineModes(db: Db, userId: number, ids: number[] | 'all', mode: RoutineMode, when: 'now' | 'next') {
+  const prof = await loadProfile(db, userId)
+  const today = todayInTz(prof?.timezone ?? 'America/Sao_Paulo')
+  const current = weekStartOf(today)
+  const next = addDays(current, 7)
+  const rows = (await db.select().from(routines).where(eq(routines.userId, userId))).filter((r) => ids === 'all' || ids.includes(r.id))
+  const done = when === 'now' ? await routinesDoneSince(db, userId, current) : new Set<number>()
+  const result: { routineId: number; from: string }[] = []
+  for (const r of rows) {
+    const from = when === 'now' && !done.has(r.id) ? current : next
+    result.push({ routineId: r.id, from })
+    // já está nesse modo daqui pra frente: não mexe
+    if (routineModeFor(r.modeHistory, from) === mode && routineModeFor(r.modeHistory, addDays(from, 7)) === mode) continue
+    await db
+      .update(routines)
+      .set({ modeHistory: withRoutineMode(r.modeHistory, from, mode) })
+      .where(eq(routines.id, r.id))
+  }
+  return result
+}
+
+app.post('/api/routine-mode', async (c) => {
   const { db, res } = await auth(c)
   if (res instanceof Response) return res
-  const userId = res.user.id
   try {
-    const body = (await c.req.json()) as { week?: 'current' | 'next'; on?: boolean; auto?: boolean }
-    const prof = await loadProfile(db, userId)
-    if (!prof) return jsonResponse({ error: 'perfil não encontrado' }, { status: 404 })
-    const today = todayInTz(prof.timezone ?? 'America/Sao_Paulo')
-    const current = weekStartOf(today)
-    const next = addDays(current, 7)
-    let weeks = new Set(prof.routineBetWeeks ?? [])
-    let auto = prof.routineBetAuto
-
-    if (typeof body.auto === 'boolean') {
-      auto = body.auto
-      if (auto) {
-        weeks.add(next)
-        if (!(await hasRoutineDoneSince(db, userId, current))) weeks.add(current)
-      } else {
-        weeks.delete(next)
-      }
-    } else if (body.week === 'current') {
-      if (!body.on) return jsonResponse({ error: 'aposta feita vale até o fim da semana — dá pra desligar a da próxima' }, { status: 409 })
-      if (await hasRoutineDoneSince(db, userId, current)) {
-        return jsonResponse({ error: 'você já marcou rotina essa semana — a aposta começa na próxima' }, { status: 409 })
-      }
-      weeks.add(current)
-    } else if (body.week === 'next') {
-      if (body.on) weeks.add(next)
-      else weeks.delete(next)
-    } else {
-      return jsonResponse({ error: 'informe week (current|next) ou auto' }, { status: 400 })
-    }
-
-    // só guarda as últimas semanas que importam (as antigas já foram pagas e não mudam mais de valor —
-    // mas o cálculo precisa delas, então guarda até 2 anos)
-    const cutoff = addDays(current, -730)
-    weeks = new Set([...weeks].filter((w) => w >= cutoff))
-    await db
-      .update(profile)
-      .set({ routineBetWeeks: [...weeks].sort(), routineBetAuto: auto })
-      .where(eq(profile.userId, userId))
-    return jsonResponse({ current: weeks.has(current), next: weeks.has(next), auto })
+    const body = (await c.req.json()) as { routineIds?: number[] | 'all'; mode?: RoutineMode; when?: 'now' | 'next' }
+    if (body.mode !== 'daily' && body.mode !== 'weekly') return jsonResponse({ error: 'mode precisa ser daily ou weekly' }, { status: 400 })
+    const ids = body.routineIds === 'all' ? 'all' : (body.routineIds ?? []).filter((n) => Number.isInteger(n))
+    return jsonResponse(await setRoutineModes(db, res.user.id, ids, body.mode, body.when === 'now' ? 'now' : 'next'))
   } catch (err) {
-    console.error('routine bet error', err)
+    console.error('routine mode error', err)
     return jsonResponse({ error: 'internal error' }, { status: 500 })
   }
 })
 
-app.get('/api/routine-bet', async (c) => {
+// Convites: o primeiro (uma vez só, ao concluir uma rotina) e o de "quase fez a semana perfeita"
+// (no máximo um por semana, olhando a semana passada das rotinas no modo todo dia).
+app.get('/api/challenge', async (c) => {
   const { db, res } = await auth(c)
   if (res instanceof Response) return res
+  try {
+    const ctx = await loadPointsContext(db, res.user.id)
+    const prof = await loadProfile(db, res.user.id)
+    const week = ctx.points.week.weekStart
+    const routineRows = await db.select().from(routines).where(eq(routines.userId, res.user.id))
+    const stillDaily = new Set(routineRows.filter((r) => r.active && routineModeFor(r.modeHistory, week) === 'daily').map((r) => r.id))
+    const almost =
+      prof?.challengePromptWeek === week ? [] : ctx.points.lastWeekDaily.filter((r) => stillDaily.has(r.routineId) && r.due >= 3 && r.done >= r.due - 1)
+    const done = await routinesDoneSince(db, res.user.id, week)
+    return jsonResponse({
+      introSeen: prof?.challengeIntroSeen ?? false,
+      almost: almost.map((r) => ({ ...r, canStartNow: !done.has(r.routineId) })),
+    })
+  } catch (err) {
+    console.error('challenge error', err)
+    return jsonResponse({ error: 'internal error' }, { status: 500 })
+  }
+})
+
+app.post('/api/challenge/seen', async (c) => {
+  const { db, res } = await auth(c)
+  if (res instanceof Response) return res
+  const { kind } = (await c.req.json()) as { kind?: 'intro' | 'almost' }
   const prof = await loadProfile(db, res.user.id)
-  const today = todayInTz(prof?.timezone ?? 'America/Sao_Paulo')
-  const current = weekStartOf(today)
-  const weeks = new Set(prof?.routineBetWeeks ?? [])
-  const canJoinCurrent = !weeks.has(current) && !(await hasRoutineDoneSince(db, res.user.id, current))
-  return jsonResponse({ current: weeks.has(current), next: weeks.has(addDays(current, 7)), auto: prof?.routineBetAuto ?? false, canJoinCurrent })
+  const week = weekStartOf(todayInTz(prof?.timezone ?? 'America/Sao_Paulo'))
+  await db
+    .update(profile)
+    .set(kind === 'intro' ? { challengeIntroSeen: true } : { challengePromptWeek: week })
+    .where(eq(profile.userId, res.user.id))
+  return jsonResponse({ ok: true })
 })
 
 // ---------- missões e baús ----------
 
+async function missionDefs(db: Db) {
+  let rows = await db.select().from(missions).orderBy(asc(missions.sortOrder), asc(missions.id))
+  if (rows.length === 0) {
+    // primeira vez: cria as padrão (o admin edita a partir daí)
+    await db.insert(missions).values(DEFAULT_MISSIONS)
+    rows = await db.select().from(missions).orderBy(asc(missions.sortOrder), asc(missions.id))
+  }
+  return rows
+}
+
+async function forumCounts(db: Db, userId: number, today: string, weekStart: string, timeZone: string) {
+  const since = new Date(`${addDays(weekStart, -1)}T00:00:00.000Z`)
+  const [topics, replies, [allTopics], [allReplies]] = await Promise.all([
+    db.select({ createdAt: forumTopics.createdAt }).from(forumTopics).where(and(eq(forumTopics.userId, userId), gte(forumTopics.createdAt, since))),
+    db.select({ createdAt: forumReplies.createdAt }).from(forumReplies).where(and(eq(forumReplies.userId, userId), gte(forumReplies.createdAt, since))),
+    db.select({ value: count() }).from(forumTopics).where(eq(forumTopics.userId, userId)),
+    db.select({ value: count() }).from(forumReplies).where(eq(forumReplies.userId, userId)),
+  ])
+  const dates = [...topics, ...replies].map((r) => dateStrInTimezone(r.createdAt, timeZone))
+  return {
+    today: dates.filter((d) => d === today).length,
+    week: dates.filter((d) => d >= weekStart && d <= today).length,
+    ever: (allTopics?.value ?? 0) + (allReplies?.value ?? 0),
+  }
+}
+
+const METRIC_LINK: Record<MissionMetric, string> = {
+  daylog: '/dia',
+  routines_done: '/routines',
+  routine_days: '/routines',
+  meds_on_time: '/',
+  workouts: '/treinos',
+  workout_goal: '/treinos',
+  likes: '/feed',
+  comments: '/feed',
+  posts: '/feed',
+  social: '/feed',
+  forum: '/comunidades',
+  visits: '/missoes',
+}
+
 async function missionStates(db: Db, userId: number, ctx: PointsContext): Promise<MissionState[]> {
-  const [[memberships]] = await Promise.all([db.select({ value: count() }).from(communityMembers).where(eq(communityMembers.userId, userId))])
   const w = ctx.points.week
+  const t = ctx.points.today
+  const [defs, forum] = await Promise.all([missionDefs(db), forumCounts(db, userId, ctx.today, w.weekStart, ctx.timeZone)])
+
   const starterDone: Record<string, boolean> = {
     first_med: ctx.counts.medications > 0,
     first_routine: ctx.counts.routines > 0,
     avatar: ctx.counts.hasAvatar,
-    join_community: (memberships?.value ?? 0) > 0,
+    forum: forum.ever > 0,
     first_post: ctx.counts.posts > 0,
   }
   const starterCount = Object.values(starterDone).filter(Boolean).length
-
-  const starter = STARTER_MISSIONS.map((m) => {
+  const starter: MissionState[] = STARTER_MISSIONS.map((m) => {
     const source = `m:${m.key}`
     const progress = m.key === 'all_starter' ? starterCount : starterDone[m.key] ? 1 : 0
-    return { ...m, progress: Math.min(progress, m.target), hidden: false, claimed: ctx.chestSources.has(source), source }
+    return {
+      key: `starter:${m.key}`,
+      group: 'starter',
+      title: m.title,
+      description: m.description,
+      target: m.target,
+      progress: Math.min(progress, m.target),
+      rewardKind: 'chest',
+      rewardRarity: m.rarity,
+      rewardAmount: 0,
+      to: m.to,
+      hidden: false,
+      claimed: ctx.chestSources.has(source),
+      source,
+    }
   })
 
   const isSunday = weekdayOf(ctx.today) === 0
-  const weekly = WEEKLY_MISSIONS.map((m) => {
-    const source = `w:${w.weekStart}:${m.key}`
-    let progress = 0
-    let target = m.target
-    let hidden = false
-    if (m.key === 'w_daylog') progress = w.dayLogDays
-    if (m.key === 'w_routines') {
-      progress = w.routineDays
-      hidden = ctx.counts.routines === 0
-    }
-    if (m.key === 'w_meds') {
-      // só no domingo dá pra saber se a semana inteira foi certinha
-      progress = isSunday && w.medsAllOnTrack ? 1 : 0
-      hidden = w.meds.length === 0
-    }
-    if (m.key === 'w_workout') {
-      target = Math.max(1, w.workoutGoal)
-      progress = w.workoutsDone
-      hidden = w.workoutGoal === 0
-    }
-    if (m.key === 'w_social') progress = w.socialWeekActions
-    return { ...m, target, progress: Math.min(progress, target), hidden, claimed: ctx.chestSources.has(source), source }
-  })
+  const weekVisits = [...ctx.visitDates].filter((d) => d >= w.weekStart && d <= ctx.today).length
+  const periodic: MissionState[] = defs
+    .filter((d) => d.active && d.metric in MISSION_METRICS)
+    .map((d) => {
+      const daily = d.period === 'daily'
+      const c = daily ? t : w
+      const metric = d.metric as MissionMetric
+      let progress = 0
+      let target = d.target
+      let hidden = false
+      switch (metric) {
+        case 'daylog':
+          progress = c.dayLogDays
+          break
+        case 'routines_done':
+          progress = c.routinesDone
+          hidden = ctx.counts.routines === 0
+          break
+        case 'routine_days':
+          progress = c.routineDays
+          hidden = ctx.counts.routines === 0
+          break
+        case 'meds_on_time':
+          // na semana só dá pra saber no domingo se foi certinho
+          progress = c.medsOnTime && (daily || isSunday) ? 1 : 0
+          target = 1
+          hidden = c.medsDue === 0
+          break
+        case 'workouts':
+          progress = c.workouts
+          hidden = w.workoutGoal === 0
+          break
+        case 'workout_goal':
+          progress = c.workouts
+          target = daily ? 1 : Math.max(1, w.workoutGoal)
+          hidden = w.workoutGoal === 0
+          break
+        case 'likes':
+          progress = c.likes
+          break
+        case 'comments':
+          progress = c.comments
+          break
+        case 'posts':
+          progress = c.posts
+          break
+        case 'social':
+          progress = c.likes + c.comments + c.posts
+          break
+        case 'forum':
+          progress = daily ? forum.today : forum.week
+          break
+        case 'visits':
+          progress = daily ? (ctx.visitDates.has(ctx.today) ? 1 : 0) : weekVisits
+          break
+      }
+      const source = daily ? `d:${ctx.today}:${d.id}` : `w:${w.weekStart}:${d.id}`
+      return {
+        key: String(d.id),
+        group: d.period as 'daily' | 'weekly',
+        title: d.title,
+        description: d.description,
+        target,
+        progress: Math.min(progress, target),
+        rewardKind: d.rewardKind as MissionState['rewardKind'],
+        rewardRarity: d.rewardRarity as ChestRarity,
+        rewardAmount: d.rewardAmount,
+        to: METRIC_LINK[metric],
+        hidden,
+        claimed: ctx.chestSources.has(source),
+        source,
+      }
+    })
 
-  return [...starter, ...weekly]
+  return [...starter, ...periodic]
 }
 
 function toChestView(row: typeof chests.$inferSelect): ChestView {
@@ -306,21 +447,34 @@ function toChestView(row: typeof chests.$inferSelect): ChestView {
   }
 }
 
+function streakWeek(ctx: PointsContext): StreakDay[] {
+  const { days } = computeStreak(ctx.visitDates, ctx.today)
+  const start = ctx.points.week.weekStart
+  return Array.from({ length: 7 }, (_, i) => {
+    const date = addDays(start, i)
+    if (date > ctx.today) return { date, status: 'future' as const }
+    return { date, status: days.get(date) ?? 'none' }
+  })
+}
+
 app.get('/api/missions', async (c) => {
   const { db, res } = await auth(c)
   if (res instanceof Response) return res
   try {
     const ctx = await loadPointsContext(db, res.user.id)
-    const [missions, chestRows] = await Promise.all([
+    const [list, chestRows] = await Promise.all([
       missionStates(db, res.user.id, ctx),
-      db.select().from(chests).where(eq(chests.userId, res.user.id)),
+      db.select().from(chests).where(and(eq(chests.userId, res.user.id), isNull(chests.openedAt))),
     ])
     chestRows.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
     return jsonResponse({
-      missions,
-      chests: chestRows.slice(0, 30).map(toChestView),
+      missions: list,
+      dailyUnlocked: list.filter((m) => m.group === 'starter').every((m) => m.claimed),
+      chests: chestRows.map(toChestView),
       potions: ctx.points.potions,
       streak: ctx.points.visitStreak,
+      restDaysLeft: ctx.points.restDaysLeft,
+      streakWeek: streakWeek(ctx),
       rescued: [...ctx.rescued],
       today: ctx.today,
     })
@@ -336,17 +490,105 @@ app.post('/api/missions/claim', async (c) => {
   try {
     const { key } = (await c.req.json()) as { key?: string }
     const ctx = await loadPointsContext(db, res.user.id)
-    const mission = (await missionStates(db, res.user.id, ctx)).find((m) => m.key === key)
+    const list = await missionStates(db, res.user.id, ctx)
+    const mission = list.find((m) => m.key === key)
     if (!mission || mission.hidden) return jsonResponse({ error: 'missão não existe' }, { status: 404 })
-    if (mission.claimed) return jsonResponse({ error: 'você já pegou esse baú' }, { status: 409 })
+    if (mission.group === 'daily' && !list.filter((m) => m.group === 'starter').every((m) => m.claimed)) {
+      return jsonResponse({ error: 'complete as boas-vindas primeiro' }, { status: 400 })
+    }
+    if (mission.claimed) return jsonResponse({ error: 'você já pegou essa recompensa' }, { status: 409 })
     if (mission.progress < mission.target) return jsonResponse({ error: 'missão ainda não completa' }, { status: 400 })
-    const [row] = await db.insert(chests).values({ userId: res.user.id, source: mission.source, rarity: mission.rarity }).onConflictDoNothing().returning()
-    if (!row) return jsonResponse({ error: 'você já pegou esse baú' }, { status: 409 })
+
+    // Brilho e poção entram como um "baú já aberto" — assim tudo soma pelo mesmo lugar
+    const instant: ChestContents | null =
+      mission.rewardKind === 'brilho'
+        ? { brilho: Math.max(0, mission.rewardAmount), potions: 0, itemKey: null }
+        : mission.rewardKind === 'potion'
+          ? { brilho: 0, potions: Math.max(1, mission.rewardAmount), itemKey: null }
+          : null
+    const [row] = await db
+      .insert(chests)
+      .values({ userId: res.user.id, source: mission.source, rarity: mission.rewardRarity, contents: instant, openedAt: instant ? new Date() : null })
+      .onConflictDoNothing()
+      .returning()
+    if (!row) return jsonResponse({ error: 'você já pegou essa recompensa' }, { status: 409 })
     return jsonResponse(toChestView(row), { status: 201 })
   } catch (err) {
     console.error('claim error', err)
     return jsonResponse({ error: 'internal error' }, { status: 500 })
   }
+})
+
+// ---------- admin: missões diárias e semanais ----------
+
+function validateMission(body: Partial<MissionDefInput>): string | null {
+  if (body.period !== 'daily' && body.period !== 'weekly') return 'período precisa ser diária ou semanal'
+  if (!body.metric || !(body.metric in MISSION_METRICS)) return 'escolha o que a missão mede'
+  if (!Number.isInteger(body.target) || (body.target ?? 0) < 1 || (body.target ?? 0) > 100) return 'meta entre 1 e 100'
+  if (!body.title?.trim() || body.title.length > 80) return 'título de 1 a 80 letras'
+  if ((body.description ?? '').length > 200) return 'descrição até 200 letras'
+  if (!['chest', 'brilho', 'potion'].includes(body.rewardKind ?? '')) return 'recompensa inválida'
+  if (body.rewardKind === 'chest' && !['common', 'rare'].includes(body.rewardRarity ?? '')) return 'baú comum ou raro'
+  if (body.rewardKind !== 'chest' && (!Number.isInteger(body.rewardAmount) || (body.rewardAmount ?? 0) < 1 || (body.rewardAmount ?? 0) > 200)) {
+    return 'quantidade da recompensa entre 1 e 200'
+  }
+  return null
+}
+
+function missionValues(body: MissionDefInput) {
+  return {
+    period: body.period,
+    metric: body.metric,
+    target: body.target,
+    title: body.title.trim(),
+    description: (body.description ?? '').trim(),
+    rewardKind: body.rewardKind,
+    rewardRarity: body.rewardRarity ?? 'common',
+    rewardAmount: body.rewardKind === 'chest' ? 0 : body.rewardAmount,
+    active: body.active !== false,
+    sortOrder: Number.isInteger(body.sortOrder) ? body.sortOrder : 0,
+  }
+}
+
+app.get('/api/admin/missions', async (c) => {
+  const db = getDb(c.env)
+  const a = await requireAdmin(c.req.raw, db)
+  if (a instanceof Response) return a
+  return jsonResponse(await missionDefs(db))
+})
+
+app.post('/api/admin/missions', async (c) => {
+  const db = getDb(c.env)
+  const a = await requireAdmin(c.req.raw, db)
+  if (a instanceof Response) return a
+  const body = (await c.req.json()) as MissionDefInput
+  const error = validateMission(body)
+  if (error) return jsonResponse({ error }, { status: 400 })
+  const [row] = await db.insert(missions).values(missionValues(body)).returning()
+  return jsonResponse(row, { status: 201 })
+})
+
+app.put('/api/admin/missions/:id', async (c) => {
+  const db = getDb(c.env)
+  const a = await requireAdmin(c.req.raw, db)
+  if (a instanceof Response) return a
+  const body = (await c.req.json()) as MissionDefInput
+  const error = validateMission(body)
+  if (error) return jsonResponse({ error }, { status: 400 })
+  const [row] = await db
+    .update(missions)
+    .set(missionValues(body))
+    .where(eq(missions.id, Number(c.req.param('id'))))
+    .returning()
+  return row ? jsonResponse(row) : jsonResponse({ error: 'missão não encontrada' }, { status: 404 })
+})
+
+app.delete('/api/admin/missions/:id', async (c) => {
+  const db = getDb(c.env)
+  const a = await requireAdmin(c.req.raw, db)
+  if (a instanceof Response) return a
+  await db.delete(missions).where(eq(missions.id, Number(c.req.param('id'))))
+  return jsonResponse({ ok: true })
 })
 
 function randInt(min: number, max: number): number {

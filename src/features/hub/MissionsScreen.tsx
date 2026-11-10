@@ -3,29 +3,42 @@ import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import clsx from 'clsx'
-import { ArrowLeft, Check, ChevronRight, Coins, Flame, Gift, Potion, Target } from '../../components/icons'
+import { ArrowLeft, Check, ChevronRight, Coins, Flame, Gift, Lock, Potion, Target, X } from '../../components/icons'
 import { Button, Card } from '../../components/ui'
 import { useClaimMission, useMissions, useOpenChest, useUsePotion } from '../../api/points'
-import { chestLabel, type ChestView, type MissionState } from '../../../shared/missions'
+import { chestLabel, rewardLabel, type ChestView, type MissionState, type StreakDay } from '../../../shared/missions'
 import { BACKFILL_DAYS, addDays } from '../../../shared/points'
 import { SHOP_ITEM_BY_KEY } from '../../../shared/shopCatalog'
 import { playSound } from '../../lib/sounds'
 import { toastError } from '../../lib/toast'
 
-function MissionRow({ mission }: { mission: MissionState }) {
+function MissionRow({ mission, locked }: { mission: MissionState; locked?: boolean }) {
   const claim = useClaimMission()
   const complete = mission.progress >= mission.target
   const pct = Math.round((mission.progress / mission.target) * 100)
+  const RewardIcon = mission.rewardKind === 'potion' ? Potion : mission.rewardKind === 'brilho' ? Coins : Gift
 
   return (
-    <div className={clsx('flex items-center gap-3 rounded-2xl border p-3', mission.claimed ? 'border-[var(--border)] opacity-60' : complete ? 'border-[var(--accent)] bg-[var(--accent-soft)]' : 'border-[var(--border)]')}>
+    <div
+      className={clsx(
+        'flex items-center gap-3 rounded-2xl border p-3',
+        locked || mission.claimed ? 'border-[var(--border)] opacity-60' : complete ? 'border-[var(--accent)] bg-[var(--accent-soft)]' : 'border-[var(--border)]',
+      )}
+    >
       <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)]">
-        {mission.claimed ? <Check size={20} className="text-[var(--accent)]" /> : <Gift size={26} />}
+        {mission.claimed ? (
+          <Check size={20} className="text-[var(--accent)]" />
+        ) : locked ? (
+          <Lock size={18} className="text-[var(--text-muted)]" />
+        ) : (
+          <RewardIcon size={mission.rewardKind === 'chest' ? 26 : 20} className={mission.rewardKind === 'brilho' ? 'text-amber-500' : undefined} />
+        )}
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-bold leading-tight">{mission.title}</p>
-        <p className="text-xs text-[var(--text-muted)]">{mission.description}</p>
-        {!mission.claimed && mission.target > 1 && (
+        {mission.description && <p className="text-xs text-[var(--text-muted)]">{mission.description}</p>}
+        <p className="text-[11px] font-bold text-[var(--accent)]">{rewardLabel(mission)}</p>
+        {!mission.claimed && !locked && mission.target > 1 && (
           <div className="mt-1.5 flex items-center gap-2">
             <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--surface-2)]">
               <div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${pct}%` }} />
@@ -38,18 +51,18 @@ function MissionRow({ mission }: { mission: MissionState }) {
       </div>
       {mission.claimed ? (
         <span className="text-xs text-[var(--text-muted)]">feito</span>
-      ) : complete ? (
+      ) : locked ? null : complete ? (
         <Button
           className="shrink-0 !px-3 !py-2 text-sm"
           disabled={claim.isPending}
           onClick={() =>
             claim.mutate(mission.key, {
-              onSuccess: () => playSound('success'),
+              onSuccess: () => playSound(mission.rewardKind === 'chest' ? 'success' : 'coin'),
               onError: (e) => toastError(e),
             })
           }
         >
-          Pegar baú
+          {mission.rewardKind === 'chest' ? 'Pegar baú' : 'Pegar'}
         </Button>
       ) : (
         <Link to={mission.to} className="shrink-0 p-1 text-[var(--text-muted)]" aria-label="Ir fazer">
@@ -57,6 +70,66 @@ function MissionRow({ mission }: { mission: MissionState }) {
         </Link>
       )}
     </div>
+  )
+}
+
+const WEEKDAY_SHORT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+
+const STATUS_LABEL: Record<StreakDay['status'], string> = {
+  fire: 'Abriu o app',
+  rest: 'Folga',
+  missed: 'Perdido',
+  pending: 'Hoje — ainda dá tempo',
+  none: '',
+  future: '',
+}
+
+/** A semana do streak de comprido: fogo = abriu, zZ = folga (o app cobriu o dia), X = perdido. */
+function StreakWeek({ days, streak, restDaysLeft }: { days: StreakDay[]; streak: number; restDaysLeft: number }) {
+  return (
+    <Card className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="flex items-center gap-1.5 font-bold">
+          <Flame size={18} className="text-orange-500" /> {streak} {streak === 1 ? 'dia seguido' : 'dias seguidos'}
+        </p>
+        <span className="text-xs text-[var(--text-muted)]">
+          zZ {restDaysLeft} {restDaysLeft === 1 ? 'folga guardada' : 'folgas guardadas'}
+        </span>
+      </div>
+      <div className="grid grid-cols-7 gap-1.5">
+        {days.map((d) => {
+          const wd = new Date(`${d.date}T12:00:00`).getDay()
+          return (
+            <div key={d.date} className="flex flex-col items-center gap-1">
+              <span className="text-[11px] text-[var(--text-muted)]">{WEEKDAY_SHORT[wd]}</span>
+              <span
+                className={clsx(
+                  'flex h-10 w-full items-center justify-center rounded-xl',
+                  d.status === 'fire' && 'bg-orange-500/15',
+                  d.status === 'rest' && 'bg-sky-400/15',
+                  d.status === 'missed' && 'bg-[var(--surface-2)]',
+                  d.status === 'pending' && 'border-2 border-dashed border-orange-400/70',
+                  (d.status === 'future' || d.status === 'none') && 'bg-[var(--surface-2)] opacity-50',
+                )}
+                title={STATUS_LABEL[d.status]}
+              >
+                {d.status === 'fire' ? (
+                  <Flame size={20} className="text-orange-500" />
+                ) : d.status === 'rest' ? (
+                  <span className="text-sm font-bold text-sky-500">zZ</span>
+                ) : d.status === 'missed' ? (
+                  <X size={16} className="text-[var(--text-muted)]" />
+                ) : null}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+      <p className="text-[11px] text-[var(--text-muted)]">
+        A cada 7 dias seguidos você ganha um baú raro e 1 dia de folga (guarda até 2): se um dia não der pra abrir o app, a folga cobre e o streak
+        não quebra.
+      </p>
+    </Card>
   )
 }
 
@@ -161,17 +234,31 @@ function PotionCard({ potions, rescued, today }: { potions: number; rescued: str
   )
 }
 
+type Tab = 'daily' | 'weekly' | 'quests'
+const TABS: { key: Tab; label: string }[] = [
+  { key: 'daily', label: 'Diário' },
+  { key: 'weekly', label: 'Semanal' },
+  { key: 'quests', label: 'Quests' },
+]
+
 export default function MissionsScreen() {
   const { data, isLoading } = useMissions()
   const open = useOpenChest()
   const [opened, setOpened] = useState<ChestView | null>(null)
+  const [tab, setTab] = useState<Tab>('daily')
 
   const missions = data?.missions ?? []
   const starter = missions.filter((m) => m.group === 'starter')
+  const daily = missions.filter((m) => m.group === 'daily' && !m.hidden)
   const weekly = missions.filter((m) => m.group === 'weekly' && !m.hidden)
-  const starterAllClaimed = starter.length > 0 && starter.every((m) => m.claimed)
-  const closed = (data?.chests ?? []).filter((c) => !c.openedAt)
-  const recent = (data?.chests ?? []).filter((c) => c.openedAt).slice(0, 6)
+  const welcomeDone = !!data?.dailyUnlocked
+  const closed = data?.chests ?? []
+  const readyIn = (list: MissionState[]) => list.filter((m) => !m.claimed && m.progress >= m.target).length
+  const badge: Record<Tab, number> = {
+    daily: readyIn(starter) + (welcomeDone ? readyIn(daily) : 0),
+    weekly: readyIn(weekly),
+    quests: 0,
+  }
 
   function openChest(chest: ChestView) {
     open.mutate(chest.id, {
@@ -191,7 +278,7 @@ export default function MissionsScreen() {
       <div className="flex items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold">Missões</h1>
-          <p className="text-sm text-[var(--text-muted)]">Complete, pegue o baú e abra.</p>
+          <p className="text-sm text-[var(--text-muted)]">Complete, pegue a recompensa e abra.</p>
         </div>
         <div className="flex gap-2">
           <span className="flex items-center gap-1 rounded-full bg-[var(--surface)] px-3 py-1.5 [box-shadow:var(--shadow)]">
@@ -204,8 +291,6 @@ export default function MissionsScreen() {
           </span>
         </div>
       </div>
-
-      {isLoading && <p className="text-sm text-[var(--text-muted)]">Carregando…</p>}
 
       {closed.length > 0 && (
         <section className="space-y-2">
@@ -234,44 +319,81 @@ export default function MissionsScreen() {
         </section>
       )}
 
-      {!starterAllClaimed && starter.length > 0 && (
-        <section className="space-y-2">
-          <h2 className="text-sm font-bold uppercase tracking-wide text-[var(--text-muted)]">Começando</h2>
-          {starter.map((m) => (
-            <MissionRow key={m.key} mission={m} />
-          ))}
-        </section>
+      <div className="grid grid-cols-3 gap-1 rounded-2xl bg-[var(--surface-2)] p-1">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => {
+              playSound('tap')
+              setTab(t.key)
+            }}
+            className={clsx(
+              'relative min-h-10 rounded-xl text-sm font-bold transition',
+              tab === t.key ? 'bg-[var(--surface)] text-[var(--text)] [box-shadow:var(--shadow)]' : 'text-[var(--text-muted)]',
+            )}
+          >
+            {t.label}
+            {badge[t.key] > 0 && (
+              <span className="absolute -top-1 right-1 rounded-full bg-red-500 px-1.5 text-[11px] font-bold leading-5 text-white">{badge[t.key]}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {isLoading && <p className="text-sm text-[var(--text-muted)]">Carregando…</p>}
+
+      {tab === 'daily' && data && (
+        <>
+          {!welcomeDone && (
+            <section className="space-y-2">
+              <h2 className="text-sm font-bold uppercase tracking-wide text-[var(--text-muted)]">Boas-vindas</h2>
+              {starter.map((m) => (
+                <MissionRow key={m.key} mission={m} />
+              ))}
+            </section>
+          )}
+          <section className="space-y-2">
+            <div className="flex items-baseline justify-between">
+              <h2 className="text-sm font-bold uppercase tracking-wide text-[var(--text-muted)]">Missões de hoje</h2>
+              <span className="text-xs text-[var(--text-muted)]">renovam todo dia</span>
+            </div>
+            {!welcomeDone && (
+              <p className="flex items-center gap-2 rounded-xl bg-[var(--surface-2)] px-3 py-2 text-xs text-[var(--text-muted)]">
+                <Lock size={14} /> Complete as boas-vindas pra liberar as missões diárias.
+              </p>
+            )}
+            {daily.map((m) => (
+              <MissionRow key={m.key} mission={m} locked={!welcomeDone} />
+            ))}
+            {daily.length === 0 && <p className="text-sm text-[var(--text-muted)]">Nenhuma missão diária agora.</p>}
+          </section>
+        </>
       )}
 
-      <section className="space-y-2">
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-sm font-bold uppercase tracking-wide text-[var(--text-muted)]">Da semana</h2>
-          <span className="text-xs text-[var(--text-muted)]">renovam toda segunda</span>
-        </div>
-        {weekly.map((m) => (
-          <MissionRow key={m.key} mission={m} />
-        ))}
-        <div className="flex items-center gap-3 rounded-2xl border border-dashed border-[var(--border)] p-3">
-          <Flame size={26} className="shrink-0 text-orange-500" />
-          <p className="text-xs text-[var(--text-muted)]">
-            <b className="text-[var(--text)]">Streak:</b> a cada 7 dias seguidos abrindo o app você ganha um baú raro, sozinho.
-          </p>
-        </div>
-      </section>
-
-      {data && <PotionCard potions={data.potions} rescued={data.rescued} today={data.today} />}
-
-      {recent.length > 0 && (
-        <section className="space-y-2">
-          <h2 className="text-sm font-bold uppercase tracking-wide text-[var(--text-muted)]">Últimos baús</h2>
-          {recent.map((c) => (
-            <div key={c.id} className="flex items-center gap-3 rounded-xl bg-[var(--surface)] px-3 py-2 text-sm">
-              <Target size={16} className="shrink-0 text-[var(--text-muted)]" />
-              <span className="min-w-0 flex-1 truncate">{chestLabel(c.source)}</span>
-              <ChestContentsView chest={c} />
+      {tab === 'weekly' && data && (
+        <>
+          <StreakWeek days={data.streakWeek} streak={data.streak} restDaysLeft={data.restDaysLeft} />
+          <section className="space-y-2">
+            <div className="flex items-baseline justify-between">
+              <h2 className="text-sm font-bold uppercase tracking-wide text-[var(--text-muted)]">Da semana</h2>
+              <span className="text-xs text-[var(--text-muted)]">renovam toda segunda</span>
             </div>
-          ))}
-        </section>
+            {weekly.map((m) => (
+              <MissionRow key={m.key} mission={m} />
+            ))}
+          </section>
+          <PotionCard potions={data.potions} rescued={data.rescued} today={data.today} />
+        </>
+      )}
+
+      {tab === 'quests' && (
+        <Card className="space-y-3 py-8 text-center">
+          <Target size={44} className="mx-auto text-[var(--accent)]" />
+          <p className="text-lg font-extrabold">Quests chegando em breve</p>
+          <p className="mx-auto max-w-xs text-sm text-[var(--text-muted)]">
+            Missões maiores, em etapas, com recompensas exclusivas que não tem na lojinha. Fica de olho!
+          </p>
+        </Card>
       )}
 
       <AnimatePresence>{opened && <OpenChestModal chest={opened} onClose={() => setOpened(null)} />}</AnimatePresence>

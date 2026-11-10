@@ -52,6 +52,22 @@ export const SHOP_ITEMS: ShopItem[] = [
     items: ['card-nb', 'frame-nb', 'pframe-nb', 'theme-nb', 'cal-nb'],
   },
   {
+    key: 'bundle-orgulho',
+    kind: 'bundle',
+    name: 'Pacote Orgulho',
+    description: 'Card, moldura e borda com o arco-íris',
+    price: 80,
+    items: ['card-orgulho', 'frame-arco-iris', 'pframe-arco-iris'],
+  },
+  {
+    key: 'bundle-bandeiras',
+    kind: 'bundle',
+    name: 'Pacote Bandeiras',
+    description: 'Lésbica, bi e pan: card, moldura e borda de cada',
+    price: 280,
+    items: ['card-lesbica', 'frame-lesbica', 'pframe-lesbica', 'card-bi', 'frame-bi', 'pframe-bi', 'card-pan', 'frame-pan', 'pframe-pan'],
+  },
+  {
     key: 'bundle-pastel',
     kind: 'bundle',
     name: 'Pacote Pastel',
@@ -95,6 +111,9 @@ export const SHOP_ITEMS: ShopItem[] = [
   { key: 'frame-dourada', kind: 'avatarFrame', name: 'Coroa dourada', description: 'Anel de ouro com coroa, pra quem chegou longe', price: 120 },
   { key: 'frame-trans', kind: 'avatarFrame', name: 'Trans', description: 'Anel da bandeira trans com laço', price: 40 },
   { key: 'frame-nb', kind: 'avatarFrame', name: 'Não-binária', description: 'Anel da bandeira NB com estrela', price: 40 },
+  { key: 'frame-lesbica', kind: 'avatarFrame', name: 'Lésbica', description: 'Anel da bandeira lésbica com coração', price: 40 },
+  { key: 'frame-bi', kind: 'avatarFrame', name: 'Bi', description: 'Anel da bandeira bi com coração', price: 40 },
+  { key: 'frame-pan', kind: 'avatarFrame', name: 'Pan', description: 'Anel da bandeira pan com estrela', price: 40 },
   { key: 'frame-pastel', kind: 'avatarFrame', name: 'Jardim pastel', description: 'Anel de bala com florzinhas', price: 40 },
   { key: 'frame-natal', kind: 'avatarFrame', name: 'Natal', description: 'Bengala de doce com arvorezinha e neve', price: 60 },
   { key: 'frame-gotico', kind: 'avatarFrame', name: 'Gótica', description: 'Anel preto e vinho com morcego e lua', price: 70 },
@@ -111,6 +130,10 @@ export const SHOP_ITEMS: ShopItem[] = [
   { key: 'card-galaxia', kind: 'cardSkin', name: 'Galáxia', description: 'Céu escuro cheio de estrelinhas', price: 60 },
   { key: 'card-trans', kind: 'cardSkin', name: 'Bandeira trans', description: 'Azul, rosa e branco', price: 40 },
   { key: 'card-nb', kind: 'cardSkin', name: 'Bandeira não-binária', description: 'Amarelo, branco, roxo e preto', price: 40 },
+  { key: 'card-orgulho', kind: 'cardSkin', name: 'Bandeira do orgulho', description: 'As seis cores do arco-íris', price: 40 },
+  { key: 'card-lesbica', kind: 'cardSkin', name: 'Bandeira lésbica', description: 'Laranja, branco e rosa', price: 40 },
+  { key: 'card-bi', kind: 'cardSkin', name: 'Bandeira bi', description: 'Rosa, roxo e azul', price: 40 },
+  { key: 'card-pan', kind: 'cardSkin', name: 'Bandeira pan', description: 'Rosa, amarelo e azul', price: 40 },
   { key: 'card-pastel', kind: 'cardSkin', name: 'Arco-íris pastel', description: 'Todas as cores, bem clarinhas', price: 30 },
   { key: 'card-natal', kind: 'cardSkin', name: 'Noite de Natal', description: 'Vermelho com neve caindo', price: 40 },
   { key: 'card-gotico', kind: 'cardSkin', name: 'Gótico', description: 'Preto e vinho com lua', price: 50 },
@@ -124,6 +147,9 @@ export const SHOP_ITEMS: ShopItem[] = [
   { key: 'pframe-dourada', kind: 'postFrame', name: 'Dourada', description: 'Borda de ouro com estrela', price: 120 },
   { key: 'pframe-trans', kind: 'postFrame', name: 'Trans', description: 'Borda da bandeira trans com coração', price: 40 },
   { key: 'pframe-nb', kind: 'postFrame', name: 'Não-binária', description: 'Borda da bandeira NB com estrela', price: 40 },
+  { key: 'pframe-lesbica', kind: 'postFrame', name: 'Lésbica', description: 'Borda da bandeira lésbica com coração', price: 40 },
+  { key: 'pframe-bi', kind: 'postFrame', name: 'Bi', description: 'Borda da bandeira bi com coração', price: 40 },
+  { key: 'pframe-pan', kind: 'postFrame', name: 'Pan', description: 'Borda da bandeira pan com estrela', price: 40 },
   { key: 'pframe-pastel', kind: 'postFrame', name: 'Pastel', description: 'Borda de bala com laço', price: 30 },
   { key: 'pframe-natal', kind: 'postFrame', name: 'Bengala de doce', description: 'Listrinhas de Natal com arvorezinha', price: 50 },
   { key: 'pframe-gotico', kind: 'postFrame', name: 'Gótica', description: 'Preto e vinho com morcego', price: 60 },
@@ -158,6 +184,37 @@ export const SHOP_ITEMS: ShopItem[] = [
 ]
 
 export const SHOP_ITEM_BY_KEY = new Map(SHOP_ITEMS.map((i) => [i.key, i]))
+
+// Categorias pros filtros da lojinha (cada departamento mostra só as que têm item). Sai do key do
+// item — item novo com "natal", "trans", "gotico" etc. no key já cai no filtro certo.
+export type ShopTag = 'padrao' | 'fofo' | 'natureza' | 'estiloso' | 'retro' | 'comemorativo' | 'genero' | 'sexualidade'
+
+export const SHOP_TAGS: { key: ShopTag; label: string }[] = [
+  { key: 'padrao', label: 'Padrão' },
+  { key: 'fofo', label: 'Fofos' },
+  { key: 'natureza', label: 'Natureza' },
+  { key: 'estiloso', label: 'Estilosos' },
+  { key: 'retro', label: '8-bit' },
+  { key: 'comemorativo', label: 'Comemorativos' },
+  { key: 'genero', label: 'Gênero' },
+  { key: 'sexualidade', label: 'Sexualidade' },
+]
+
+const TAG_RULES: [ShopTag, RegExp][] = [
+  ['genero', /trans|-nb\b/],
+  ['sexualidade', /arco-iris|orgulho|lesbica|-bi\b|-pan\b|bandeiras/],
+  ['comemorativo', /natal/],
+  ['estiloso', /gotico|neon|holograf|galaxia|dourada|estrel|meia-noite/],
+  ['fofo', /pastel|coracoes|gatinho|algodao|morango|cereja|suave|lavanda/],
+  ['natureza', /oceano|floresta|menta|por-do-sol|aurora-boreal|card-aurora/],
+]
+
+export function itemTags(item: ShopItem): ShopTag[] {
+  const tags = TAG_RULES.filter(([, re]) => re.test(item.key)).map(([t]) => t)
+  if (item.pixel) tags.push('retro')
+  if (tags.length === 0 || item.price === 0) tags.unshift('padrao')
+  return [...new Set(tags)]
+}
 
 /** Coluna do perfil onde fica o item equipado de cada tipo (card é por post e pacote não equipa). */
 export type EquippableKind = Exclude<ShopKind, 'cardSkin' | 'bundle'>

@@ -8,10 +8,10 @@ import Layout from './components/Layout'
 import TodayScreen from './features/medications/TodayScreen'
 import MedicationsScreen from './features/medications/MedicationsScreen'
 import SaudeScreen from './features/health/SaudeScreen'
-import CommunityScreen from './features/community/CommunityScreen'
 import TopicPageScreen from './features/explore/TopicPageScreen'
-import CommunityMembersScreen from './features/community/CommunityMembersScreen'
-import CommunitiesScreen from './features/community/CommunitiesScreen'
+import ForumScreen from './features/forum/ForumScreen'
+import NewTopicScreen from './features/forum/NewTopicScreen'
+import TopicScreen from './features/forum/TopicScreen'
 import MoodCheckIn from './features/mood/MoodCheckIn'
 import CalendarScreen from './features/calendar/CalendarScreen'
 import DayLogScreen from './features/calendar/DayLogScreen'
@@ -34,6 +34,7 @@ import ColecaoScreen from './features/points/ColecaoScreen'
 import MeasurementsScreen from './features/measurements/MeasurementsScreen'
 import LabsScreen from './features/labs/LabsScreen'
 import ShopScreen from './features/shop/ShopScreen'
+import ShopDepartmentScreen from './features/shop/ShopDepartmentScreen'
 import MyItemsScreen from './features/shop/MyItemsScreen'
 import AuroraHubScreen from './features/hub/AuroraHubScreen'
 import FeedScreen from './features/feed/FeedScreen'
@@ -52,6 +53,7 @@ import AdminOverview from './features/admin/AdminOverview'
 import AdminUsers from './features/admin/AdminUsers'
 import AdminQuarantine from './features/admin/AdminQuarantine'
 import AdminContent from './features/admin/AdminContent'
+import AdminMissions from './features/admin/AdminMissions'
 import AdminModerationScreen from './features/settings/AdminModerationScreen'
 import AdminAnnouncementsScreen from './features/settings/AdminAnnouncementsScreen'
 import AdminTopicsScreen from './features/settings/AdminTopicsScreen'
@@ -113,6 +115,7 @@ function RootGate() {
         <Route path="denuncias" element={<AdminModerationScreen />} />
         <Route path="quarentena" element={<AdminQuarantine />} />
         <Route path="conteudo" element={<AdminContent />} />
+        <Route path="missoes" element={<AdminMissions />} />
         <Route path="registro" element={<AdminModerationScreen initialTab="log" />} />
         <Route path="avisos" element={<AdminAnnouncementsScreen />} />
         <Route path="topicos" element={<AdminTopicsScreen />} />
@@ -121,10 +124,12 @@ function RootGate() {
         <Route index element={<TodayScreen />} />
         <Route path="medications" element={<MedicationsScreen />} />
         <Route path="saude" element={<SaudeScreen />} />
-        <Route path="comunidades" element={<CommunitiesScreen />} />
-        <Route path="comunidade/:id" element={<CommunityScreen />} />
+        <Route path="comunidades" element={<ForumScreen />} />
+        <Route path="comunidades/novo" element={<NewTopicScreen />} />
+        <Route path="comunidades/t/:id" element={<TopicScreen />} />
+        {/* as comunidades antigas (grupos) viraram o fórum */}
+        <Route path="comunidade/*" element={<Navigate to="/comunidades" replace />} />
         <Route path="topico/:slug" element={<TopicPageScreen />} />
-        <Route path="comunidade/:id/membros" element={<CommunityMembersScreen />} />
         <Route path="mood" element={<MoodCheckIn />} />
         <Route path="calendar" element={<CalendarScreen />} />
         <Route path="dia" element={<DayLogScreen />} />
@@ -135,6 +140,7 @@ function RootGate() {
         <Route path="labs" element={<LabsScreen />} />
         <Route path="aurora" element={<AuroraHubScreen />} />
         <Route path="loja" element={<ShopScreen />} />
+        <Route path="loja/:slug" element={<ShopDepartmentScreen />} />
         <Route path="meus-itens" element={<MyItemsScreen />} />
         {/* Dicas saiu — a Lojinha entrou no lugar; link antigo salvo cai lá */}
         <Route path="tips" element={<Navigate to="/loja" replace />} />

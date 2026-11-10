@@ -12,6 +12,8 @@ const TARGET_LABELS: Record<string, string> = {
   community_post: 'Post de comunidade',
   comment: 'Comentário',
   community_comment: 'Comentário de comunidade',
+  forum_topic: 'Tópico da Comunidade',
+  forum_reply: 'Resposta na Comunidade',
 }
 
 const ACTION_LABELS: Record<string, string> = {
@@ -23,6 +25,8 @@ const ACTION_LABELS: Record<string, string> = {
   unban_user: 'Desbaniu conta',
   approve_image: 'Liberou imagem barrada',
   delete_quarantined_image: 'Apagou imagem barrada',
+  delete_forum_topic: 'Apagou tópico da Comunidade',
+  delete_forum_reply: 'Apagou resposta na Comunidade',
 }
 
 type Tab = 'reports' | 'log' | 'banned'

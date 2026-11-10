@@ -49,7 +49,7 @@ function DashboardCard() {
   const stats = useWorkoutStats()
   const { data: points } = usePoints()
   const goal = points?.week.workoutGoal ?? 0
-  const doneWeek = points?.week.workoutsDone ?? 0
+  const doneWeek = points?.week.workouts ?? 0
   return (
     <Card className="space-y-3">
       <div className="flex items-center justify-between">

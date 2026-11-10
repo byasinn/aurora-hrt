@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/apiClient'
 import type { Routine, RoutineInput, RoutineLog, RoutineLogInput } from '../../shared/types'
+import type { RoutineMode } from '../../shared/points'
+
+// `mode` (todo dia ou Semana Perfeita) vai junto ao criar/editar e vale a partir da próxima segunda
+type RoutineBody = Omit<RoutineInput, 'modeHistory'> & { mode?: RoutineMode }
 
 export function useRoutines() {
   return useQuery({
@@ -12,7 +16,7 @@ export function useRoutines() {
 export function useCreateRoutine() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (input: RoutineInput) => api.post<Routine>('/routines', input),
+    mutationFn: (input: RoutineBody) => api.post<Routine>('/routines', input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['routines'] }),
   })
 }
@@ -20,7 +24,7 @@ export function useCreateRoutine() {
 export function useUpdateRoutine() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, ...input }: Partial<RoutineInput> & { id: number }) =>
+    mutationFn: ({ id, ...input }: Partial<RoutineBody> & { id: number }) =>
       api.put<Routine>(`/routines?id=${id}`, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['routines'] }),
   })

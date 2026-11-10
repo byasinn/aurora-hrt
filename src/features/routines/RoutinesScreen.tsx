@@ -1,70 +1,40 @@
 import { useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Coins, Plus } from '../../components/icons'
+import { Plus, Target } from '../../components/icons'
 import { Card, EmptyState, ScreenTitle } from '../../components/ui'
-import Switch from '../../components/Switch'
 import { useRoutines } from '../../api/routines'
-import { usePoints, useRoutineBet, useSetRoutineBet } from '../../api/points'
+import { usePoints } from '../../api/points'
 import { MAX_ROUTINES, POINTS } from '../../../shared/points'
-import { showToast, toastError } from '../../lib/toast'
+import { showToast } from '../../lib/toast'
 import RoutineForm from './RoutineForm'
 import RoutineRow from './RoutineRow'
 import type { Routine } from '../../../shared/types'
 
-/** Modo aposta: em vez de ganhar um pouco por dia, a semana inteira paga no domingo com +50% — mas
- * só as rotinas feitas em todos os dias previstos. Dá pra entrar na semana atual enquanto nenhuma
- * rotina foi marcada nela; aposta feita não se desfaz até a semana acabar. */
-function BetCard() {
-  const { data: bet } = useRoutineBet()
+/** Explica a Semana Perfeita e mostra como estão as rotinas nela essa semana. */
+function PerfectWeekCard() {
   const { data: points } = usePoints()
-  const setBet = useSetRoutineBet()
-  if (!bet) return null
-  const onTrack = points?.week.betOnTrack ?? []
-
-  function change(body: Parameters<typeof setBet.mutate>[0]) {
-    setBet.mutate(body, { onError: (e) => toastError(e) })
-  }
-
+  const list = points?.week.perfectWeek ?? []
   return (
-    <Card className="space-y-3">
+    <Card className="space-y-2">
       <div className="flex items-start gap-3">
-        <Coins size={26} className="mt-0.5 shrink-0 text-amber-500" />
+        <Target size={26} className="mt-0.5 shrink-0 text-[var(--accent)]" />
         <div className="min-w-0 flex-1">
-          <p className="font-bold">Modo aposta</p>
+          <p className="font-bold">Semana Perfeita</p>
           <p className="text-xs text-[var(--text-muted)]">
-            Normal: +{POINTS.routinePerDay} Brilho por rotina feita no dia. Apostando: nada durante a semana e, no domingo, +50% por cada
-            rotina que você fez em todos os dias. Furou um dia, aquela rotina não paga.
+            Cada rotina pode valer +{POINTS.routinePerDay} por dia, ou juntar tudo pro domingo com +
+            {Math.round((POINTS.perfectWeekMultiplier - 1) * 100)}% se for feita em todos os dias. Escolha no lápis de cada rotina — vale a partir da
+            semana seguinte.
           </p>
         </div>
       </div>
-      {bet.current ? (
-        <div className="rounded-xl bg-[var(--accent-soft)] p-2.5 text-sm">
-          <b>Essa semana está apostada.</b>{' '}
-          {onTrack.length > 0 && (
-            <span className="text-[var(--text-muted)]">
-              {onTrack.filter((r) => r.onTrack).length} de {onTrack.length} rotina(s) no caminho.
-            </span>
-          )}
+      {list.map((r) => (
+        <div key={r.routineId} className="flex items-center justify-between rounded-xl bg-[var(--surface-2)] px-3 py-2 text-sm">
+          <span className="min-w-0 truncate">{r.name}</span>
+          <span className={r.onTrack ? 'font-bold text-[var(--accent)]' : 'text-[var(--text-muted)]'}>
+            {r.done}/{r.due} {r.onTrack ? 'no caminho' : '· não paga essa semana'}
+          </span>
         </div>
-      ) : bet.canJoinCurrent ? (
-        <button
-          onClick={() => change({ week: 'current', on: true })}
-          disabled={setBet.isPending}
-          className="w-full rounded-xl border border-[var(--accent)] py-2 text-sm font-bold text-[var(--accent)]"
-        >
-          Apostar essa semana
-        </button>
-      ) : (
-        <p className="text-xs text-[var(--text-muted)]">Você já marcou rotina essa semana — dá pra apostar a partir da próxima.</p>
-      )}
-      <label className="flex items-center justify-between gap-3 text-sm">
-        <span>Apostar a próxima semana</span>
-        <Switch checked={bet.next} onChange={(v) => change({ week: 'next', on: v })} />
-      </label>
-      <label className="flex items-center justify-between gap-3 text-sm">
-        <span>Apostar toda semana automaticamente</span>
-        <Switch checked={bet.auto} onChange={(v) => change({ auto: v })} />
-      </label>
+      ))}
     </Card>
   )
 }
@@ -116,7 +86,7 @@ export default function RoutinesScreen() {
         ))}
       </div>
 
-      {active.length > 0 && formState === 'closed' && <BetCard />}
+      {active.length > 0 && formState === 'closed' && <PerfectWeekCard />}
     </div>
   )
 }

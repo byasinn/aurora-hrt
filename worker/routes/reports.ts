@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { and, desc, eq, inArray, ne } from 'drizzle-orm'
 import { getDb } from '../shared/db'
-import { reports, users, profile, posts, communityPosts, postComments, communityPostComments } from '../../shared/schema'
+import { reports, users, profile, posts, communityPosts, postComments, communityPostComments, forumTopics, forumReplies } from '../../shared/schema'
 import { jsonResponse, requireUser, requireAdmin } from '../shared/auth'
 import { isRateLimited } from '../shared/rateLimit'
 import { validateText } from '../shared/contentLimits'
@@ -9,7 +9,7 @@ import type { ReportInput, ReportWithDetails } from '../../shared/types'
 import type { Env } from '../env'
 
 const app = new Hono<{ Bindings: Env }>()
-const VALID_TARGET_TYPES = new Set<string>(['user', 'post', 'community_post', 'comment', 'community_comment'])
+const VALID_TARGET_TYPES = new Set<string>(['user', 'post', 'community_post', 'comment', 'community_comment', 'forum_topic', 'forum_reply'])
 const REPORT_WINDOW_MS = 60 * 60 * 1000
 const REPORT_MAX_PER_USER = 10
 
@@ -42,6 +42,14 @@ async function resolveTargetPreview(db: ReturnType<typeof getDb>, targetType: st
         .where(eq(communityPostComments.id, targetId))
         .limit(1)
       return row ? row.text.slice(0, 140) : '(comentário já removido)'
+    }
+    if (targetType === 'forum_topic') {
+      const [row] = await db.select({ title: forumTopics.title, body: forumTopics.body }).from(forumTopics).where(eq(forumTopics.id, targetId)).limit(1)
+      return row ? `${row.title} — ${row.body.slice(0, 100)}` : '(tópico já removido)'
+    }
+    if (targetType === 'forum_reply') {
+      const [row] = await db.select({ body: forumReplies.body }).from(forumReplies).where(eq(forumReplies.id, targetId)).limit(1)
+      return row ? row.body.slice(0, 140) : '(resposta já removida)'
     }
   } catch {
     // segue com preview vazio se algo der errado resolvendo

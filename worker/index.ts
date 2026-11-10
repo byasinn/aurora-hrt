@@ -65,6 +65,7 @@ import posts from './routes/posts'
 import profile from './routes/profile'
 import pushSubscribe from './routes/push-subscribe'
 import rewards from './routes/rewards'
+import forum from './routes/forum'
 import routineLogs from './routes/routine-logs'
 import routines from './routes/routines'
 import tags from './routes/tags'
@@ -215,6 +216,7 @@ const routes = [
   profile,
   pushSubscribe,
   rewards,
+  forum,
   routineLogs,
   routines,
   tags,

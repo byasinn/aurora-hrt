@@ -9,6 +9,11 @@ import {
   useDeleteRoutine,
 } from '../../api/routines'
 import { todayStr } from '../../lib/dateUtils'
+import { useQueryClient } from '@tanstack/react-query'
+import { api } from '../../lib/apiClient'
+import { useChallengePrompt } from '../../components/ChallengeModal'
+import { routineModeFor, weekStartOf, addDays } from '../../../shared/points'
+import type { ChallengeState } from '../../api/points'
 import { getRoutineIcon } from '../../lib/routineIcons'
 import type { Routine } from '../../../shared/types'
 
@@ -36,6 +41,11 @@ export default function RoutineRow({
   const createLog = useCreateRoutineLog()
   const updateLog = useUpdateRoutineLog()
   const deleteRoutine = useDeleteRoutine()
+  const qc = useQueryClient()
+  const showPrompt = useChallengePrompt((s) => s.show)
+  const week = weekStartOf(today)
+  const weeklyNow = routineModeFor(routine.modeHistory, week) === 'weekly'
+  const weeklyNext = routineModeFor(routine.modeHistory, addDays(week, 7)) === 'weekly'
 
   const todayLog = logs?.find((l) => l.routineId === routine.id)
   const count = todayLog?.count ?? 0
@@ -68,8 +78,21 @@ export default function RoutineRow({
     running && sessionStartRef.current ? Math.floor((Date.now() - sessionStartRef.current) / 1000) : 0
   const displaySeconds = count + sessionSeconds
 
+  // primeira vez que conclui uma rotina na vida: convite da Semana Perfeita (uma vez só, ver ChallengeModal)
+  async function maybeInvite(nextCount: number) {
+    const willBeDone = isCheckbox ? nextCount > 0 : routine.targetCount != null && nextCount >= routine.targetCount
+    if (done || !willBeDone || weeklyNow || weeklyNext) return
+    try {
+      const state = await qc.fetchQuery({ queryKey: ['challenge'], queryFn: () => api.get<ChallengeState>('/challenge'), staleTime: 10 * 60_000 })
+      if (!state.introSeen) setTimeout(() => showPrompt({ kind: 'intro', routine: { id: routine.id, name: routine.name } }), 900)
+    } catch {
+      // sem convite agora, tudo bem
+    }
+  }
+
   function setCount(next: number) {
     const clamped = Math.max(0, next)
+    void maybeInvite(clamped)
     if (todayLog) {
       updateLog.mutate({ id: todayLog.id, count: clamped })
     } else {
@@ -112,6 +135,9 @@ export default function RoutineRow({
         <p className={big ? 'text-base font-semibold text-[var(--text)]' : 'font-medium text-[var(--text)]'}>
           {routine.name}
         </p>
+        {(weeklyNow || weeklyNext) && (
+          <p className="text-[11px] font-bold text-[var(--accent)]">{weeklyNow ? '🎯 Semana Perfeita' : '🎯 Semana Perfeita a partir de segunda'}</p>
+        )}
         {!isCheckbox && (
           <p className="text-xs text-[var(--text-muted)]">
             {isTimer ? formatDuration(displaySeconds) : count}/

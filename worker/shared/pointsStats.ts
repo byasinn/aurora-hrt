@@ -19,10 +19,13 @@ import {
   dailyVisits,
   chests,
   rescuedDays,
+  forumTopics,
+  forumReplies,
+  forumTopicLikes,
 } from '../../shared/schema'
 import { currentStreak, transitionYearsBonus, type PointsStats } from '../../src/lib/collectiblesEngine'
 import { dateStrInTimezone } from '../../shared/scheduling'
-import { computeActivityPoints, streakEndingAt, workoutWeeklyGoal, type PointsResult } from '../../shared/points'
+import { computeActivityPoints, computeStreak, workoutWeeklyGoal, type PointsResult } from '../../shared/points'
 import type { ChestContents } from '../../shared/missions'
 import type { getDb } from './db'
 
@@ -48,6 +51,7 @@ export interface PointsSummary extends PointsResult {
   chests: number
   since: string
   visitStreak: number
+  restDaysLeft: number
   potions: number
   unopenedChests: number
 }
@@ -59,6 +63,7 @@ export interface PointsContext {
   today: string
   /** pra checar missões sem consultar de novo */
   counts: { medications: number; routines: number; posts: number; hasAvatar: boolean }
+  visitDates: Set<string>
   chestSources: Set<string>
   rescued: Set<string>
 }
@@ -144,7 +149,7 @@ export async function loadPointsContext(db: Db, userId: number): Promise<PointsC
   const sinceStart = new Date(`${since}T00:00:00.000Z`)
   sinceStart.setUTCDate(sinceStart.getUTCDate() - 1) // folga de fuso
 
-  const [noteRows, likeRows, communityLikeRows, commentRows, communityCommentRows, postRows, communityPostRows] = await Promise.all([
+  const [noteRows, likeRows, communityLikeRows, commentRows, communityCommentRows, postRows, communityPostRows, forumTopicRows, forumReplyRows, forumLikeRows] = await Promise.all([
     db.select().from(dayNotes).where(and(eq(dayNotes.userId, userId), gte(dayNotes.date, since))),
     db.select({ createdAt: postLikes.createdAt }).from(postLikes).where(and(eq(postLikes.userId, userId), gte(postLikes.createdAt, sinceStart))),
     db
@@ -164,6 +169,13 @@ export async function loadPointsContext(db: Db, userId: number): Promise<PointsC
       .select({ createdAt: communityPosts.createdAt })
       .from(communityPosts)
       .where(and(eq(communityPosts.userId, userId), gte(communityPosts.createdAt, sinceStart))),
+    // Comunidade (fórum): tópico vale como post, resposta como comentário, curtida como curtida
+    db.select({ createdAt: forumTopics.createdAt }).from(forumTopics).where(and(eq(forumTopics.userId, userId), gte(forumTopics.createdAt, sinceStart))),
+    db.select({ createdAt: forumReplies.createdAt }).from(forumReplies).where(and(eq(forumReplies.userId, userId), gte(forumReplies.createdAt, sinceStart))),
+    db
+      .select({ createdAt: forumTopicLikes.createdAt })
+      .from(forumTopicLikes)
+      .where(and(eq(forumTopicLikes.userId, userId), gte(forumTopicLikes.createdAt, sinceStart))),
   ])
 
   const rescued = new Set(rescuedRows.map((r) => r.date))
@@ -178,7 +190,6 @@ export async function loadPointsContext(db: Db, userId: number): Promise<PointsC
     dayNotes: noteRows,
     routines: routineRows,
     routineLogs: routineLogRows,
-    betWeeks: new Set(prof?.routineBetWeeks ?? []),
     workoutGoal: workoutWeeklyGoal(programs),
     workoutLogs: workoutLogRows,
     meds: medRows.map((m) => ({ ...m, preferredTimes: m.preferredTimes ?? [] })),
@@ -190,6 +201,9 @@ export async function loadPointsContext(db: Db, userId: number): Promise<PointsC
       ...communityCommentRows.map((r) => ({ kind: 'comment' as const, createdAt: r.createdAt })),
       ...postRows.map((r) => ({ kind: 'post' as const, createdAt: r.createdAt })),
       ...communityPostRows.map((r) => ({ kind: 'post' as const, createdAt: r.createdAt })),
+      ...forumTopicRows.map((r) => ({ kind: 'post' as const, createdAt: r.createdAt })),
+      ...forumReplyRows.map((r) => ({ kind: 'comment' as const, createdAt: r.createdAt })),
+      ...forumLikeRows.map((r) => ({ kind: 'like' as const, createdAt: r.createdAt })),
     ],
   })
 
@@ -201,6 +215,7 @@ export async function loadPointsContext(db: Db, userId: number): Promise<PointsC
   const chestBrilho = openedChests.reduce((s, c) => s + ((c.contents as ChestContents).brilho ?? 0), 0)
   const potionsEarned = openedChests.reduce((s, c) => s + ((c.contents as ChestContents).potions ?? 0), 0)
   const visitDates = new Set([...visitRows.map((v) => v.date), ...rescued])
+  const streakState = computeStreak(visitDates, today)
 
   const total = legacy + transitionBonus + result.activity + visits + chestBrilho
   const workoutDates = new Set(workoutLogRows.map((l) => l.date))
@@ -210,6 +225,7 @@ export async function loadPointsContext(db: Db, userId: number): Promise<PointsC
     today,
     rescued,
     chestSources: new Set(chestRows.map((c) => c.source)),
+    visitDates,
     counts: { medications: medRows.length, routines: routineRows.length, posts: postsCount, hasAvatar: !!prof?.avatarUrl },
     points: {
       ...result,
@@ -219,7 +235,8 @@ export async function loadPointsContext(db: Db, userId: number): Promise<PointsC
       visits,
       chests: chestBrilho,
       since,
-      visitStreak: streakEndingAt(visitDates, today),
+      visitStreak: streakState.streak,
+      restDaysLeft: streakState.restDaysLeft,
       potions: Math.max(0, potionsEarned - rescued.size),
       unopenedChests: chestRows.filter((c) => !c.openedAt).length,
     },

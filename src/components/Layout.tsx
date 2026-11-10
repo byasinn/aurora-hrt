@@ -15,6 +15,7 @@ import InsightMessageGenerator from './InsightMessageGenerator'
 import DesktopSidebar from './DesktopSidebar'
 import { useMainNavItems } from './navItems'
 import AnnouncementModal from './AnnouncementModal'
+import ChallengeModal from './ChallengeModal'
 
 function TabItem({ to, label, active, children }: { to: string; label: string; active: boolean; children: React.ReactNode }) {
   return (
@@ -70,6 +71,7 @@ export default function Layout() {
       <div className="flex min-h-app w-full max-w-md flex-col lg:max-w-2xl lg:px-8">
         <InsightMessageGenerator />
         <AnnouncementModal />
+        <ChallengeModal />
         {/* Sem foto de perfil aqui: ela ficava por cima do primeiro card. O perfil fica no "Meu espaço"
             da barra de baixo, e o que a gaveta do avatar tinha está no Meu espaço e na central do Aurora. */}
         <header className="flex items-center justify-center pb-2 pt-[max(0.75rem,env(safe-area-inset-top))] lg:hidden">

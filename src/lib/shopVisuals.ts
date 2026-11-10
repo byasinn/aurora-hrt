@@ -8,6 +8,9 @@ import type { PixelIconName } from '../components/PixelIcon'
 const TRANS = ['#5bcefa', '#f5a9b8', '#ffffff', '#f5a9b8', '#5bcefa']
 const NB = ['#fcf434', '#ffffff', '#9c59d1', '#2c2c2c']
 const RAINBOW = ['#ef4444', '#f59e0b', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6']
+const LESBIAN = ['#d52d00', '#ff9a56', '#ffffff', '#d362a4', '#a30262']
+const BI = ['#d60270', '#d60270', '#9b4f96', '#0038a8', '#0038a8']
+const PAN = ['#ff218c', '#ffd800', '#21b1ff']
 const PASTEL_RAINBOW = ['#fecaca', '#fed7aa', '#fef08a', '#bbf7d0', '#bae6fd', '#ddd6fe', '#fbcfe8']
 const GOLD = 'conic-gradient(#b7791f, #fde68a, #d4a017, #fff3b0, #b7791f)'
 const HOLO = 'linear-gradient(135deg, #a5f3fc, #f0abfc 25%, #fde68a 50%, #a7f3d0 75%, #c4b5fd)'
@@ -52,6 +55,10 @@ export const CARD_SKINS: Record<string, CardSkinVisual> = {
   'card-galaxia': { style: { background: `${STARS}, linear-gradient(135deg, #1e1b4b, #4c1d95 60%, #831843)` }, color: '#ffffff' },
   'card-trans': { style: { background: flagStripes(TRANS, '#fdf2f8') }, color: '#3b2531', paddingLeft: 42 },
   'card-nb': { style: { background: flagStripes(NB, '#f5f0ff') }, color: '#2e2140', paddingLeft: 36 },
+  'card-orgulho': { style: { background: flagStripes(RAINBOW, '#fffdf5') }, color: '#2b2440', paddingLeft: 48 },
+  'card-lesbica': { style: { background: flagStripes(LESBIAN, '#fff5f2') }, color: '#3d1626', paddingLeft: 42 },
+  'card-bi': { style: { background: flagStripes(BI, '#f6f2ff') }, color: '#251a3d', paddingLeft: 42 },
+  'card-pan': { style: { background: flagStripes(PAN, '#fffbea') }, color: '#3a2433', paddingLeft: 30 },
   'card-pastel': { style: { background: `linear-gradient(135deg, ${PASTEL_RAINBOW.join(', ')})` }, color: '#3b2f36' },
   'card-natal': { style: { background: `${SNOW}, linear-gradient(160deg, #b91c1c, #dc2626 60%, #15803d)` }, color: '#ffffff' },
   'card-gotico': {
@@ -140,6 +147,18 @@ export const AVATAR_FRAMES: Record<string, AvatarFrameVisual> = {
     ring: conicStripes(TRANS),
     ornaments: [{ icon: 'bow', pos: 'top', scale: 0.32, palette: { P: '#5bcefa', p: '#f5a9b8' } }],
   },
+  'frame-lesbica': {
+    ring: conicStripes(LESBIAN),
+    ornaments: [{ icon: 'heart', pos: 'top-right', scale: 0.3, palette: { a: '#d362a4' } }],
+  },
+  'frame-bi': {
+    ring: conicStripes(BI),
+    ornaments: [{ icon: 'heart', pos: 'top-right', scale: 0.3, palette: { a: '#9b4f96' } }],
+  },
+  'frame-pan': {
+    ring: conicStripes(PAN),
+    ornaments: [{ icon: 'star', pos: 'top-right', scale: 0.32, palette: { c: '#ffd800', y: '#ffffff', k: '#ff218c' } }],
+  },
   'frame-nb': {
     ring: conicStripes(NB),
     ornaments: [{ icon: 'star', pos: 'top-right', scale: 0.34, palette: { c: '#fcf434', y: '#ffffff', k: '#9c59d1' } }],
@@ -200,6 +219,9 @@ export const POST_FRAMES: Record<string, PostFrameVisual> = {
     border: `linear-gradient(90deg, ${TRANS.join(', ')})`,
     ornament: { icon: 'heart', palette: { a: '#f5a9b8' } },
   },
+  'pframe-lesbica': { border: `linear-gradient(90deg, ${LESBIAN.join(', ')})`, ornament: { icon: 'heart', palette: { a: '#d362a4' } } },
+  'pframe-bi': { border: `linear-gradient(90deg, ${BI.join(', ')})`, ornament: { icon: 'heart', palette: { a: '#9b4f96' } } },
+  'pframe-pan': { border: `linear-gradient(90deg, ${PAN.join(', ')})`, ornament: { icon: 'star', palette: { c: '#ffd800', y: '#ffffff', k: '#ff218c' } } },
   'pframe-nb': {
     border: `linear-gradient(90deg, ${NB.join(', ')})`,
     ornament: { icon: 'star', palette: { c: '#fcf434', y: '#ffffff', k: '#9c59d1' } },

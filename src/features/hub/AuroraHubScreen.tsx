@@ -52,7 +52,7 @@ export default function AuroraHubScreen() {
   const { data: shop } = useShop()
   const { data: missions } = useMissions()
   const readyCount =
-    (missions?.missions.filter((m) => !m.hidden && !m.claimed && m.progress >= m.target).length ?? 0) +
+    (missions?.missions.filter((m) => !m.hidden && !m.claimed && m.progress >= m.target && (m.group !== 'daily' || missions.dailyUnlocked)).length ?? 0) +
     (missions?.chests.filter((c) => !c.openedAt).length ?? 0)
   const firstName = profile?.displayName?.trim().split(/\s+/)[0]
   const ownedCount = SHOP_ITEMS.filter((i) => i.kind !== 'bundle' && i.price > 0 && ownsItem(shop?.owned ?? [], i.key)).length
@@ -125,8 +125,8 @@ export default function AuroraHubScreen() {
           to="/comunidades"
           icon={<AppIcon icon={Users} pixel="usersColor" size={26} className="text-[var(--accent)]" />}
           background="var(--accent-soft)"
-          title="Comunidades"
-          description="Grupos pra conversar sobre o que importa"
+          title="Comunidade"
+          description="Tópicos pra perguntar, contar e trocar ideia"
         />
         <HubCard
           to="/loja"

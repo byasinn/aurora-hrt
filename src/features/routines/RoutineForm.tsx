@@ -5,6 +5,9 @@ import { ROUTINE_ICON_OPTIONS, DEFAULT_ROUTINE_ICON_KEY } from '../../lib/routin
 import { weekdayLabel } from '../../lib/dateUtils'
 import type { Routine, RoutineType } from '../../../shared/types'
 import { toastError } from '../../lib/toast'
+import clsx from 'clsx'
+import { POINTS, addDays, routineModeFor, weekStartOf, type RoutineMode } from '../../../shared/points'
+import { todayStr } from '../../lib/dateUtils'
 
 const DEFAULT_SUGGESTIONS: {
   name: string
@@ -41,6 +44,11 @@ export default function RoutineForm({ routine, onDone }: { routine?: Routine; on
   const [targetMinutes, setTargetMinutes] = useState(routine?.targetCount ? Math.round(routine.targetCount / 60) : 5)
   const [everyDay, setEveryDay] = useState((routine?.daysOfWeek as number[] | null | undefined) == null)
   const [days, setDays] = useState<number[]>((routine?.daysOfWeek as number[] | null | undefined) ?? [1, 2, 3, 4, 5])
+  // modo que vai valer a partir de segunda (é o que a pessoa escolhe aqui)
+  const thisWeek = weekStartOf(todayStr())
+  const currentMode = routineModeFor(routine?.modeHistory, thisWeek)
+  const initialNextMode = routineModeFor(routine?.modeHistory, addDays(thisWeek, 7))
+  const [mode, setMode] = useState<RoutineMode>(initialNextMode)
 
   function toggleDay(d: number) {
     setDays((cur) => (cur.includes(d) ? cur.filter((x) => x !== d) : [...cur, d].sort()))
@@ -57,6 +65,7 @@ export default function RoutineForm({ routine, onDone }: { routine?: Routine; on
       if (isEdit) {
         await updateRoutine.mutateAsync({
           id: routine.id,
+          ...(mode !== initialNextMode ? { mode } : {}),
           name,
           icon,
           type,
@@ -71,6 +80,7 @@ export default function RoutineForm({ routine, onDone }: { routine?: Routine; on
           targetCount: finalTarget,
           daysOfWeek,
           active: true,
+          mode,
         })
       }
     } catch (err) {
@@ -230,6 +240,38 @@ export default function RoutineForm({ routine, onDone }: { routine?: Routine; on
               ))}
             </div>
           )}
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Como ganha Brilho</p>
+          <div className="grid grid-cols-2 gap-2">
+            {(
+              [
+                { value: 'daily', title: 'Todo dia', text: `+${POINTS.routinePerDay} a cada dia que fizer` },
+                { value: 'weekly', title: '🎯 Semana Perfeita', text: `Paga no domingo, +${Math.round((POINTS.perfectWeekMultiplier - 1) * 100)}% — se fizer todo dia` },
+              ] as const
+            ).map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setMode(opt.value)}
+                className={clsx(
+                  'rounded-xl border p-2.5 text-left transition',
+                  mode === opt.value ? 'border-[var(--accent)] bg-[var(--accent-soft)]' : 'border-[var(--border)]',
+                )}
+              >
+                <span className="block text-sm font-bold text-[var(--text)]">{opt.title}</span>
+                <span className="block text-[11px] text-[var(--text-muted)]">{opt.text}</span>
+              </button>
+            ))}
+          </div>
+          <p className="text-[11px] text-[var(--text-muted)]">
+            {isEdit && mode !== currentMode
+              ? `Essa semana continua ${currentMode === 'weekly' ? 'na Semana Perfeita' : 'valendo por dia'} — a mudança começa na segunda.`
+              : !isEdit && mode === 'weekly'
+                ? 'Essa semana conta por dia; a Semana Perfeita começa na segunda.'
+                : 'Dá pra mudar quando quiser — vale a partir do começo da semana seguinte.'}
+          </p>
         </div>
 
         <div className="flex gap-2 pt-1">

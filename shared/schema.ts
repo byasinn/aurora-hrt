@@ -119,10 +119,10 @@ export const profile = pgTable(
   // congelado em legacyBrilho, calculado uma vez pela fórmula antiga — ninguém perde ponto na troca
   pointsV2Since: date('points_v2_since'),
   legacyBrilho: integer('legacy_brilho').notNull().default(0),
-  // semanas (segunda, YYYY-MM-DD) em que as rotinas estão "apostadas": só pagam no fim da semana,
-  // +50%, e só as rotinas feitas em todos os dias
-  routineBetWeeks: jsonb('routine_bet_weeks').notNull().default([]).$type<string[]>(),
-  routineBetAuto: boolean('routine_bet_auto').notNull().default(false),
+  // convite da Semana Perfeita: o primeiro aparece uma vez só (ao concluir uma rotina); o de "quase
+  // fez a semana perfeita" no máximo uma vez por semana (guarda a segunda em que apareceu)
+  challengeIntroSeen: boolean('challenge_intro_seen').notNull().default(false),
+  challengePromptWeek: date('challenge_prompt_week'),
   // último dia que a pessoa já respondeu no "e ontem, fez?" — não pergunta de novo
   lastDayReviewed: date('last_day_reviewed'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -323,6 +323,10 @@ export const routines = pgTable('routines', {
   type: text('type').notNull().default('checkbox'), // 'checkbox' | 'counter' | 'timer'
   targetCount: integer('target_count'), // counter: unidades; timer: segundos
   daysOfWeek: jsonb('days_of_week'), // number[] (0=dom..6=sáb) | null = todo dia
+  // como pontua: { from: segunda YYYY-MM-DD, mode: 'daily' | 'weekly' }[] — 'weekly' é a Semana
+  // Perfeita. Só o servidor mexe (shared/points.ts withRoutineMode), mudança vale da semana seguinte
+  // (ou da atual, se a rotina ainda não foi feita nela)
+  modeHistory: jsonb('mode_history').notNull().default([]).$type<{ from: string; mode: 'daily' | 'weekly' }[]>(),
   active: boolean('active').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
@@ -872,4 +876,72 @@ export const rescuedDays = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [uniqueIndex('rescued_days_user_date').on(table.userId, table.date)],
+)
+
+// Missões diárias e semanais (as de boas-vindas ficam no código, shared/missions.ts). Admin cria e
+// edita pelo painel; `metric` é uma das contagens que o servidor sabe medir (MISSION_METRICS).
+export const missions = pgTable('missions', {
+  id: serial('id').primaryKey(),
+  period: text('period').notNull(), // 'daily' | 'weekly'
+  metric: text('metric').notNull(),
+  target: integer('target').notNull().default(1),
+  title: text('title').notNull(),
+  description: text('description').notNull().default(''),
+  rewardKind: text('reward_kind').notNull().default('chest'), // 'chest' | 'brilho' | 'potion'
+  rewardRarity: text('reward_rarity').notNull().default('common'), // baú: 'common' | 'rare'
+  rewardAmount: integer('reward_amount').notNull().default(0), // brilho/poção: quanto
+  active: boolean('active').notNull().default(true),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+// Comunidade (fórum): tópicos com tags, respostas e curtidas. Admin fixa e tranca.
+export const forumTopics = pgTable(
+  'forum_topics',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    body: text('body').notNull(),
+    tags: jsonb('tags').notNull().default([]).$type<string[]>(),
+    pinned: boolean('pinned').notNull().default(false),
+    locked: boolean('locked').notNull().default(false),
+    replyCount: integer('reply_count').notNull().default(0),
+    likeCount: integer('like_count').notNull().default(0),
+    lastActivityAt: timestamp('last_activity_at', { withTimezone: true }).notNull().defaultNow(),
+    editedAt: timestamp('edited_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('forum_topics_activity_idx').on(table.lastActivityAt), index('forum_topics_user_idx').on(table.userId)],
+)
+
+export const forumReplies = pgTable(
+  'forum_replies',
+  {
+    id: serial('id').primaryKey(),
+    topicId: integer('topic_id')
+      .notNull()
+      .references(() => forumTopics.id, { onDelete: 'cascade' }),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    body: text('body').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('forum_replies_topic_idx').on(table.topicId, table.createdAt), index('forum_replies_user_idx').on(table.userId)],
+)
+
+export const forumTopicLikes = pgTable(
+  'forum_topic_likes',
+  {
+    id: serial('id').primaryKey(),
+    topicId: integer('topic_id')
+      .notNull()
+      .references(() => forumTopics.id, { onDelete: 'cascade' }),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex('forum_topic_likes_pair').on(table.topicId, table.userId)],
 )

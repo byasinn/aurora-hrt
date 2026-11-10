@@ -30,10 +30,12 @@ async function main() {
         '• Configurações reorganizadas: troque email e senha, escolha seu gênero, ligue a dica do dia e escolha quais notificações receber',
         '• Botões maiores, versão pra computador e sons fofos',
         '• "Você tomou?" uma hora depois do horário da dose, com botões direto na notificação',
-        '• Missões (no botão do Aurora): complete, ganhe baús com Brilho, itens da lojinha e Poções do tempo — que salvam um dia que você esqueceu de marcar',
-        '• Brilho novo: remédio e treino valem por semana completa, rotina vale por dia (ou aposte a semana e ganhe +50% no domingo), registro do dia vale mais quanto mais detalhe, e abrir o app todo dia mantém seu streak. Tudo que você já tinha continua seu',
+        '• Missões (no botão do Aurora): boas-vindas, diárias e semanais, com baús de Brilho, itens da lojinha e Poções do tempo — que salvam um dia que você esqueceu de marcar. E o streak agora tem dias de folga',
+        '• Brilho novo: remédio e treino valem por semana completa, rotina vale por dia (ou entra na Semana Perfeita e paga +50% no domingo), registro do dia vale mais quanto mais detalhe, e abrir o app todo dia mantém seu streak. Tudo que você já tinha continua seu',
         '• Ao abrir o app, ele pergunta das rotinas e treinos de ontem e das doses esquecidas dos últimos 10 dias',
         '• Treinos mais simples: só o nome do exercício e as séries pra marcar, sem kg nem repetição',
+        '• Comunidade nova, em tópicos: abra o seu com tags, veja os mais recentes ou os mais relevantes e filtre por assunto',
+        '• Lojinha por departamentos (no 8-bit, cada um tem sua vendedora) e bandeiras novas: orgulho, lésbica, bi e pan',
       ].join('\n'),
     })
     .returning()

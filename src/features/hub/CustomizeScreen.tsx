@@ -14,6 +14,7 @@ import { playSound, useSoundStore } from '../../lib/sounds'
 import { toastError } from '../../lib/toast'
 import ItemPreview, { ThemeSwatch } from '../shop/ItemPreview'
 import { DEFAULT_THEME, SHOP_ITEMS, ownsItem, type EquippableKind } from '../../../shared/shopCatalog'
+import { DEPARTMENT_BY_KIND } from '../shop/departments'
 
 // Personalizar app (central do Aurora): tudo que muda o visual num lugar só, com prévia ao vivo e só
 // com o que a pessoa já tem — o resto fica a um toque, na Lojinha. Substitui a antiga tela de Aparência.
@@ -99,7 +100,7 @@ function OwnedGrid({ kind, allowNone }: { kind: EquippableKind; allowNone: boole
       })}
       {missing > 0 && (
         <Link
-          to={`/loja#tab=${kind}`}
+          to={`/loja/${DEPARTMENT_BY_KIND.get(kind)?.slug ?? ''}`}
           className={clsx(tile, 'items-center justify-center gap-1 border-dashed border-[var(--border)] p-4 text-center text-[var(--text-muted)]')}
         >
           <Store size={22} className="text-[var(--accent)]" />

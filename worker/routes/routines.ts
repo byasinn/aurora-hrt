@@ -4,7 +4,8 @@ import { getDb } from '../shared/db'
 import { routines } from '../../shared/schema'
 import { jsonResponse, requireUser } from '../shared/auth'
 import { stripOwnerFields } from '../shared/contentLimits'
-import { MAX_ROUTINES } from '../../shared/points'
+import { MAX_ROUTINES, type RoutineMode } from '../../shared/points'
+import { setRoutineModes } from './rewards'
 import type { RoutineInput } from '../../shared/types'
 import type { Env } from '../env'
 
@@ -31,7 +32,7 @@ app.all('/api/routines', async (c) => {
     }
 
     if (req.method === 'POST') {
-      const body = (await req.json()) as RoutineInput
+      const { mode, modeHistory: _mh, ...body } = (await req.json()) as RoutineInput & { mode?: RoutineMode }
       // teto de rotinas: criar e apagar não dá Brilho, mas sem limite dava pra encher o dia de rotina boba
       const [{ value: existing }] = await db.select({ value: count() }).from(routines).where(eq(routines.userId, user.id))
       if (existing >= MAX_ROUTINES) {
@@ -41,17 +42,22 @@ app.all('/api/routines', async (c) => {
         .insert(routines)
         .values({ ...body, userId: user.id })
         .returning()
+      // Semana Perfeita escolhida ao criar: começa na próxima segunda (essa semana conta por dia)
+      if (mode === 'weekly') await setRoutineModes(db, user.id, [row.id], 'weekly', 'next')
       return jsonResponse(row, { status: 201 })
     }
 
     if (req.method === 'PUT') {
       if (!id) return jsonResponse({ error: 'id é obrigatório' }, { status: 400 })
-      const body = (await req.json()) as Partial<RoutineInput>
-      const [row] = await db
-        .update(routines)
-        .set(stripOwnerFields(body))
-        .where(and(eq(routines.id, Number(id)), eq(routines.userId, user.id)))
-        .returning()
+      const { mode, modeHistory: _mh, ...body } = (await req.json()) as Partial<RoutineInput> & { mode?: RoutineMode }
+      if (mode === 'daily' || mode === 'weekly') await setRoutineModes(db, user.id, [Number(id)], mode, 'next')
+      const patch = stripOwnerFields(body)
+      const where = and(eq(routines.id, Number(id)), eq(routines.userId, user.id))
+      if (Object.keys(patch).length === 0) {
+        const [current] = await db.select().from(routines).where(where).limit(1)
+        return jsonResponse(current)
+      }
+      const [row] = await db.update(routines).set(patch).where(where).returning()
       return jsonResponse(row)
     }
 

@@ -6,6 +6,7 @@ import clsx from 'clsx'
 import { Button, Card } from './ui'
 import { Check, Flame, Gift, Potion, X } from './icons'
 import {
+  useChallenge,
   useCheckin,
   useSubmitMissedDoses,
   useSubmitReview,
@@ -17,6 +18,7 @@ import {
 } from '../api/points'
 import { addDays } from '../../shared/points'
 import { todayStr } from '../lib/dateUtils'
+import { useChallengePrompt } from './ChallengeModal'
 import { playSound } from '../lib/sounds'
 import { toastError } from '../lib/toast'
 
@@ -106,6 +108,16 @@ function StreakPopup({ visit, onClose }: { visit: VisitResult; onClose: () => vo
             +{visit.points} Brilho por passar aqui hoje{saved != null && ' · streak salvo!'}
           </p>
         </div>
+        {visit.usedRestDay && (
+          <p className="rounded-2xl bg-[var(--surface-2)] p-3 text-sm">
+            💤 Ontem foi <b>dia de folga</b>: você não passou aqui, mas seu streak continuou.
+          </p>
+        )}
+        {visit.gotRestDay && !visit.usedRestDay && (
+          <p className="rounded-2xl bg-[var(--surface-2)] p-3 text-sm">
+            💤 Você ganhou <b>1 dia de folga</b>: se um dia não der pra passar aqui, o streak não quebra.
+          </p>
+        )}
         {visit.chest && (
           <Link
             to="/missoes"
@@ -428,9 +440,27 @@ export default function DailyFlow() {
   const visit = useVisit()
   const today = todayStr()
   const [visitResult, setVisitResult] = useState<VisitResult | null>(null)
-  const [stage, setStage] = useState<'visit' | 'checkin' | 'done'>(() => (sessionGet(SESSION_KEY) === today ? 'done' : 'visit'))
+  const [stage, setStage] = useState<'visit' | 'challenge' | 'checkin' | 'done'>(() => (sessionGet(SESSION_KEY) === today ? 'done' : 'visit'))
   const startedRef = useRef(false)
   const { data: checkin } = useCheckin(stage === 'checkin')
+  const { data: challenge, isError: challengeError } = useChallenge(stage === 'challenge')
+  const showPrompt = useChallengePrompt((s) => s.show)
+  const prompt = useChallengePrompt((s) => s.prompt)
+  const promptShownRef = useRef(false)
+
+  // convite "você quase fez a semana perfeita" — aparece no máximo uma vez por semana
+  useEffect(() => {
+    if (stage !== 'challenge') return
+    if (challengeError) return setStage('checkin')
+    if (!challenge) return
+    if (!promptShownRef.current) {
+      if (challenge.almost.length === 0) return setStage('checkin')
+      promptShownRef.current = true
+      showPrompt({ kind: 'almost', routines: challenge.almost })
+    } else if (!prompt) {
+      setStage('checkin')
+    }
+  }, [stage, challenge, challengeError, prompt, showPrompt])
 
   useEffect(() => {
     if (startedRef.current) return
@@ -440,9 +470,9 @@ export default function DailyFlow() {
         if (r.isNew) {
           playSound('coin')
           setVisitResult(r)
-        } else setStage((s) => (s === 'visit' ? 'checkin' : s))
+        } else setStage((s) => (s === 'visit' ? 'challenge' : s))
       },
-      onError: () => setStage((s) => (s === 'visit' ? 'checkin' : s)),
+      onError: () => setStage((s) => (s === 'visit' ? 'challenge' : s)),
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -461,7 +491,7 @@ export default function DailyFlow() {
           visit={visitResult}
           onClose={() => {
             setVisitResult(null)
-            setStage('checkin')
+            setStage('challenge')
           }}
         />
       )}

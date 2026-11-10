@@ -50,7 +50,7 @@ export type AdminUserSummary = Pick<User, 'id' | 'email' | 'emailVerified' | 'is
   isVerified: boolean
 }
 
-export type ReportTargetType = 'user' | 'post' | 'community_post' | 'comment' | 'community_comment'
+export type ReportTargetType = 'user' | 'post' | 'community_post' | 'comment' | 'community_comment' | 'forum_topic' | 'forum_reply'
 export type ReportStatus = 'pending' | 'reviewed' | 'dismissed'
 export type Report = typeof reports.$inferSelect
 export type ReportInput = { targetType: ReportTargetType; targetId: number; reason?: string | null }
