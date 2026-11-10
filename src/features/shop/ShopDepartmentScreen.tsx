@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import clsx from 'clsx'
@@ -8,11 +8,12 @@ import { useIconStyle } from '../../components/AppIcon'
 import { useBuyPotion, useShop } from '../../api/shop'
 import { playSound } from '../../lib/sounds'
 import { showToast, toastError } from '../../lib/toast'
-import ItemCard, { PriceLabel, PromoBadge } from './ItemCard'
-import ShopStage from './ShopStage'
-import { DEPARTMENT_BY_SLUG } from './departments'
-import { SHOP_ITEMS, SHOP_TAGS, itemTags, ownsItem, type ShopState, type ShopTag } from '../../../shared/shopCatalog'
-import { POTION_OFFERS, discounted, type PotionOffer } from '../../../shared/shopPromos'
+import { PriceLabel, PromoBadge } from './ItemCard'
+import { ItemModal, ItemRow } from './ItemRow'
+import ShopStage, { KeeperMini, useKeeperTalk } from './ShopStage'
+import { DEPARTMENT_BY_SLUG, type Department } from './departments'
+import { SHOP_ITEMS, SHOP_ITEM_BY_KEY, SHOP_TAGS, itemTags, ownsItem, type ShopState, type ShopTag } from '../../../shared/shopCatalog'
+import { POTION_OFFERS, POTION_OFFER_BY_KEY, discounted, type PotionOffer } from '../../../shared/shopPromos'
 
 function FilterChips({
   tags,
@@ -95,25 +96,76 @@ function PotionOfferCard({ offer, shop }: { offer: PotionOffer; shop: ShopState 
   )
 }
 
-export default function ShopDepartmentScreen() {
-  const { slug } = useParams<{ slug: string }>()
-  const dept = slug ? DEPARTMENT_BY_SLUG.get(slug) : undefined
+/** Fala da vendedora sobre a promoção da loja dela (se tiver alguma valendo). */
+function promoLineFor(dept: Department, shop: ShopState | undefined): string | null {
+  if (!shop) return null
+  const deals = Object.entries(shop.promos ?? {})
+    .map(([key, promo]) => {
+      const name = dept.kind === 'potion' ? POTION_OFFER_BY_KEY.get(key)?.name : SHOP_ITEM_BY_KEY.get(key)?.kind === dept.kind ? SHOP_ITEM_BY_KEY.get(key)?.name : undefined
+      return name && !(dept.kind !== 'potion' && ownsItem(shop.owned, key)) ? { name, percent: promo.percent, daily: promo.label === 'Oferta do dia' } : null
+    })
+    .filter((d): d is NonNullable<typeof d> => !!d)
+  if (deals.length === 0) return null
+  if (deals.length === 1) {
+    const d = deals[0]
+    return `Psiu! ${d.daily ? 'Só hoje' : 'Tá em promoção'}: ${d.name} com ${d.percent}% de desconto!`
+  }
+  const names = deals.slice(0, 3).map((d) => d.name)
+  return `Tem promoção aqui! ${names.slice(0, -1).join(', ')} e ${names[names.length - 1]} tão com desconto${deals.every((d) => d.daily) ? ' só hoje' : ''}!`
+}
+
+function DepartmentView({ dept }: { dept: Department }) {
   const { data: shop, isLoading } = useShop()
   const pixel = useIconStyle((s) => s.style) === 'pixel'
   const [tag, setTag] = useState<ShopTag | null>(null)
   const [hideOwned, setHideOwned] = useState(false)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [poke, setPoke] = useState(0)
-
-  const all = useMemo(() => SHOP_ITEMS.filter((i) => i.kind === dept?.kind), [dept])
-  const tags = useMemo(() => [...new Set(all.flatMap(itemTags))], [all])
-  if (!dept) return <Navigate to="/loja" replace />
+  const [openKey, setOpenKey] = useState<string | null>(null)
   const isPotions = dept.kind === 'potion'
 
+  const promoLine = useMemo(() => promoLineFor(dept, shop), [dept, shop])
+  const talk = useKeeperTalk({
+    keeper: dept.keeper,
+    poke,
+    promoLine,
+    message: filtersOpen ? 'O que você procura? Escolhe aqui!' : undefined,
+  })
+
+  // quando a cena grande sai da tela, a vendedora vira uma barrinha presa no topo
+  const stageRef = useRef<HTMLDivElement>(null)
+  const [stageVisible, setStageVisible] = useState(true)
+  useEffect(() => {
+    const el = stageRef.current
+    if (!el || !pixel) return
+    const obs = new IntersectionObserver(([e]) => setStageVisible(e.isIntersecting), { threshold: 0.15 })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [pixel])
+
+  const all = useMemo(() => SHOP_ITEMS.filter((i) => i.kind === dept.kind), [dept])
+  const tags = useMemo(() => [...new Set(all.flatMap(itemTags))], [all])
   const items = all.filter((i) => (!tag || itemTags(i).includes(tag)) && (!hideOwned || !shop || !ownsItem(shop.owned, i.key)))
+  const openItem = openKey ? (SHOP_ITEM_BY_KEY.get(openKey) ?? null) : null
+
+  function keeperTap() {
+    playSound('pop')
+    if (isPotions) setPoke((n) => n + 1)
+    else setFiltersOpen((v) => !v)
+  }
+
   const filters = <FilterChips tags={tags} active={tag} onChange={setTag} hideOwned={hideOwned} onHideOwned={setHideOwned} />
+  const filterHint = !isPotions && (
+    <p className="font-pixel text-center text-sm text-[var(--accent)]">
+      {tag ? (
+        <button onClick={() => setTag(null)}>Filtro: {SHOP_TAGS.find((t) => t.key === tag)?.label} · limpar</button>
+      ) : (
+        `Toque em ${dept.keeper.name} pra abrir os filtros`
+      )}
+    </p>
+  )
   const list = (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {isLoading && <p className="text-sm text-[var(--text-muted)]">Abrindo a loja…</p>}
       {shop && isPotions && (
         <>
@@ -128,8 +180,15 @@ export default function ShopDepartmentScreen() {
           ))}
         </>
       )}
-      {shop && !isPotions && items.map((item) => <ItemCard key={item.key} item={item} shop={shop} />)}
+      {shop && !isPotions && (
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+          {items.map((item) => (
+            <ItemRow key={item.key} item={item} shop={shop} onOpen={() => (playSound('tap'), setOpenKey(item.key))} />
+          ))}
+        </div>
+      )}
       {shop && !isPotions && items.length === 0 && <p className="py-6 text-center text-sm text-[var(--text-muted)]">Nada com esse filtro.</p>}
+      {shop && <ItemModal item={openItem} shop={shop} onClose={() => setOpenKey(null)} />}
     </div>
   )
 
@@ -152,19 +211,12 @@ export default function ShopDepartmentScreen() {
       {pixel ? (
         <div className="space-y-3 lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-start lg:gap-4 lg:space-y-0">
           <div className="space-y-3 lg:sticky lg:top-4">
-            <ShopStage
-              dept={dept}
-              poke={poke}
-              message={filtersOpen ? 'O que você procura? Escolhe aqui embaixo!' : undefined}
-              onKeeperClick={() => {
-                playSound('pop')
-                if (isPotions) setPoke((n) => n + 1)
-                else setFiltersOpen((v) => !v)
-              }}
-            />
+            <div ref={stageRef}>
+              <ShopStage dept={dept} talk={talk} onKeeperClick={keeperTap} />
+            </div>
             {!isPotions && (
               <AnimatePresence initial={false}>
-                {filtersOpen ? (
+                {filtersOpen && stageVisible ? (
                   <motion.div
                     initial={{ opacity: 0, y: -6 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -174,18 +226,26 @@ export default function ShopDepartmentScreen() {
                     {filters}
                   </motion.div>
                 ) : (
-                  <p className="font-pixel text-center text-sm text-[var(--accent)]">
-                    {tag ? (
-                      <button onClick={() => setTag(null)}>Filtro: {SHOP_TAGS.find((t) => t.key === tag)?.label} · limpar</button>
-                    ) : (
-                      `Toque em ${dept.keeper.name} pra abrir os filtros`
-                    )}
-                  </p>
+                  filterHint
                 )}
               </AnimatePresence>
             )}
           </div>
-          {list}
+          <div>
+            {/* barrinha da vendedora: altura zero no fluxo, então aparecer não empurra a lista */}
+            <div className="sticky top-2 z-30 h-0 lg:hidden">
+              <AnimatePresence>
+                {!stageVisible && (
+                  <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.18 }}>
+                    <KeeperMini dept={dept} talk={talk} onClick={keeperTap}>
+                      {filtersOpen && <div className="mt-2 rounded-xl bg-[var(--surface)] p-2">{filters}</div>}
+                    </KeeperMini>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            {list}
+          </div>
         </div>
       ) : (
         <>
@@ -195,4 +255,12 @@ export default function ShopDepartmentScreen() {
       )}
     </div>
   )
+}
+
+export default function ShopDepartmentScreen() {
+  const { slug } = useParams<{ slug: string }>()
+  const dept = slug ? DEPARTMENT_BY_SLUG.get(slug) : undefined
+  if (!dept) return <Navigate to="/loja" replace />
+  // key: trocar de loja recomeça a conversa e os filtros
+  return <DepartmentView key={dept.slug} dept={dept} />
 }
