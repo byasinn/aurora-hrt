@@ -83,7 +83,7 @@ export default function Layout() {
         <main className="flex-1 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:px-0 lg:pb-8 lg:pt-8">
           <Outlet />
         </main>
-        <nav className="fixed bottom-0 left-1/2 z-10 w-full max-w-md -translate-x-1/2 rounded-t-3xl border-t border-[var(--border)] bg-[var(--surface)]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
+        <nav className="fixed bottom-0 left-1/2 z-40 w-full max-w-md -translate-x-1/2 rounded-t-3xl border-t border-[var(--border)] bg-[var(--surface)]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
           <ul className="flex items-stretch justify-around px-1">
             {navItems
               .filter((item) => item.to !== '/comunidades')

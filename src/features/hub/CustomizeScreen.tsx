@@ -1,36 +1,40 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
 import clsx from 'clsx'
-import { Smartphone, Volume2 } from 'lucide-react'
-import { Check, ChevronRight, Gem, Store, X } from '../../components/icons'
-import { Card, ScreenTitle } from '../../components/ui'
+import { Smartphone, Volume2, VolumeX } from 'lucide-react'
+import { Check, ChevronRight, Gem, Sparkles, Store, X } from '../../components/icons'
+import { Button, Card, ScreenTitle } from '../../components/ui'
 import Avatar from '../../components/Avatar'
 import Switch from '../../components/Switch'
+import PixelIcon from '../../components/PixelIcon'
 import VisualStylePicker from '../../components/VisualStylePicker'
+import { useIconStyle } from '../../components/AppIcon'
 import { useProfile, useUpdateProfile } from '../../api/profile'
 import { useShop, useEquipItem } from '../../api/shop'
 import { useThemeStore } from '../../lib/themeStore'
 import { playSound, useSoundStore } from '../../lib/sounds'
 import { toastError } from '../../lib/toast'
 import ItemPreview, { ThemeSwatch } from '../shop/ItemPreview'
-import { DEFAULT_THEME, SHOP_ITEMS, ownsItem, type EquippableKind } from '../../../shared/shopCatalog'
+import { ScaledPreview } from '../shop/ItemRow'
+import { DEFAULT_THEME, SHOP_ITEM_BY_KEY, SHOP_ITEMS, ownsItem, type EquippableKind } from '../../../shared/shopCatalog'
 import { DEPARTMENT_BY_KIND } from '../shop/departments'
 
-// Personalizar app (central do Aurora): tudo que muda o visual num lugar só, com prévia ao vivo e só
-// com o que a pessoa já tem — o resto fica a um toque, na Lojinha. Substitui a antiga tela de Aparência.
+// Personalizar app (central do Aurora): prévia ao vivo em cima e uma grade com cada parte do app
+// mostrando o que está em uso. Tocar numa parte abre uma gaveta de baixo com as opções (só o que a
+// pessoa já tem — o resto fica a um toque, na Lojinha); a prévia continua visível e muda na hora.
 
-type Tab = 'theme' | 'visual' | 'avatarFrame' | 'postFrame' | 'calendarSkin' | 'app'
+type Part = 'theme' | 'visual' | 'avatarFrame' | 'postFrame' | 'calendarSkin' | 'app'
 
-const TABS: { key: Tab; label: string }[] = [
-  { key: 'theme', label: 'Tema' },
-  { key: 'visual', label: 'Visual' },
-  { key: 'avatarFrame', label: 'Moldura' },
-  { key: 'postFrame', label: 'Borda dos posts' },
-  { key: 'calendarSkin', label: 'Calendário' },
-  { key: 'app', label: 'Ícone e sons' },
-]
-
-const TAB_KEY = 'transapp.customizeTab'
+const PART_TITLE: Record<Part, string> = {
+  theme: 'Tema',
+  visual: 'Visual',
+  avatarFrame: 'Moldura',
+  postFrame: 'Borda dos posts',
+  calendarSkin: 'Calendário',
+  app: 'Ícone e sons',
+}
 
 const ICON_VARIANTS = [
   { key: 'default', label: 'Rosa & Azul' },
@@ -40,20 +44,7 @@ const ICON_VARIANTS = [
   { key: 'lilas', label: 'Lilás & Menta' },
 ]
 
-function readTab(): Tab {
-  try {
-    const saved = localStorage.getItem(TAB_KEY)
-    if (saved && TABS.some((t) => t.key === saved)) return saved as Tab
-  } catch {
-    // sem localStorage: começa no tema
-  }
-  return 'theme'
-}
-
-function itemName(key: string | null | undefined): string {
-  if (!key) return 'Nenhuma'
-  return SHOP_ITEMS.find((i) => i.key === key)?.name ?? key
-}
+const iconSrc = (variant: string) => (variant === 'default' ? '/icons/icon-192.png' : `/icons/variants/${variant}/icon-192.png`)
 
 /** Grade de itens que a pessoa tem de um tipo, pra equipar com um toque. */
 function OwnedGrid({ kind, allowNone }: { kind: EquippableKind; allowNone: boolean }) {
@@ -78,7 +69,7 @@ function OwnedGrid({ kind, allowNone }: { kind: EquippableKind; allowNone: boole
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
       {allowNone && (
         <button type="button" onClick={() => choose(null)} className={clsx(tile, current == null ? 'border-[var(--accent)]' : 'border-[var(--border)]')}>
-          <span className="flex h-24 items-center justify-center bg-[var(--surface-2)] text-[var(--text-muted)]">
+          <span className="flex h-20 items-center justify-center bg-[var(--surface-2)] text-[var(--text-muted)]">
             <X size={22} />
           </span>
           <span className="px-3 py-2 text-sm font-bold text-[var(--text)]">Nenhuma</span>
@@ -88,7 +79,7 @@ function OwnedGrid({ kind, allowNone }: { kind: EquippableKind; allowNone: boole
         const selected = current === item.key
         return (
           <button key={item.key} type="button" onClick={() => choose(item.key)} className={clsx(tile, selected ? 'border-[var(--accent)]' : 'border-[var(--border)]')}>
-            <span className="flex h-24 items-center justify-center overflow-hidden bg-[var(--surface-2)]">
+            <span className="flex h-20 items-center justify-center overflow-hidden bg-[var(--surface-2)]">
               {kind === 'theme' ? <ThemeSwatch itemKey={item.key} className="h-full w-full rounded-none" /> : <ItemPreview item={item} />}
             </span>
             <span className="flex items-center justify-between gap-1 px-3 py-2 text-sm font-bold text-[var(--text)]">
@@ -112,7 +103,7 @@ function OwnedGrid({ kind, allowNone }: { kind: EquippableKind; allowNone: boole
   )
 }
 
-function AppTab() {
+function AppOptions() {
   const { data: profile } = useProfile()
   const updateProfile = useUpdateProfile()
   const sounds = useSoundStore()
@@ -125,7 +116,7 @@ function AppTab() {
         </span>
         <span className="min-w-0 flex-1">
           <span className="block font-bold text-[var(--text)]">Sons</span>
-          <span className="block text-xs text-[var(--text-muted)]">Barulhinhos ao tomar dose, curtir e navegar</span>
+          <span className="block text-xs text-[var(--text-muted)]">Barulhinhos ao tomar dose, curtir, navegar e na lojinha</span>
         </span>
         <Switch
           checked={sounds.enabled}
@@ -143,11 +134,10 @@ function AppTab() {
         <div className="flex flex-wrap gap-3">
           {ICON_VARIANTS.map((v) => {
             const selected = (profile?.appIconVariant ?? 'default') === v.key
-            const iconSrc = v.key === 'default' ? '/icons/icon-192.png' : `/icons/variants/${v.key}/icon-192.png`
             return (
               <button key={v.key} type="button" onClick={() => updateProfile.mutate({ appIconVariant: v.key })} className="flex flex-col items-center gap-1" title={v.label}>
                 <span className="relative">
-                  <img src={iconSrc} alt={v.label} className={clsx('h-14 w-14 rounded-2xl border-2', selected ? 'border-[var(--accent)]' : 'border-[var(--border)]')} />
+                  <img src={iconSrc(v.key)} alt={v.label} className={clsx('h-14 w-14 rounded-2xl border-2', selected ? 'border-[var(--accent)]' : 'border-[var(--border)]')} />
                   {selected && (
                     <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-contrast)]">
                       <Check size={11} />
@@ -172,88 +162,80 @@ function AppTab() {
   )
 }
 
+/** Gaveta que sobe de baixo com as opções de uma parte. A prévia em cima continua aparecendo. */
+function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+  return createPortal(
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[95] flex items-end justify-center bg-black/30" onClick={onClose}>
+      <motion.div
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', stiffness: 380, damping: 36 }}
+        onClick={(e) => e.stopPropagation()}
+        className="flex max-h-[62dvh] w-full max-w-md flex-col rounded-t-3xl border-t border-[var(--border)] bg-[var(--surface)] [box-shadow:0_-10px_30px_rgba(0,0,0,0.15)] lg:max-w-2xl"
+      >
+        <div className="flex items-center gap-2 px-4 pb-2 pt-3">
+          <span className="mx-auto h-1.5 w-10 rounded-full bg-[var(--border)]" />
+        </div>
+        <div className="flex items-center justify-between px-4 pb-3">
+          <p className="text-lg font-extrabold text-[var(--text)]">{title}</p>
+          <button onClick={onClose} aria-label="Fechar" className="rounded-full p-1 text-[var(--text-muted)]">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto px-4 pb-4">{children}</div>
+        <div className="border-t border-[var(--border)] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+          <Button className="w-full" onClick={onClose}>
+            Pronto
+          </Button>
+        </div>
+      </motion.div>
+    </motion.div>,
+    document.body,
+  )
+}
+
+function PartTile({ label, value, active, onClick, children }: { label: string; value: string; active: boolean; onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={clsx(
+        'btn-press-soft flex flex-col overflow-hidden rounded-2xl border-2 bg-[var(--surface)] text-left transition active:translate-y-0.5',
+        active ? 'border-[var(--accent)]' : 'border-[var(--border)]',
+      )}
+    >
+      <span className="flex h-16 items-center justify-center overflow-hidden bg-[var(--surface-2)]">{children}</span>
+      <span className="block px-2.5 py-2">
+        <span className="block text-[10px] font-bold uppercase tracking-wide text-[var(--text-muted)]">{label}</span>
+        <span className="block truncate text-sm font-bold text-[var(--text)]">{value}</span>
+      </span>
+    </button>
+  )
+}
+
 export default function CustomizeScreen() {
   const { data: profile } = useProfile()
   const { data: shop } = useShop()
   const mode = useThemeStore((s) => s.mode)
-  const [tab, setTabState] = useState<Tab>(readTab)
+  const visual = useIconStyle((s) => s.style)
+  const soundsOn = useSoundStore((s) => s.enabled)
+  const [part, setPart] = useState<Part | null>(null)
   const themeKey = profile?.equippedTheme ?? DEFAULT_THEME[mode]
+  const frameKey = profile?.equippedAvatarFrame ?? null
+  const postFrame = shop?.equipped.postFrame ? SHOP_ITEM_BY_KEY.get(shop.equipped.postFrame) : undefined
+  const calendar = shop?.equipped.calendarSkin ? SHOP_ITEM_BY_KEY.get(shop.equipped.calendarSkin) : undefined
 
-  function setTab(next: Tab) {
-    playSound('tap')
-    setTabState(next)
-    try {
-      localStorage.setItem(TAB_KEY, next)
-    } catch {
-      // só não lembra a aba
-    }
+  function open(next: Part) {
+    playSound('pop')
+    setPart(next)
   }
-
-  const postFrame = shop?.equipped.postFrame ? SHOP_ITEMS.find((i) => i.key === shop.equipped.postFrame) : null
-  const calendar = shop?.equipped.calendarSkin ? SHOP_ITEMS.find((i) => i.key === shop.equipped.calendarSkin) : null
 
   return (
     <div className="space-y-4">
-      <ScreenTitle subtitle="Tema, visual e os itens que você tem — muda na hora.">Personalizar app</ScreenTitle>
+      <ScreenTitle subtitle="Toque numa parte pra trocar — muda na hora.">Personalizar app</ScreenTitle>
 
-      {/* prévia ao vivo: o que está em uso agora */}
-      <Card className="overflow-hidden p-0">
-        <ThemeSwatch itemKey={themeKey} className="h-16 rounded-none" />
-        <div className="-mt-9 flex items-end gap-3 px-4">
-          <div className="p-1.5">
-            <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} frame={profile?.equippedAvatarFrame} size={64} showOrnaments />
-          </div>
-          <div className="min-w-0 pb-2">
-            <p className="truncate font-bold text-[var(--text)]">{profile?.displayName}</p>
-            <p className="truncate text-xs text-[var(--text-muted)]">Moldura: {itemName(profile?.equippedAvatarFrame)}</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-3 gap-2 p-3 pt-1">
-          {[
-            { label: 'Tema', name: itemName(themeKey), node: <ThemeSwatch itemKey={themeKey} className="h-full w-full rounded-none" />, tab: 'theme' as Tab },
-            { label: 'Borda', name: postFrame?.name ?? 'Nenhuma', node: postFrame ? <ItemPreview item={postFrame} /> : null, tab: 'postFrame' as Tab },
-            { label: 'Calendário', name: calendar?.name ?? 'Padrão', node: calendar ? <ItemPreview item={calendar} /> : null, tab: 'calendarSkin' as Tab },
-          ].map((p) => (
-            <button key={p.label} type="button" onClick={() => setTab(p.tab)} className="overflow-hidden rounded-xl border border-[var(--border)] text-left">
-              <span className="flex h-14 items-center justify-center overflow-hidden bg-[var(--surface-2)] text-xs text-[var(--text-muted)]">{p.node ?? '—'}</span>
-              <span className="block px-2 py-1">
-                <span className="block text-[10px] uppercase tracking-wide text-[var(--text-muted)]">{p.label}</span>
-                <span className="block truncate text-xs font-bold text-[var(--text)]">{p.name}</span>
-              </span>
-            </button>
-          ))}
-        </div>
-      </Card>
-
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:px-0">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => setTab(t.key)}
-            aria-pressed={tab === t.key}
-            className={clsx(
-              'min-h-10 shrink-0 rounded-full border-2 px-4 text-sm font-bold transition',
-              tab === t.key ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]' : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)]',
-            )}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {tab === 'theme' && <OwnedGrid kind="theme" allowNone={false} />}
-      {tab === 'visual' && (
-        <Card>
-          <VisualStylePicker />
-        </Card>
-      )}
-      {tab === 'avatarFrame' && <OwnedGrid kind="avatarFrame" allowNone />}
-      {tab === 'postFrame' && <OwnedGrid kind="postFrame" allowNone />}
-      {tab === 'calendarSkin' && <OwnedGrid kind="calendarSkin" allowNone />}
-      {tab === 'app' && <AppTab />}
-
-      <div className="grid grid-cols-2 gap-3 pt-1">
+      <div className="grid grid-cols-2 gap-3">
         <Link to="/meus-itens" className="btn-press-soft flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] font-bold text-[var(--text)]">
           <Gem size={18} className="text-[var(--accent)]" /> Meus itens
         </Link>
@@ -261,6 +243,73 @@ export default function CustomizeScreen() {
           <Store size={18} /> Lojinha
         </Link>
       </div>
+
+      {/* prévia ao vivo: o que está em uso agora */}
+      <Card className="overflow-hidden p-0">
+        <ThemeSwatch itemKey={themeKey} className="h-16 rounded-none" />
+        <div className="-mt-9 flex items-end gap-3 px-4">
+          <div className="p-1.5">
+            <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} frame={frameKey} size={64} showOrnaments />
+          </div>
+          <div className="min-w-0 pb-2">
+            <p className="truncate font-bold text-[var(--text)]">{profile?.displayName}</p>
+            <p className="truncate text-xs text-[var(--text-muted)]">{visual === 'pixel' ? 'Visual 8-bit' : 'Visual Clean'}</p>
+          </div>
+        </div>
+        <div className="p-3 pt-1">
+          <div className="h-20 overflow-hidden rounded-2xl">
+            {postFrame ? (
+              <ItemPreview item={postFrame} />
+            ) : (
+              <div className="h-full space-y-1.5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-2.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="h-4 w-4 rounded-full bg-[var(--accent-soft)]" />
+                  <span className="h-2 w-12 rounded-full bg-[var(--surface-2)]" />
+                </div>
+                <span className="block h-2 w-full rounded-full bg-[var(--surface-2)]" />
+                <span className="block h-2 w-2/3 rounded-full bg-[var(--surface-2)]" />
+              </div>
+            )}
+          </div>
+        </div>
+      </Card>
+
+      <div className="grid grid-cols-3 gap-2.5">
+        <PartTile label="Tema" value={SHOP_ITEM_BY_KEY.get(themeKey)?.name ?? 'Padrão'} active={part === 'theme'} onClick={() => open('theme')}>
+          <ThemeSwatch itemKey={themeKey} className="h-full w-full rounded-none" />
+        </PartTile>
+        <PartTile label="Visual" value={visual === 'pixel' ? '8-bit' : 'Clean'} active={part === 'visual'} onClick={() => open('visual')}>
+          {visual === 'pixel' ? <PixelIcon name="star" size={30} /> : <Sparkles size={28} className="text-[var(--accent)]" />}
+        </PartTile>
+        <PartTile label="Moldura" value={frameKey ? (SHOP_ITEM_BY_KEY.get(frameKey)?.name ?? '—') : 'Nenhuma'} active={part === 'avatarFrame'} onClick={() => open('avatarFrame')}>
+          <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} frame={frameKey} size={40} />
+        </PartTile>
+        <PartTile label="Borda" value={postFrame?.name ?? 'Nenhuma'} active={part === 'postFrame'} onClick={() => open('postFrame')}>
+          {postFrame ? <ScaledPreview item={postFrame} className="rounded-none bg-transparent" /> : <span className="text-[var(--text-muted)]">—</span>}
+        </PartTile>
+        <PartTile label="Calendário" value={calendar?.name ?? 'Padrão'} active={part === 'calendarSkin'} onClick={() => open('calendarSkin')}>
+          {calendar ? <ScaledPreview item={calendar} className="rounded-none bg-transparent" /> : <span className="text-[var(--text-muted)]">—</span>}
+        </PartTile>
+        <PartTile label="Ícone e sons" value={soundsOn ? 'Sons ligados' : 'Sem sons'} active={part === 'app'} onClick={() => open('app')}>
+          <span className="flex items-center gap-1.5">
+            <img src={iconSrc(profile?.appIconVariant ?? 'default')} alt="" className="h-9 w-9 rounded-xl" />
+            {soundsOn ? <Volume2 size={18} className="text-[var(--accent)]" /> : <VolumeX size={18} className="text-[var(--text-muted)]" />}
+          </span>
+        </PartTile>
+      </div>
+
+      <AnimatePresence>
+        {part && (
+          <Sheet key={part} title={PART_TITLE[part]} onClose={() => setPart(null)}>
+            {part === 'theme' && <OwnedGrid kind="theme" allowNone={false} />}
+            {part === 'visual' && <VisualStylePicker />}
+            {part === 'avatarFrame' && <OwnedGrid kind="avatarFrame" allowNone />}
+            {part === 'postFrame' && <OwnedGrid kind="postFrame" allowNone />}
+            {part === 'calendarSkin' && <OwnedGrid kind="calendarSkin" allowNone />}
+            {part === 'app' && <AppOptions />}
+          </Sheet>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

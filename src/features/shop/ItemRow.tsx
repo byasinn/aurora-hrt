@@ -12,9 +12,9 @@ import { discounted } from '../../../shared/shopPromos'
 // modal, com a prévia grande e o botão de comprar/usar (o ItemCard de sempre).
 
 /** A prévia do card grande, em escala menor (as prévias foram feitas pra ~160×96). */
-function Thumb({ item }: { item: ShopItem }) {
+export function ScaledPreview({ item, className }: { item: ShopItem; className?: string }) {
   return (
-    <div className="h-12 w-20 shrink-0 overflow-hidden rounded-xl bg-[var(--surface-2)]">
+    <div className={clsx('h-12 w-20 shrink-0 overflow-hidden rounded-xl bg-[var(--surface-2)]', className)}>
       <div className="origin-top-left scale-50" style={{ width: 160, height: 96 }}>
         <ItemPreview item={item} />
       </div>
@@ -40,7 +40,7 @@ export function ItemRow({ item, shop, onOpen }: { item: ShopItem; shop: ShopStat
         inUse ? 'border-[var(--accent)]' : 'border-[var(--border)]',
       )}
     >
-      <Thumb item={item} />
+      <ScaledPreview item={item} />
       <div className="min-w-0 flex-1">
         <p className="truncate font-bold leading-tight text-[var(--text)]">{item.name}</p>
         <div className="mt-0.5 flex items-center gap-1.5 text-xs">

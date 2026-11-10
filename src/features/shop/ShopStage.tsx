@@ -55,11 +55,14 @@ export function useKeeperTalk({
   message,
   poke = 0,
   promoLine,
+  enabled = true,
 }: {
   keeper: Keeper
   message?: string
   poke?: number
   promoLine?: string | null
+  /** false no visual Clean: sem vendedora na tela, nada de fala, som nem timer */
+  enabled?: boolean
 }): KeeperTalk {
   const [line, setLine] = useState(keeper.greeting)
   const [blink, setBlink] = useState(false)
@@ -80,7 +83,7 @@ export function useKeeperTalk({
   }, [poke, pool])
 
   useEffect(() => {
-    if (message) return
+    if (message || !enabled) return
     const id = setInterval(
       () => {
         if (document.visibilityState !== 'visible' || idleCount.current >= 3) return
@@ -90,24 +93,29 @@ export function useKeeperTalk({
       17000 + Math.random() * 8000,
     )
     return () => clearInterval(id)
-  }, [message, pool])
+  }, [message, pool, enabled])
 
-  // texto aparecendo letra por letra, "blá-blá" a cada duas letras
+  // texto aparecendo letra por letra, "blablá" a cada três letras
   useEffect(() => {
+    if (!enabled) {
+      setShown(text.length)
+      return
+    }
     setShown(0)
     let i = 0
     const id = setInterval(() => {
       i++
       setShown(i)
       const ch = text[i - 1]
-      if (ch && /[a-zá-úçãõ]/i.test(ch) && i % 2 === 0) playVoice(keeper.voice)
+      if (ch && /[a-zá-úçãõ]/i.test(ch) && i % 3 === 0) playVoice(keeper.voice)
       if (i >= text.length) clearInterval(id)
     }, 32)
     return () => clearInterval(id)
-  }, [text, keeper.voice])
+  }, [text, keeper.voice, enabled])
 
   // piscadinha a cada 2–5 s
   useEffect(() => {
+    if (!enabled) return
     let t: ReturnType<typeof setTimeout>
     const schedule = () => {
       t = setTimeout(
@@ -121,7 +129,7 @@ export function useKeeperTalk({
     }
     schedule()
     return () => clearTimeout(t)
-  }, [])
+  }, [enabled])
 
   const typing = shown < text.length
   return { typed: text.slice(0, shown), typing, blink, talking: typing && shown % 4 < 2 }

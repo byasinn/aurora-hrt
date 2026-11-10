@@ -130,6 +130,7 @@ function DepartmentView({ dept }: { dept: Department }) {
     poke,
     promoLine,
     message: filtersOpen ? 'O que você procura? Escolhe aqui!' : undefined,
+    enabled: pixel,
   })
 
   // quando a cena grande sai da tela, a vendedora vira uma barrinha presa no topo

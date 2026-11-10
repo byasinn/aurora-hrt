@@ -1,5 +1,6 @@
 import type { ShopKind } from '../../../shared/shopCatalog'
 import type { KeeperLook, SceneLook } from './pixelArt'
+import type { VoicePitch } from '../../lib/sounds'
 
 // Departamentos da lojinha: cada tipo de item é uma "loja". No visual 8-bit cada uma tem sua
 // vendedora (meio RPG, meio mágica), com fundo, balcão, voz e falas próprias.
@@ -10,8 +11,8 @@ export interface Keeper {
   name: string
   role: string
   look: KeeperLook
-  /** tom base do "blá-blá" (Hz) */
-  voice: number
+  /** voz do "blablá": grave, média ou aguda */
+  voice: VoicePitch
   greeting: string
   /** falas soltas de vez em quando */
   lines: string[]
@@ -36,7 +37,7 @@ export const DEPARTMENTS: Department[] = [
       name: 'Lua',
       role: 'mercadora viajante',
       look: { skin: '#f5c6a5', hair: '#7c3aed', eyes: '#d97706', outfit: '#e0a526', trim: '#9a3412', hairStyle: 'long', hat: 'cap', hatColor: '#b45309', extras: ['earrings', 'scarf'] },
-      voice: 520,
+      voice: 'mid',
       greeting: 'Bem-vinde à minha tenda! Pacote sai mais barato que comprar tudo separado, viu?',
       lines: ['Trouxe esses lá do outro lado do mapa!', 'Pacote é o melhor negócio da vila, confia.', 'Se já tem um pedaço, eu desconto o que falta!'],
     },
@@ -61,7 +62,7 @@ export const DEPARTMENTS: Department[] = [
       name: 'Kiki',
       role: 'artista de molduras',
       look: { skin: '#e0ac85', hair: '#f472b6', eyes: '#0e7490', outfit: '#22d3ee', trim: '#fef3c7', hairStyle: 'bob', hat: 'beret', hatColor: '#be185d', extras: ['freckles'] },
-      voice: 680,
+      voice: 'high',
       greeting: 'Oiii! Uma moldura nova e seu avatar brilha no feed inteiro!',
       lines: ['Pintei essa ontem à noite, tá até quentinha.', 'Moldura combina com tudo, juro.', 'Ai, você ia ficar linde nessa dourada!'],
     },
@@ -85,7 +86,7 @@ export const DEPARTMENTS: Department[] = [
       name: 'Rafa',
       role: 'escriba do correio',
       look: { skin: '#8d5524', hair: '#1f2937', eyes: '#7c3aed', outfit: '#a78bfa', trim: '#fde68a', hairStyle: 'curly', extras: ['glasses'] },
-      voice: 430,
+      voice: 'low',
       greeting: 'Salve! Você escolhe o card na hora de postar, um diferente por post.',
       lines: ['Cada carta que sai daqui leva um pedacinho de coração.', 'Esse de galáxia é o mais pedido.', 'Já viu o card com a bandeira lésbica? Ficou lindo.'],
     },
@@ -109,7 +110,7 @@ export const DEPARTMENTS: Department[] = [
       name: 'Nic',
       role: 'costureira de bordas',
       look: { skin: '#ffdbac', hair: '#f59e0b', eyes: '#16a34a', outfit: '#34d399', trim: '#fce7f3', hairStyle: 'twin', hat: 'flower', extras: ['freckles'] },
-      voice: 610,
+      voice: 'high',
       greeting: 'Bordinha aparece em todos os seus posts, pra todo mundo ver!',
       lines: ['Costurei essa com linha de arco-íris.', 'Cuidado com o novelo, o gato da vizinha adora.', 'Borda neon brilha até no escuro!'],
     },
@@ -133,7 +134,7 @@ export const DEPARTMENTS: Department[] = [
       name: 'Sol',
       role: 'pintora de cores',
       look: { skin: '#c68642', hair: '#ef4444', eyes: '#92400e', outfit: '#60a5fa', trim: '#fde047', hairStyle: 'bun', extras: ['earrings', 'scarf'] },
-      voice: 560,
+      voice: 'mid',
       greeting: 'Tema muda as cores do app todinho — só pra você ver!',
       lines: ['Misturei esse azul com um pouquinho de céu.', 'O tema galáxia tem estrelas de verdade, quase.', 'Cor certa muda o humor do dia, sabia?'],
     },
@@ -158,7 +159,7 @@ export const DEPARTMENTS: Department[] = [
       name: 'Teo',
       role: 'astrônomo do tempo',
       look: { skin: '#f1c27d', hair: '#5bcefa', eyes: '#1e3a8a', outfit: '#312e81', trim: '#fde68a', hairStyle: 'short', hat: 'starcap', hatColor: '#4338ca', extras: ['glasses'] },
-      voice: 470,
+      voice: 'mid',
       greeting: 'Olá, viajante do tempo. Calendário bonito dá vontade de registrar todo dia!',
       lines: ['As estrelas dizem que hoje é um bom dia pra registrar o humor.', 'Esse relógio de areia nunca atrasa.', 'Lua cheia combina com o calendário estrelado.'],
     },
@@ -183,7 +184,7 @@ export const DEPARTMENTS: Department[] = [
       name: 'Mags',
       role: 'bruxa das poções',
       look: { skin: '#b5835a', hair: '#34d399', eyes: '#a21caf', outfit: '#6d28d9', trim: '#fbbf24', hairStyle: 'long', hat: 'witch', hatColor: '#4c1d95', extras: ['earrings'] },
-      voice: 400,
+      voice: 'low',
       greeting: 'Hihi... bem-vinde! A Poção do tempo faz um dia esquecido valer de novo. É cara, mas é mágica.',
       lines: ['Cuidado, essa do frasco roxo borbulha!', 'O gato? É o Biscoito. Ele não vende nada, só julga.', 'Uma gota e o seu streak volta inteirinho.', 'Ingrediente secreto: carinho. E um pouquinho de pó de estrela.'],
     },
