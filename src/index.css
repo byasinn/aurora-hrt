@@ -313,3 +313,21 @@ select {
   font-family: 'Unbounded', system-ui, sans-serif;
   font-weight: 700;
 }
+
+/* lojinha 8-bit: estrelinhas que piscam e chama de vela que treme (pixelArt.ts marca os pixels) */
+@keyframes pixel-twinkle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.15; }
+}
+@keyframes pixel-flicker {
+  0%, 100% { opacity: 1; }
+  30% { opacity: 0.55; }
+  60% { opacity: 0.9; }
+}
+.pixel-twinkle { animation: pixel-twinkle 2.4s steps(3) infinite; }
+.pixel-twinkle:nth-child(3n) { animation-delay: 0.8s; }
+.pixel-twinkle:nth-child(3n + 1) { animation-delay: 1.6s; }
+.pixel-flicker { animation: pixel-flicker 0.9s steps(2) infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .pixel-twinkle, .pixel-flicker { animation: none; }
+}

@@ -145,7 +145,8 @@ export const AVATAR_FRAMES: Record<string, AvatarFrameVisual> = {
   },
   'frame-trans': {
     ring: conicStripes(TRANS),
-    ornaments: [{ icon: 'bow', pos: 'top', scale: 0.32, palette: { P: '#5bcefa', p: '#f5a9b8' } }],
+    // estrela, não laço: a bandeira é de todo mundo trans (fem, masc, nb)
+    ornaments: [{ icon: 'star', pos: 'top-right', scale: 0.34, palette: { c: '#5bcefa', y: '#ffffff', k: '#f5a9b8' } }],
   },
   'frame-lesbica': {
     ring: conicStripes(LESBIAN),

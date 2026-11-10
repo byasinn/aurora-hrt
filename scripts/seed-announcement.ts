@@ -35,7 +35,7 @@ async function main() {
         '• Ao abrir o app, ele pergunta das rotinas e treinos de ontem e das doses esquecidas dos últimos 10 dias',
         '• Treinos mais simples: só o nome do exercício e as séries pra marcar, sem kg nem repetição',
         '• Comunidade nova, em tópicos: abra o seu com tags, veja os mais recentes ou os mais relevantes e filtre por assunto',
-        '• Lojinha por departamentos (no 8-bit, cada um tem sua vendedora) e bandeiras novas: orgulho, lésbica, bi e pan',
+        '• Lojinha por departamentos, com vendedoras e lojas desenhadas no 8-bit, loja de poções, ofertas do dia e bandeiras novas: orgulho, lésbica, bi e pan',
       ].join('\n'),
     })
     .returning()

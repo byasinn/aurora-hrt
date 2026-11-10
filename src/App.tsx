@@ -54,6 +54,7 @@ import AdminUsers from './features/admin/AdminUsers'
 import AdminQuarantine from './features/admin/AdminQuarantine'
 import AdminContent from './features/admin/AdminContent'
 import AdminMissions from './features/admin/AdminMissions'
+import AdminPromotions from './features/admin/AdminPromotions'
 import AdminModerationScreen from './features/settings/AdminModerationScreen'
 import AdminAnnouncementsScreen from './features/settings/AdminAnnouncementsScreen'
 import AdminTopicsScreen from './features/settings/AdminTopicsScreen'
@@ -116,6 +117,7 @@ function RootGate() {
         <Route path="quarentena" element={<AdminQuarantine />} />
         <Route path="conteudo" element={<AdminContent />} />
         <Route path="missoes" element={<AdminMissions />} />
+        <Route path="promocoes" element={<AdminPromotions />} />
         <Route path="registro" element={<AdminModerationScreen initialTab="log" />} />
         <Route path="avisos" element={<AdminAnnouncementsScreen />} />
         <Route path="topicos" element={<AdminTopicsScreen />} />

@@ -109,7 +109,7 @@ export const SHOP_ITEMS: ShopItem[] = [
   { key: 'frame-estrelas', kind: 'avatarFrame', name: 'Noite estrelada', description: 'Anel azul-noite com estrelas', price: 45 },
   { key: 'frame-neon', kind: 'avatarFrame', name: 'Neon', description: 'Anel que brilha no escuro', price: 60 },
   { key: 'frame-dourada', kind: 'avatarFrame', name: 'Coroa dourada', description: 'Anel de ouro com coroa, pra quem chegou longe', price: 120 },
-  { key: 'frame-trans', kind: 'avatarFrame', name: 'Trans', description: 'Anel da bandeira trans com laço', price: 40 },
+  { key: 'frame-trans', kind: 'avatarFrame', name: 'Trans', description: 'Anel da bandeira trans com estrela', price: 40 },
   { key: 'frame-nb', kind: 'avatarFrame', name: 'Não-binária', description: 'Anel da bandeira NB com estrela', price: 40 },
   { key: 'frame-lesbica', kind: 'avatarFrame', name: 'Lésbica', description: 'Anel da bandeira lésbica com coração', price: 40 },
   { key: 'frame-bi', kind: 'avatarFrame', name: 'Bi', description: 'Anel da bandeira bi com coração', price: 40 },
@@ -233,6 +233,10 @@ export interface ShopState {
   balance: number
   owned: string[]
   equipped: ShopEquipped
+  /** desconto valendo agora em cada item (key do item ou da poção) */
+  promos: Record<string, { percent: number; label: string; endsAt: string | null }>
+  /** poções do tempo disponíveis agora */
+  potions: number
 }
 
 /** Grátis conta como "tem" sem comprar; pacote conta se foi comprado ou se já tem tudo dele. */

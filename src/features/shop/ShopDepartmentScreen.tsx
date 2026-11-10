@@ -2,14 +2,17 @@ import { useMemo, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import clsx from 'clsx'
-import { ArrowLeft, Coins } from '../../components/icons'
-import PixelIcon from '../../components/PixelIcon'
+import { ArrowLeft, Coins, Lock, Potion } from '../../components/icons'
+import { Button, Card } from '../../components/ui'
 import { useIconStyle } from '../../components/AppIcon'
-import { useShop } from '../../api/shop'
+import { useBuyPotion, useShop } from '../../api/shop'
 import { playSound } from '../../lib/sounds'
-import ItemCard from './ItemCard'
-import { DEPARTMENT_BY_SLUG, type Department } from './departments'
-import { SHOP_ITEMS, SHOP_TAGS, itemTags, ownsItem, type ShopTag } from '../../../shared/shopCatalog'
+import { showToast, toastError } from '../../lib/toast'
+import ItemCard, { PriceLabel, PromoBadge } from './ItemCard'
+import ShopStage from './ShopStage'
+import { DEPARTMENT_BY_SLUG } from './departments'
+import { SHOP_ITEMS, SHOP_TAGS, itemTags, ownsItem, type ShopState, type ShopTag } from '../../../shared/shopCatalog'
+import { POTION_OFFERS, discounted, type PotionOffer } from '../../../shared/shopPromos'
 
 function FilterChips({
   tags,
@@ -46,18 +49,49 @@ function FilterChips({
   )
 }
 
-/** Vendedora atrás do balcão (só no 8-bit). Tocar nela abre os filtros. */
-function Shopkeeper({ dept, onClick, talking }: { dept: Department; onClick: () => void; talking: boolean }) {
+function PotionOfferCard({ offer, shop }: { offer: PotionOffer; shop: ShopState }) {
+  const buy = useBuyPotion()
+  const promo = shop.promos?.[offer.key]
+  const price = discounted(offer.price, promo?.percent ?? 0)
+  const missing = price - shop.balance
+
+  function handleBuy() {
+    buy.mutate(offer.key, {
+      onSuccess: () => {
+        playSound('coin')
+        showToast(`${offer.name} na sua bolsa! ✨`, 'info')
+      },
+      onError: (e) => {
+        playSound('error')
+        toastError(e)
+      },
+    })
+  }
+
   return (
-    <button onClick={onClick} className="group relative flex w-full flex-col items-center" aria-label={`Falar com ${dept.keeper.name} (filtros)`}>
-      <motion.div animate={{ y: [0, -2, 0] }} transition={{ repeat: Infinity, duration: 1.6 }}>
-        <PixelIcon name={dept.keeper.sprite} palette={dept.keeper.palette} size={96} />
-      </motion.div>
-      {/* balcão de madeira */}
-      <span className="-mt-3 block h-10 w-[112%] border-t-4 border-[#fde68a] bg-[#b7791f] [box-shadow:inset_0_-6px_0_#8a5a14,0_4px_0_rgba(0,0,0,0.15)]" />
-      <span className="font-pixel mt-1.5 text-sm text-[var(--text)]">{dept.keeper.name}</span>
-      {!talking && <span className="font-pixel text-[11px] text-[var(--accent)] group-active:opacity-60">toque aqui</span>}
-    </button>
+    <Card className="flex flex-col gap-3 p-3">
+      <div className="relative flex h-24 items-center justify-center gap-1 rounded-2xl bg-[linear-gradient(160deg,#2e1065,#6d28d9)]">
+        {Array.from({ length: offer.qty }, (_, i) => (
+          <motion.span key={i} animate={{ y: [0, -3, 0] }} transition={{ repeat: Infinity, duration: 1.8, delay: i * 0.3 }}>
+            <Potion size={offer.qty > 1 ? 40 : 56} />
+          </motion.span>
+        ))}
+        {promo && (
+          <span className="absolute left-1.5 top-1.5">
+            <PromoBadge percent={promo.percent} label={promo.label} />
+          </span>
+        )}
+      </div>
+      <div>
+        <p className="font-extrabold leading-tight text-[var(--text)]">{offer.name}</p>
+        <p className="text-xs text-[var(--text-muted)]">{offer.description}</p>
+      </div>
+      <Button size="sm" onClick={handleBuy} disabled={missing > 0 || buy.isPending} className="w-full">
+        {missing > 0 && <Lock size={14} />}
+        <PriceLabel price={price} full={promo ? offer.price : undefined} />
+      </Button>
+      {missing > 0 && <p className="-mt-1.5 text-center text-xs text-[var(--text-muted)]">Faltam {missing}</p>}
+    </Card>
   )
 }
 
@@ -69,18 +103,33 @@ export default function ShopDepartmentScreen() {
   const [tag, setTag] = useState<ShopTag | null>(null)
   const [hideOwned, setHideOwned] = useState(false)
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [poke, setPoke] = useState(0)
 
   const all = useMemo(() => SHOP_ITEMS.filter((i) => i.kind === dept?.kind), [dept])
   const tags = useMemo(() => [...new Set(all.flatMap(itemTags))], [all])
   if (!dept) return <Navigate to="/loja" replace />
+  const isPotions = dept.kind === 'potion'
 
   const items = all.filter((i) => (!tag || itemTags(i).includes(tag)) && (!hideOwned || !shop || !ownsItem(shop.owned, i.key)))
   const filters = <FilterChips tags={tags} active={tag} onChange={setTag} hideOwned={hideOwned} onHideOwned={setHideOwned} />
   const list = (
     <div className="space-y-3">
       {isLoading && <p className="text-sm text-[var(--text-muted)]">Abrindo a loja…</p>}
-      {shop && items.map((item) => <ItemCard key={item.key} item={item} shop={shop} />)}
-      {shop && items.length === 0 && <p className="py-6 text-center text-sm text-[var(--text-muted)]">Nada com esse filtro.</p>}
+      {shop && isPotions && (
+        <>
+          <p className="flex items-center gap-2 rounded-2xl bg-[var(--surface-2)] px-3 py-2 text-sm">
+            <Potion size={20} />
+            <span>
+              Você tem <b>{shop.potions}</b> {shop.potions === 1 ? 'poção' : 'poções'} — use em Missões → Semanal.
+            </span>
+          </p>
+          {POTION_OFFERS.map((o) => (
+            <PotionOfferCard key={o.key} offer={o} shop={shop} />
+          ))}
+        </>
+      )}
+      {shop && !isPotions && items.map((item) => <ItemCard key={item.key} item={item} shop={shop} />)}
+      {shop && !isPotions && items.length === 0 && <p className="py-6 text-center text-sm text-[var(--text-muted)]">Nada com esse filtro.</p>}
     </div>
   )
 
@@ -101,43 +150,46 @@ export default function ShopDepartmentScreen() {
       </div>
 
       {pixel ? (
-        <div className="grid grid-cols-[104px_minmax(0,1fr)] gap-3 lg:grid-cols-[160px_minmax(0,1fr)]">
-          <div className="sticky top-4 h-fit space-y-2">
-            <Shopkeeper
+        <div className="space-y-3 lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-start lg:gap-4 lg:space-y-0">
+          <div className="space-y-3 lg:sticky lg:top-4">
+            <ShopStage
               dept={dept}
-              talking={filtersOpen}
-              onClick={() => {
+              poke={poke}
+              message={filtersOpen ? 'O que você procura? Escolhe aqui embaixo!' : undefined}
+              onKeeperClick={() => {
                 playSound('pop')
-                setFiltersOpen((v) => !v)
+                if (isPotions) setPoke((n) => n + 1)
+                else setFiltersOpen((v) => !v)
               }}
             />
-          </div>
-          <div className="space-y-3">
-            {/* balão de fala da vendedora — vira o painel de filtros */}
-            <div className="relative rounded-2xl border-2 border-[var(--text)] bg-[var(--surface)] p-3">
-              <span className="absolute -left-2 top-6 h-3 w-3 rotate-45 border-b-2 border-l-2 border-[var(--text)] bg-[var(--surface)]" />
-              <p className="font-pixel text-sm leading-snug text-[var(--text)]">
-                {filtersOpen ? 'O que você procura?' : `${dept.keeper.greeting} Clique em mim pra abrir os filtros!`}
-              </p>
+            {!isPotions && (
               <AnimatePresence initial={false}>
-                {filtersOpen && (
-                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                    <div className="pt-3">{filters}</div>
+                {filtersOpen ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    className="rounded-2xl border-[3px] border-[#2a1626] bg-[var(--surface)] p-3"
+                  >
+                    {filters}
                   </motion.div>
+                ) : (
+                  <p className="font-pixel text-center text-sm text-[var(--accent)]">
+                    {tag ? (
+                      <button onClick={() => setTag(null)}>Filtro: {SHOP_TAGS.find((t) => t.key === tag)?.label} · limpar</button>
+                    ) : (
+                      `Toque em ${dept.keeper.name} pra abrir os filtros`
+                    )}
+                  </p>
                 )}
               </AnimatePresence>
-            </div>
-            {tag && !filtersOpen && (
-              <button onClick={() => setTag(null)} className="text-xs font-bold text-[var(--accent)]">
-                Filtro: {SHOP_TAGS.find((t) => t.key === tag)?.label} · limpar
-              </button>
             )}
-            {list}
           </div>
+          {list}
         </div>
       ) : (
         <>
-          {filters}
+          {!isPotions && filters}
           {list}
         </>
       )}

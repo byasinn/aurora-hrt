@@ -7,6 +7,7 @@ import { playSound } from '../../lib/sounds'
 import { useThemeStore } from '../../lib/themeStore'
 import { showToast, toastError } from '../../lib/toast'
 import ItemPreview from './ItemPreview'
+import { discounted } from '../../../shared/shopPromos'
 import {
   SHOP_ITEM_BY_KEY,
   DEFAULT_THEME,
@@ -31,13 +32,22 @@ const BUNDLE_PART_LABEL: Record<ShopKind, string> = {
   calendarSkin: 'Calendário',
 }
 
-function PriceLabel({ price, full }: { price: number; full?: number }) {
+export function PriceLabel({ price, full }: { price: number; full?: number }) {
   return (
     <>
       <Coins size={14} className="text-amber-500" />
       <span className="font-pixel text-[15px]">{price}</span>
       {full != null && full > price && <span className="font-pixel text-xs line-through opacity-60">{full}</span>}
     </>
+  )
+}
+
+/** Selinho de promoção (oferta do dia ou criada pelo admin). */
+export function PromoBadge({ percent, label }: { percent: number; label: string }) {
+  return (
+    <span title={label} className="rounded-md bg-orange-500 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">
+      -{percent}% {label === 'Oferta do dia' ? 'hoje' : ''}
+    </span>
   )
 }
 
@@ -51,7 +61,9 @@ export default function ItemCard({ item, shop }: { item: ShopItem; shop: ShopSta
   // sem tema escolhido, o app está no tema base do modo atual (src/App.tsx)
   const equippedKey = item.kind === 'theme' ? (shop.equipped.theme ?? DEFAULT_THEME[mode]) : shop.equipped[item.kind as EquippableKind]
   const isEquipped = equippable && equippedKey === item.key
-  const price = isBundle ? bundlePriceFor(item, shop.owned) : item.price
+  const base = isBundle ? bundlePriceFor(item, shop.owned) : item.price
+  const promo = shop.promos?.[item.key]
+  const price = discounted(base, promo?.percent ?? 0)
   const missing = price - shop.balance
 
   async function handleBuy() {
@@ -92,6 +104,11 @@ export default function ItemCard({ item, shop }: { item: ShopItem; shop: ShopSta
         {item.price === 0 && !isBundle && (
           <span className="absolute left-1.5 top-1.5 rounded-md bg-emerald-500 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">grátis</span>
         )}
+        {promo && !owned && (
+          <span className="absolute left-1.5 top-1.5">
+            <PromoBadge percent={promo.percent} label={promo.label} />
+          </span>
+        )}
       </div>
       <div className="min-w-0 flex-1">
         <p className="font-extrabold leading-tight text-[var(--text)]">{item.name}</p>
@@ -106,7 +123,7 @@ export default function ItemCard({ item, shop }: { item: ShopItem; shop: ShopSta
       {!owned ? (
         <Button size="sm" onClick={handleBuy} disabled={missing > 0 || buy.isPending} className="w-full">
           {missing > 0 && <Lock size={14} />}
-          <PriceLabel price={price} full={isBundle ? bundleFullPrice(item) : undefined} />
+          <PriceLabel price={price} full={isBundle ? bundleFullPrice(item) : promo ? base : undefined} />
         </Button>
       ) : !equippable ? (
         <p className="flex min-h-9 items-center justify-center gap-1 rounded-2xl bg-[var(--accent-soft)] px-2 text-center text-sm font-bold text-[var(--text)]">

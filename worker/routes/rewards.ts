@@ -9,6 +9,7 @@ import {
   forumTopics,
   medications,
   missions,
+  potionPurchases,
   profile,
   rescuedDays,
   routineLogs,
@@ -68,11 +69,12 @@ async function loadProfile(db: Db, userId: number) {
 }
 
 async function potionsAvailable(db: Db, userId: number): Promise<number> {
-  const [chestRows, [rescued]] = await Promise.all([
+  const [chestRows, [rescued], bought] = await Promise.all([
     db.select({ contents: chests.contents }).from(chests).where(eq(chests.userId, userId)),
     db.select({ value: count() }).from(rescuedDays).where(eq(rescuedDays.userId, userId)),
+    db.select({ qty: potionPurchases.qty }).from(potionPurchases).where(eq(potionPurchases.userId, userId)),
   ])
-  const earned = chestRows.reduce((s, c) => s + ((c.contents as ChestContents | null)?.potions ?? 0), 0)
+  const earned = chestRows.reduce((s, c) => s + ((c.contents as ChestContents | null)?.potions ?? 0), 0) + bought.reduce((s, r) => s + r.qty, 0)
   return Math.max(0, earned - (rescued?.value ?? 0))
 }
 
@@ -296,7 +298,7 @@ async function missionDefs(db: Db) {
 
 async function forumCounts(db: Db, userId: number, today: string, weekStart: string, timeZone: string) {
   const since = new Date(`${addDays(weekStart, -1)}T00:00:00.000Z`)
-  const [topics, replies, [allTopics], [allReplies]] = await Promise.all([
+  const [topics, replies, [allTopics], [allReplies]] = await db.batch([
     db.select({ createdAt: forumTopics.createdAt }).from(forumTopics).where(and(eq(forumTopics.userId, userId), gte(forumTopics.createdAt, since))),
     db.select({ createdAt: forumReplies.createdAt }).from(forumReplies).where(and(eq(forumReplies.userId, userId), gte(forumReplies.createdAt, since))),
     db.select({ value: count() }).from(forumTopics).where(eq(forumTopics.userId, userId)),

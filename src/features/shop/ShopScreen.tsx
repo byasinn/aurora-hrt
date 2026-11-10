@@ -2,17 +2,17 @@ import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import clsx from 'clsx'
 import { Card, ScreenTitle } from '../../components/ui'
-import { ChevronRight, Coins } from '../../components/icons'
-import PixelIcon from '../../components/PixelIcon'
-import { useIconStyle } from '../../components/AppIcon'
+import { ChevronRight, Coins, Potion } from '../../components/icons'
 import { useShop } from '../../api/shop'
 import { playSound } from '../../lib/sounds'
 import ItemPreview from './ItemPreview'
+import { PromoBadge } from './ItemCard'
 import { DEPARTMENTS, DEPARTMENT_BY_KIND, type Department } from './departments'
-import { SHOP_ITEMS, ownsItem, type ShopKind, type ShopState } from '../../../shared/shopCatalog'
+import { SHOP_ITEMS, SHOP_ITEM_BY_KEY, ownsItem, type ShopKind, type ShopState } from '../../../shared/shopCatalog'
+import { POTION_OFFERS, POTION_OFFER_BY_KEY } from '../../../shared/shopPromos'
 
-// Lojinha: primeiro os departamentos (cards grandes), e cada um abre a sua loja
-// (ShopDepartmentScreen). No 8-bit cada departamento tem uma vendedora.
+// Lojinha: primeiro os departamentos (cards grandes, com o que vende — as vendedoras aparecem lá
+// dentro, no 8-bit), e cada um abre a sua loja (ShopDepartmentScreen).
 
 export function BalanceCard({ shop }: { shop: ShopState | undefined }) {
   return (
@@ -36,26 +36,30 @@ export function BalanceCard({ shop }: { shop: ShopState | undefined }) {
   )
 }
 
-function DepartmentCard({ dept, shop, pixel, wide }: { dept: Department; shop: ShopState | undefined; pixel: boolean; wide?: boolean }) {
-  const items = SHOP_ITEMS.filter((i) => i.kind === dept.kind)
+function DepartmentCard({ dept, shop, wide }: { dept: Department; shop: ShopState | undefined; wide?: boolean }) {
+  const isPotions = dept.kind === 'potion'
+  const items = isPotions ? [] : SHOP_ITEMS.filter((i) => i.kind === dept.kind)
   const owned = shop ? items.filter((i) => ownsItem(shop.owned, i.key)).length : 0
   const featured = [...items].filter((i) => i.price > 0).sort((a, b) => b.price - a.price)[0]
+  const onSale = shop ? Object.keys(shop.promos ?? {}).some((k) => (isPotions ? POTION_OFFER_BY_KEY.has(k) : SHOP_ITEM_BY_KEY.get(k)?.kind === dept.kind)) : false
 
   return (
     <Link to={`/loja/${dept.slug}`} onClick={() => playSound('tap')} className={clsx('block', wide && 'col-span-2')}>
-      <Card className={clsx('btn-press-soft flex h-full gap-3 p-3 transition active:translate-y-0.5', wide ? 'items-center' : 'flex-col')}>
+      <Card className={clsx('btn-press-soft relative flex h-full gap-3 p-3 transition active:translate-y-0.5', wide ? 'items-center' : 'flex-col')}>
+        {onSale && <span className="absolute right-2 top-2 z-10 rounded-md bg-orange-500 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">promo</span>}
         <div
           className={clsx(
-            'relative flex shrink-0 items-end justify-center overflow-hidden rounded-2xl',
-            pixel ? 'bg-[var(--accent-soft)]' : 'bg-[var(--surface-2)]',
+            'relative flex shrink-0 items-center justify-center overflow-hidden rounded-2xl',
+            isPotions ? 'bg-[linear-gradient(160deg,#2e1065,#6d28d9)]' : 'bg-[var(--surface-2)]',
             wide ? 'h-24 w-28' : 'h-24 w-full',
           )}
         >
-          {pixel ? (
-            <>
-              <PixelIcon name={dept.keeper.sprite} palette={dept.keeper.palette} size={72} className="relative z-0" />
-              <span className="absolute inset-x-0 bottom-0 h-3 border-t-2 border-[#fde68a] bg-[#b7791f]" />
-            </>
+          {isPotions ? (
+            <span className="flex gap-1">
+              <Potion size={40} />
+              <Potion size={52} />
+              <Potion size={40} />
+            </span>
           ) : (
             featured && (
               <div className="h-full w-full p-2">
@@ -68,8 +72,7 @@ function DepartmentCard({ dept, shop, pixel, wide }: { dept: Department; shop: S
           <p className="text-lg font-extrabold leading-tight text-[var(--text)]">{dept.title}</p>
           <p className="text-xs text-[var(--text-muted)]">{dept.blurb}</p>
           <p className="mt-1 text-[11px] font-bold text-[var(--accent)]">
-            {items.length} itens{owned > 0 ? ` · ${owned} seus` : ''}
-            {pixel && ` · com ${dept.keeper.name}`}
+            {isPotions ? `${POTION_OFFERS.length} frascos` : `${items.length} itens${owned > 0 ? ` · ${owned} seus` : ''}`}
           </p>
         </div>
         {wide && <ChevronRight size={18} className="shrink-0 text-[var(--text-muted)]" />}
@@ -78,10 +81,38 @@ function DepartmentCard({ dept, shop, pixel, wide }: { dept: Department; shop: S
   )
 }
 
+/** O que está com desconto agora (ofertas do dia + promoções do admin). */
+function TodayDeals({ shop }: { shop: ShopState }) {
+  const deals = Object.entries(shop.promos ?? {})
+    .map(([key, promo]) => {
+      const item = SHOP_ITEM_BY_KEY.get(key)
+      const potion = POTION_OFFER_BY_KEY.get(key)
+      const dept = item ? DEPARTMENT_BY_KIND.get(item.kind) : potion ? DEPARTMENT_BY_KIND.get('potion') : undefined
+      if (!dept || (item && ownsItem(shop.owned, item.key))) return null
+      return { key, name: item?.name ?? potion?.name ?? key, dept, promo }
+    })
+    .filter((d): d is NonNullable<typeof d> => !!d)
+    .slice(0, 8)
+  if (deals.length === 0) return null
+  return (
+    <Card className="space-y-2">
+      <p className="font-bold">Em promoção</p>
+      <div className="space-y-1.5">
+        {deals.map((d) => (
+          <Link key={d.key} to={`/loja/${d.dept.slug}`} className="flex items-center gap-2 rounded-xl bg-[var(--surface-2)] px-3 py-2 text-sm">
+            <PromoBadge percent={d.promo.percent} label={d.promo.label} />
+            <span className="min-w-0 flex-1 truncate font-bold">{d.name}</span>
+            <span className="shrink-0 text-xs text-[var(--text-muted)]">{d.dept.title}</span>
+          </Link>
+        ))}
+      </div>
+    </Card>
+  )
+}
+
 export default function ShopScreen() {
   const navigate = useNavigate()
   const { data: shop, isError } = useShop()
-  const pixel = useIconStyle((s) => s.style) === 'pixel'
 
   // link antigo direto pra uma aba (/loja#tab=avatarFrame) vira o departamento
   useEffect(() => {
@@ -96,9 +127,10 @@ export default function ShopScreen() {
       <BalanceCard shop={shop} />
       <p className="-mt-2 px-1 text-xs text-[var(--text-muted)]">Comprar não tira seus títulos: eles contam todo o Brilho que você já ganhou.</p>
       {isError && <p className="text-sm text-[var(--text-muted)]">Não deu pra abrir a lojinha agora. Tenta de novo daqui a pouco.</p>}
+      {shop && <TodayDeals shop={shop} />}
       <div className="grid grid-cols-2 gap-3">
         {DEPARTMENTS.map((d, i) => (
-          <DepartmentCard key={d.slug} dept={d} shop={shop} pixel={pixel} wide={i === 0} />
+          <DepartmentCard key={d.slug} dept={d} shop={shop} wide={i === 0 || d.kind === 'potion'} />
         ))}
       </div>
     </div>

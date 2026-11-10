@@ -97,3 +97,15 @@ export function playSound(name: SoundName) {
     // som é enfeite — nunca deixa uma falha de áudio quebrar a ação
   }
 }
+
+/** "Blá-blá" das vendedoras da lojinha: um bipe curtinho com o tom variando um pouco a cada sílaba
+ * (cada personagem tem sua voz, mais grave ou mais aguda). */
+export function playVoice(basePitch: number) {
+  if (!useSoundStore.getState().enabled) return
+  try {
+    const f = basePitch * (0.85 + Math.random() * 0.4)
+    play([{ freq: f, dur: 0.05, type: 'square', gain: 0.16, slideTo: f * 1.08 }])
+  } catch {
+    // som é enfeite
+  }
+}

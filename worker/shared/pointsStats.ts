@@ -22,6 +22,7 @@ import {
   forumTopics,
   forumReplies,
   forumTopicLikes,
+  potionPurchases,
 } from '../../shared/schema'
 import { currentStreak, transitionYearsBonus, type PointsStats } from '../../src/lib/collectiblesEngine'
 import { dateStrInTimezone } from '../../shared/scheduling'
@@ -74,11 +75,10 @@ export interface PointsContext {
  * mostra o que /api/points devolve.
  */
 export async function loadPointsContext(db: Db, userId: number): Promise<PointsContext> {
-  const [[prof]] = await Promise.all([db.select().from(profile).where(eq(profile.userId, userId)).limit(1)])
-  const timeZone = prof?.timezone ?? 'America/Sao_Paulo'
-  const today = todayInTz(timeZone)
-
+  // Tudo numa ida só ao banco (db.batch = uma requisição HTTP): o Worker tem limite de subrequisições
+  // por chamada, e com uma consulta por tabela isso estourava em rotas que calculam pontos duas vezes.
   const [
+    profRows,
     doseRows,
     moodRows,
     routineRows,
@@ -94,7 +94,9 @@ export async function loadPointsContext(db: Db, userId: number): Promise<PointsC
     visitRows,
     chestRows,
     rescuedRows,
-  ] = await Promise.all([
+    boughtPotionRows,
+  ] = await db.batch([
+    db.select().from(profile).where(eq(profile.userId, userId)).limit(1),
     db.select().from(doseLogs).where(eq(doseLogs.userId, userId)),
     db.select().from(moodEntries).where(eq(moodEntries.userId, userId)),
     db.select().from(routines).where(eq(routines.userId, userId)),
@@ -114,7 +116,12 @@ export async function loadPointsContext(db: Db, userId: number): Promise<PointsC
     db.select().from(dailyVisits).where(eq(dailyVisits.userId, userId)),
     db.select().from(chests).where(eq(chests.userId, userId)),
     db.select({ date: rescuedDays.date }).from(rescuedDays).where(eq(rescuedDays.userId, userId)),
+    db.select({ qty: potionPurchases.qty }).from(potionPurchases).where(eq(potionPurchases.userId, userId)),
   ])
+
+  const prof = profRows[0]
+  const timeZone = prof?.timezone ?? 'America/Sao_Paulo'
+  const today = todayInTz(timeZone)
 
   const postsCount = (postsCountRows[0]?.value ?? 0) + (communityPostsCountRows[0]?.value ?? 0)
   const commentsGivenCount = (commentsCountRows[0]?.value ?? 0) + (communityCommentsCountRows[0]?.value ?? 0)
@@ -149,7 +156,7 @@ export async function loadPointsContext(db: Db, userId: number): Promise<PointsC
   const sinceStart = new Date(`${since}T00:00:00.000Z`)
   sinceStart.setUTCDate(sinceStart.getUTCDate() - 1) // folga de fuso
 
-  const [noteRows, likeRows, communityLikeRows, commentRows, communityCommentRows, postRows, communityPostRows, forumTopicRows, forumReplyRows, forumLikeRows] = await Promise.all([
+  const [noteRows, likeRows, communityLikeRows, commentRows, communityCommentRows, postRows, communityPostRows, forumTopicRows, forumReplyRows, forumLikeRows] = await db.batch([
     db.select().from(dayNotes).where(and(eq(dayNotes.userId, userId), gte(dayNotes.date, since))),
     db.select({ createdAt: postLikes.createdAt }).from(postLikes).where(and(eq(postLikes.userId, userId), gte(postLikes.createdAt, sinceStart))),
     db
@@ -214,6 +221,7 @@ export async function loadPointsContext(db: Db, userId: number): Promise<PointsC
   const openedChests = chestRows.filter((c) => c.openedAt && c.contents)
   const chestBrilho = openedChests.reduce((s, c) => s + ((c.contents as ChestContents).brilho ?? 0), 0)
   const potionsEarned = openedChests.reduce((s, c) => s + ((c.contents as ChestContents).potions ?? 0), 0)
+  const potionsBought = boughtPotionRows.reduce((s, r) => s + r.qty, 0)
   const visitDates = new Set([...visitRows.map((v) => v.date), ...rescued])
   const streakState = computeStreak(visitDates, today)
 
@@ -237,7 +245,7 @@ export async function loadPointsContext(db: Db, userId: number): Promise<PointsC
       since,
       visitStreak: streakState.streak,
       restDaysLeft: streakState.restDaysLeft,
-      potions: Math.max(0, potionsEarned - rescued.size),
+      potions: Math.max(0, potionsEarned + potionsBought - rescued.size),
       unopenedChests: chestRows.filter((c) => !c.openedAt).length,
     },
     stats: {

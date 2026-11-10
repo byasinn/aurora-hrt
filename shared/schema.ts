@@ -945,3 +945,34 @@ export const forumTopicLikes = pgTable(
   },
   (table) => [uniqueIndex('forum_topic_likes_pair').on(table.topicId, table.userId)],
 )
+
+// Poções compradas na lojinha (consumível: pode comprar várias vezes, por isso fora de shop_purchases,
+// que é um item por pessoa). Entram no saldo gasto e nas poções disponíveis.
+export const potionPurchases = pgTable(
+  'potion_purchases',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    offerKey: text('offer_key').notNull(),
+    qty: integer('qty').notNull(),
+    price: integer('price').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('potion_purchases_user_idx').on(table.userId)],
+)
+
+// Promoções da lojinha, criadas pelo admin. scope 'random' é a configuração das ofertas aleatórias
+// do dia (target = quantos itens); sem essa linha elas ficam ligadas com 10% em 3 itens.
+export const shopPromotions = pgTable('shop_promotions', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  percent: integer('percent').notNull(),
+  scope: text('scope').notNull(), // 'all' | 'kind' | 'item' | 'tag' | 'potions' | 'random'
+  target: text('target'),
+  startsAt: timestamp('starts_at', { withTimezone: true }),
+  endsAt: timestamp('ends_at', { withTimezone: true }),
+  active: boolean('active').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
