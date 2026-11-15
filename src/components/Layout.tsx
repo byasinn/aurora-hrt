@@ -13,7 +13,8 @@ import AppIcon, { useIconStyle } from './AppIcon'
 import PixelIcon from './PixelIcon'
 import InsightMessageGenerator from './InsightMessageGenerator'
 import DesktopSidebar from './DesktopSidebar'
-import { useMainNavItems } from './navItems'
+import DesktopRail from './DesktopRail'
+import { HUB_PATHS, useMainNavItems } from './navItems'
 import AnnouncementModal from './AnnouncementModal'
 import ChallengeModal from './ChallengeModal'
 
@@ -58,7 +59,7 @@ export default function Layout() {
   const spaceActive = location.pathname === '/profile' || location.pathname === '/perfil'
   const inboxActive = location.pathname === '/inbox' || location.pathname.startsWith('/conversas')
   const hubActive =
-    ['/aurora', '/personalizar', '/missoes', '/loja', '/meus-itens', '/pontos'].some((p) => location.pathname.startsWith(p)) ||
+    HUB_PATHS.some((p) => location.pathname.startsWith(p)) ||
     !!matchPath('/comunidade*', location.pathname)
 
   const { data: messages } = useMessages()
@@ -143,6 +144,7 @@ export default function Layout() {
           </ul>
         </nav>
       </div>
+      <DesktopRail />
     </div>
   )
 }

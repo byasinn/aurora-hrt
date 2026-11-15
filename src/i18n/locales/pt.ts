@@ -10,9 +10,10 @@ export default {
     cancel: 'Cancelar',
   },
   nav: {
+    missions: 'Missões',
     home: 'Home',
     explore: 'Explorar',
-    communities: 'Comunidades',
+    communities: 'Comunidade',
     messages: 'Mensagens',
     mySpace: 'Meu espaço',
     profile: 'Perfil',

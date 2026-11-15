@@ -7,9 +7,10 @@ export default {
     cancel: 'Cancel',
   },
   nav: {
+    missions: 'Missions',
     home: 'Home',
     explore: 'Explore',
-    communities: 'Communities',
+    communities: 'Community',
     messages: 'Messages',
     mySpace: 'My space',
     profile: 'Profile',

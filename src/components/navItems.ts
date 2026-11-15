@@ -1,4 +1,4 @@
-import { Home, Image, Users, User, Sparkles, Store, Gem, ListChecks, Calendar, Settings } from 'lucide-react'
+import { Home, Image, Users, Gift, Store, ListChecks, Calendar, Settings } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { PixelIconName } from './PixelIcon'
 
@@ -22,16 +22,17 @@ export function useMainNavItems(): NavItem[] {
   ]
 }
 
-/** Atalhos secundários — gaveta do avatar no celular, parte de baixo da barra lateral no PC. */
+/** Atalhos menores da barra lateral do PC (o resto da central do Aurora fica no botão Aurora). */
 export function useSecondaryNavItems(): NavItem[] {
   const { t } = useTranslation()
   return [
-    { to: '/perfil', label: t('nav.profile'), Icon: User, pixel: 'user' },
-    { to: '/pontos', label: t('nav.points'), Icon: Sparkles, pixel: 'star' },
-    { to: '/loja', label: t('nav.shop'), Icon: Store, pixel: 'bag' },
-    { to: '/meus-itens', label: t('nav.myItems'), Icon: Gem, pixel: 'sparkle' },
+    { to: '/missoes', label: t('nav.missions'), Icon: Gift, pixel: 'chest' },
+    { to: '/loja', label: t('nav.shop'), Icon: Store, pixel: 'bag', match: '/loja/*' },
     { to: '/routines', label: t('nav.routines'), Icon: ListChecks, pixel: 'checklistColor' },
     { to: '/calendar', label: t('nav.history'), Icon: Calendar, pixel: 'calendarColor' },
-    { to: '/settings', label: t('nav.settings'), Icon: Settings, pixel: 'gearColor' },
+    { to: '/settings', label: t('nav.settings'), Icon: Settings, pixel: 'gearColor', match: '/settings/*' },
   ]
 }
+
+/** Telas que ficam "dentro" do botão Aurora (central) — marcam ele como ativo. */
+export const HUB_PATHS = ['/aurora', '/personalizar', '/missoes', '/loja', '/meus-itens', '/pontos']
