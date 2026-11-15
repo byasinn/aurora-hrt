@@ -14,6 +14,7 @@ import ShopStage, { KeeperMini, useKeeperTalk } from './ShopStage'
 import { DEPARTMENT_BY_SLUG, type Department } from './departments'
 import { SHOP_ITEMS, SHOP_ITEM_BY_KEY, SHOP_TAGS, itemTags, ownsItem, type ShopState, type ShopTag } from '../../../shared/shopCatalog'
 import { POTION_OFFERS, POTION_OFFER_BY_KEY, discounted, type PotionOffer } from '../../../shared/shopPromos'
+import Guide from '../../components/Guide'
 
 function FilterChips({
   tags,
@@ -195,6 +196,16 @@ function DepartmentView({ dept }: { dept: Department }) {
 
   return (
     <div className="space-y-4">
+      {!isPotions && (
+        <Guide
+          id={pixel ? 'shop-keeper-1.3' : 'shop-filters-1.3'}
+          steps={
+            pixel
+              ? [{ target: 'shop-keeper', title: 'Fale com a vendedora', text: 'Toque nela pra abrir os filtros. Ela também conta quando tem promoção!' }]
+              : [{ target: 'shop-filters', title: 'Filtros da loja', text: 'Filtre por categoria — fofos, estilosos, gênero, sexualidade e mais.' }]
+          }
+        />
+      )}
       <div className="flex items-center justify-between gap-3">
         <Link to="/loja" className="flex items-center gap-1 text-sm text-[var(--text-muted)]">
           <ArrowLeft size={16} /> Lojinha
@@ -212,7 +223,7 @@ function DepartmentView({ dept }: { dept: Department }) {
       {pixel ? (
         <div className="space-y-3 lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-start lg:gap-4 lg:space-y-0">
           <div className="space-y-3 lg:sticky lg:top-4">
-            <div ref={stageRef}>
+            <div ref={stageRef} data-guide="shop-keeper">
               <ShopStage dept={dept} talk={talk} onKeeperClick={keeperTap} />
             </div>
             {!isPotions && (
@@ -250,7 +261,7 @@ function DepartmentView({ dept }: { dept: Department }) {
         </div>
       ) : (
         <>
-          {!isPotions && filters}
+          {!isPotions && <div data-guide="shop-filters">{filters}</div>}
           {list}
         </>
       )}

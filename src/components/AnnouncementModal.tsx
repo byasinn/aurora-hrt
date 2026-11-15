@@ -67,6 +67,7 @@ export default function AnnouncementModal() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[96] flex items-end justify-center bg-black/50 p-3 sm:items-center"
+          data-overlay
           onClick={close}
         >
           <motion.div

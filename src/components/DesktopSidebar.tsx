@@ -66,6 +66,7 @@ function AuroraButton() {
     <NavLink
       to="/aurora"
       onClick={() => playSound('pop')}
+      data-guide="aurora-button"
       className={clsx(
         'btn-press flex items-center gap-3 rounded-2xl p-2 pr-3 text-white transition',
         active ? 'ring-2 ring-[var(--accent)] ring-offset-2 ring-offset-[var(--bg)]' : 'hover:brightness-105',

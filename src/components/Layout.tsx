@@ -101,6 +101,7 @@ export default function Layout() {
               <NavLink
                 to="/aurora"
                 onClick={() => playSound('pop')}
+                data-guide="aurora-button"
                 aria-label="Aurora"
                 className="flex min-h-16 flex-col items-center justify-end gap-1 pb-1.5 text-[11px] font-bold"
               >

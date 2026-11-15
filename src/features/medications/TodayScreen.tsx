@@ -17,6 +17,7 @@ import MedicationForm from './MedicationForm'
 import MedicationsCarousel from './MedicationsCarousel'
 import { WorkoutTodayCarousel, RoutinesTodayList, type WorkoutTodayItem } from './TodayActivitiesCarousel'
 import type { Medication } from '../../../shared/types'
+import Guide from '../../components/Guide'
 
 function AddDoseButton({ prominent, onClick }: { prominent: boolean; onClick: () => void }) {
   const { t } = useTranslation()
@@ -131,6 +132,15 @@ export default function TodayScreen() {
 
   return (
     <div>
+      <Guide
+        id="home-1.3"
+        steps={[
+          { target: 'aurora-button', title: 'A central do Aurora', text: 'Missões, baús, lojinha, Comunidade, pontos e personalizar app — tudo aqui.' },
+          { target: 'register-day', title: 'Registrar dia vale Brilho', text: 'Humor, energia, libido, sintomas e notas: quanto mais detalhe, mais Brilho.' },
+          { target: 'routine-check', title: 'Marcou no dia, valeu', text: 'Rotina marcada no dia vale Brilho. Esqueceu? No dia seguinte o app pergunta.' },
+          { target: 'desktop-rail', title: 'Seu resumo sempre à vista', text: 'Streak, Brilho, poções e recompensas pra pegar, aqui do lado.' },
+        ]}
+      />
       <WelcomeBanner />
 
       {isError && <EmptyState>{t('today.loadError')}</EmptyState>}
@@ -187,7 +197,7 @@ export default function TodayScreen() {
         </div>
       )}
 
-      <div className="mt-5">
+      <div className="mt-5" data-guide="register-day">
         <BigLinkButton to="/dia" icon={Heart} pixel="health" label={t('today.registerDay')} variant="accent" big />
       </div>
       <div className="mt-2">

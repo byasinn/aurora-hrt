@@ -10,6 +10,7 @@ import { PromoBadge } from './ItemCard'
 import { DEPARTMENTS, DEPARTMENT_BY_KIND, type Department } from './departments'
 import { SHOP_ITEMS, SHOP_ITEM_BY_KEY, ownsItem, type ShopKind, type ShopState } from '../../../shared/shopCatalog'
 import { POTION_OFFERS, POTION_OFFER_BY_KEY } from '../../../shared/shopPromos'
+import Guide from '../../components/Guide'
 
 // Lojinha: primeiro os departamentos (cards grandes, com o que vende — as vendedoras aparecem lá
 // dentro, no 8-bit), e cada um abre a sua loja (ShopDepartmentScreen).
@@ -95,7 +96,7 @@ function TodayDeals({ shop }: { shop: ShopState }) {
     .slice(0, 8)
   if (deals.length === 0) return null
   return (
-    <Card className="space-y-2">
+    <Card className="space-y-2" data-guide="shop-deals">
       <p className="font-bold">Em promoção</p>
       <div className="space-y-1.5">
         {deals.map((d) => (
@@ -123,12 +124,19 @@ export default function ShopScreen() {
 
   return (
     <div className="space-y-4">
+      <Guide
+        id="shop-1.3"
+        steps={[
+          { target: 'shop-deals', title: 'Ofertas do dia', text: 'Todo dia alguns itens ganham desconto — às vezes tem promoção especial também.' },
+          { target: 'shop-departments', title: 'Uma loja pra cada coisa', text: 'Molduras, cards, bordas, temas, calendários… e uma loja de poções!' },
+        ]}
+      />
       <ScreenTitle subtitle="Troque seu Brilho por enfeites pro seu perfil, seus posts e seu app.">Lojinha</ScreenTitle>
       <BalanceCard shop={shop} />
       <p className="-mt-2 px-1 text-xs text-[var(--text-muted)]">Comprar não tira seus títulos: eles contam todo o Brilho que você já ganhou.</p>
       {isError && <p className="text-sm text-[var(--text-muted)]">Não deu pra abrir a lojinha agora. Tenta de novo daqui a pouco.</p>}
       {shop && <TodayDeals shop={shop} />}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3" data-guide="shop-departments">
         {DEPARTMENTS.map((d, i) => (
           <DepartmentCard key={d.slug} dept={d} shop={shop} wide={i === 0 || d.kind === 'potion'} />
         ))}

@@ -30,7 +30,7 @@ export default function DesktopRail() {
 
   return (
     <aside className="sticky top-0 hidden h-app w-72 shrink-0 flex-col gap-3 overflow-y-auto py-8 pl-2 pr-6 xl:flex">
-      <Link to="/missoes" onClick={() => playSound('tap')} className="block">
+      <Link to="/missoes" onClick={() => playSound('tap')} className="block" data-guide="desktop-rail">
         <Card className="space-y-3 transition hover:-translate-y-0.5">
           <div className="grid grid-cols-3 text-center">
             <span>

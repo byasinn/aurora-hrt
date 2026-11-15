@@ -20,6 +20,7 @@ import ItemPreview, { ThemeSwatch } from '../shop/ItemPreview'
 import { ScaledPreview } from '../shop/ItemRow'
 import { DEFAULT_THEME, SHOP_ITEM_BY_KEY, SHOP_ITEMS, ownsItem, type EquippableKind } from '../../../shared/shopCatalog'
 import { DEPARTMENT_BY_KIND } from '../shop/departments'
+import Guide from '../../components/Guide'
 
 // Personalizar app (central do Aurora): prévia ao vivo em cima e uma grade com cada parte do app
 // mostrando o que está em uso. Tocar numa parte abre uma gaveta de baixo com as opções (só o que a
@@ -233,6 +234,12 @@ export default function CustomizeScreen() {
 
   return (
     <div className="space-y-4">
+      <Guide
+        id="customize-1.3"
+        steps={[
+          { target: 'customize-parts', title: 'Toque numa parte', text: 'Abre as opções que você tem e muda na hora — a prévia em cima mostra como ficou.' },
+        ]}
+      />
       <ScreenTitle subtitle="Toque numa parte pra trocar — muda na hora.">Personalizar app</ScreenTitle>
 
       <div className="grid grid-cols-2 gap-3">
@@ -274,7 +281,7 @@ export default function CustomizeScreen() {
         </div>
       </Card>
 
-      <div className="grid grid-cols-3 gap-2.5">
+      <div className="grid grid-cols-3 gap-2.5" data-guide="customize-parts">
         <PartTile label="Tema" value={SHOP_ITEM_BY_KEY.get(themeKey)?.name ?? 'Padrão'} active={part === 'theme'} onClick={() => open('theme')}>
           <ThemeSwatch itemKey={themeKey} className="h-full w-full rounded-none" />
         </PartTile>

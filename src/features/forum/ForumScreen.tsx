@@ -9,6 +9,7 @@ import { useForumTopics } from '../../api/forum'
 import { FORUM_TAGS, FORUM_TAG_BY_KEY, type ForumTopicSummary } from '../../../shared/forum'
 import { timeAgo } from '../../lib/dateUtils'
 import { playSound } from '../../lib/sounds'
+import Guide from '../../components/Guide'
 
 export function TagChip({ tag, active, onClick }: { tag: string; active?: boolean; onClick?: () => void }) {
   const label = FORUM_TAG_BY_KEY.get(tag)?.label ?? tag
@@ -68,10 +69,18 @@ export default function ForumScreen() {
 
   return (
     <div className="space-y-4">
+      <Guide
+        id="forum-1.3"
+        steps={[
+          { target: 'forum-new', title: 'Abra um tópico', text: 'Pergunte, conte uma conquista ou desabafe — com até 3 tags.' },
+          { target: 'forum-sort', title: 'Recentes, relevantes e tags', text: 'Troque a ordem e filtre pelo assunto que te interessa.' },
+        ]}
+      />
       <div className="flex items-center justify-between gap-3">
         <ScreenTitle subtitle="Tópicos pra perguntar, contar, desabafar e trocar ideia.">Comunidade</ScreenTitle>
         <Link
           to="/comunidades/novo"
+          data-guide="forum-new"
           aria-label="Novo tópico"
           className="flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 text-sm font-bold text-[var(--accent-contrast)]"
         >
@@ -107,7 +116,7 @@ export default function ForumScreen() {
         )}
       </form>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2" data-guide="forum-sort">
         <div className="grid flex-1 grid-cols-2 gap-1 rounded-2xl bg-[var(--surface-2)] p-1">
           {(
             [

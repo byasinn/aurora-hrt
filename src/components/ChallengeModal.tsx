@@ -181,6 +181,7 @@ export default function ChallengeModal() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[95] flex items-end justify-center bg-black/50 p-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:items-center sm:pb-4"
+          data-overlay
           onClick={handleClose}
         >
           <motion.div

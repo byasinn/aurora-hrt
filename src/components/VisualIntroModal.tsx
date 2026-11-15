@@ -63,7 +63,7 @@ export default function VisualIntroModal() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4" data-overlay
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.94, y: 12 }}

@@ -9,13 +9,14 @@ import { showToast } from '../../lib/toast'
 import RoutineForm from './RoutineForm'
 import RoutineRow from './RoutineRow'
 import type { Routine } from '../../../shared/types'
+import Guide from '../../components/Guide'
 
 /** Explica a Semana Perfeita e mostra como estão as rotinas nela essa semana. */
 function PerfectWeekCard() {
   const { data: points } = usePoints()
   const list = points?.week.perfectWeek ?? []
   return (
-    <Card className="space-y-2">
+    <Card className="space-y-2" data-guide="perfect-week">
       <div className="flex items-start gap-3">
         <Target size={26} className="mt-0.5 shrink-0 text-[var(--accent)]" />
         <div className="min-w-0 flex-1">
@@ -51,6 +52,13 @@ export default function RoutinesScreen() {
 
   return (
     <div className="space-y-4">
+      <Guide
+        id="routines-1.3"
+        steps={[
+          { target: 'perfect-week', title: 'Semana Perfeita', text: 'Em vez de +2 por dia, a rotina paga tudo no domingo com +50% — se você fizer todo dia.' },
+          { target: 'routine-edit', title: 'Escolha no lápis', text: 'Em cada rotina dá pra escolher Todo dia ou Semana Perfeita.' },
+        ]}
+      />
       <div className="flex items-center justify-between">
         <ScreenTitle>Rotinas</ScreenTitle>
         <button

@@ -10,6 +10,7 @@ import { useShop } from '../../api/shop'
 import { useMissions } from '../../api/points'
 import { playSound } from '../../lib/sounds'
 import { SHOP_ITEMS, ownsItem } from '../../../shared/shopCatalog'
+import Guide from '../../components/Guide'
 
 function HubCard({
   to,
@@ -59,6 +60,13 @@ export default function AuroraHubScreen() {
 
   return (
     <div className="space-y-5">
+      <Guide
+        id="hub-1.3"
+        steps={[
+          { target: 'missions-card', title: 'Missões e baús', text: 'Complete missões, pegue baús e ganhe Brilho, itens e poções.' },
+          { target: 'customize-card', title: 'Personalizar app', text: 'Tema, visual Clean ou 8-bit, moldura, borda, calendário, ícone e sons.' },
+        ]}
+      />
       <div className="flex items-center gap-4 pt-5">
         <Avatar src={profile?.avatarUrl} icon={profile?.avatarIcon} name={profile?.displayName} frame={profile?.equippedAvatarFrame} size={56} />
         <div className="min-w-0 flex-1">
@@ -72,7 +80,7 @@ export default function AuroraHubScreen() {
       </div>
 
       {/* de fora a fora e com outra cor de propósito: é a porta de entrada da personalização */}
-      <Link to="/personalizar" onClick={() => playSound('pop')} className="block">
+      <Link to="/personalizar" onClick={() => playSound('pop')} className="block" data-guide="customize-card">
         <div
           className="btn-press-soft relative overflow-hidden rounded-3xl p-5 text-white [box-shadow:var(--shadow)] transition active:translate-y-0.5"
           style={{ background: 'linear-gradient(120deg, var(--accent-3), var(--accent-2) 55%, var(--accent))' }}
@@ -97,7 +105,7 @@ export default function AuroraHubScreen() {
         </div>
       </Link>
 
-      <Link to="/missoes" onClick={() => playSound('tap')} className="block">
+      <Link to="/missoes" onClick={() => playSound('tap')} className="block" data-guide="missions-card">
         <Card className="btn-press-soft flex items-center gap-4 p-4 transition active:translate-y-0.5">
           <span className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[var(--accent-soft)]">
             <Gift size={36} />

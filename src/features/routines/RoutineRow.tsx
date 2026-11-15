@@ -153,6 +153,7 @@ export default function RoutineRow({
             animate={justCompleted ? { scale: [1, 1.3, 1] } : { scale: 1 }}
             transition={{ duration: 0.4 }}
             onClick={() => setCount(done ? 0 : 1)}
+            data-guide="routine-check"
             className={
               `flex ${actionSize} items-center justify-center rounded-full border transition ` +
               (done
@@ -206,7 +207,7 @@ export default function RoutineRow({
       )}
 
       {!compact && onEdit && (
-        <button onClick={onEdit} className="text-[var(--text-muted)]">
+        <button onClick={onEdit} className="text-[var(--text-muted)]" data-guide="routine-edit" aria-label="Editar rotina">
           <Pencil size={14} />
         </button>
       )}

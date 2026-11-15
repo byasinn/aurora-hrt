@@ -11,6 +11,7 @@ import { BACKFILL_DAYS, addDays } from '../../../shared/points'
 import { SHOP_ITEM_BY_KEY } from '../../../shared/shopCatalog'
 import { playSound } from '../../lib/sounds'
 import { toastError } from '../../lib/toast'
+import Guide from '../../components/Guide'
 
 function MissionRow({ mission, locked }: { mission: MissionState; locked?: boolean }) {
   const claim = useClaimMission()
@@ -272,6 +273,13 @@ export default function MissionsScreen() {
 
   return (
     <div className="space-y-5">
+      <Guide
+        id="missions-1.3"
+        steps={[
+          { target: 'missions-counters', title: 'Streak e poções', text: 'O foguinho é seu streak. A poção salva um dia que você esqueceu de marcar.' },
+          { target: 'missions-tabs', title: 'Diário, Semanal e Quests', text: 'As boas-vindas liberam as diárias; as semanais renovam toda segunda.' },
+        ]}
+      />
       <Link to="/aurora" className="flex items-center gap-1 pt-2 text-sm text-[var(--text-muted)]">
         <ArrowLeft size={16} /> Aurora
       </Link>
@@ -280,7 +288,7 @@ export default function MissionsScreen() {
           <h1 className="text-2xl font-extrabold">Missões</h1>
           <p className="text-sm text-[var(--text-muted)]">Complete, pegue a recompensa e abra.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2" data-guide="missions-counters">
           <span className="flex items-center gap-1 rounded-full bg-[var(--surface)] px-3 py-1.5 [box-shadow:var(--shadow)]">
             <Flame size={16} className="text-orange-500" />
             <span className="font-pixel text-lg font-bold">{data?.streak ?? '–'}</span>
@@ -319,7 +327,7 @@ export default function MissionsScreen() {
         </section>
       )}
 
-      <div className="grid grid-cols-3 gap-1 rounded-2xl bg-[var(--surface-2)] p-1">
+      <div className="grid grid-cols-3 gap-1 rounded-2xl bg-[var(--surface-2)] p-1" data-guide="missions-tabs">
         {TABS.map((t) => (
           <button
             key={t.key}

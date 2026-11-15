@@ -340,7 +340,7 @@ export default function WhatsNewTour({ version, slides, onClose }: { version: st
   }
 
   return createPortal(
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[96] flex items-end justify-center bg-black/50 p-3 sm:items-center">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[96] flex items-end justify-center bg-black/50 p-3 sm:items-center" data-overlay>
       <motion.div
         initial={{ y: 40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
